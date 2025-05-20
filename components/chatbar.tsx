@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import {
   RectangleHorizontal,
@@ -17,6 +16,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 
 const aspectRatios = [
   "1:3",
@@ -41,7 +41,7 @@ const styleTypes = ["Auto", "General", "Realistic", "Design"];
 
 export function ChatInput() {
   const [message, setMessage] = useState("");
-  const textInputref = useRef<HTMLInputElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const handleSend = () => {
     if (message.trim()) {
@@ -51,7 +51,7 @@ export function ChatInput() {
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSend();
@@ -62,13 +62,14 @@ export function ChatInput() {
     <div className="w-full max-w-3xl mx-auto p-2 mb-4">
       <div className="border-2 rounded-xl">
         <div className="w-full">
-          <Input
-            ref={textInputref}
+          <Textarea
+            ref={textareaRef}
             placeholder="Message Echo..."
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             onKeyDown={handleKeyDown}
-            className="w-full h-20 py-3 px-4"
+            className="w-full min-h-[80px] max-h-[160px] py-3 px-4 resize-none overflow-auto"
+            rows={1}
           />
         </div>
 
