@@ -1,8 +1,11 @@
 import Image from "next/image";
 import { ChatInput } from "../components/chatbar";
+import { HeroSection } from "@/components/HeroSectiontext";
 
 export default function Home() {
-  return (
-    <ChatInput />
-  )
+  return(
+  <main className="flex min-h-screen flex-col items-center justify-center p-6 md:p-24">
+  <HeroSection />
+  <ChatInput />
+</main>)
 }
