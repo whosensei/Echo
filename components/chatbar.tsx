@@ -12,8 +12,21 @@ import {
 import { Textarea } from "@/components/ui/textarea"
 
 const aspectRatios = [
-  "1:3", "3:1", "1:2", "2:1", "9:16", "16:9", "10:16", "16:10",
-  "2:3", "3:2", "3:4", "4:3", "4:5", "5:4", "1:1",
+  "1:3",
+  "3:1",
+  "1:2",
+  "2:1",
+  "9:16",
+  "16:9",
+  "10:16",
+  "16:10",
+  "2:3",
+  "3:2",
+  "3:4",
+  "4:3",
+  "4:5",
+  "5:4",
+  "1:1",
 ]
 
 const magicPrompts = ["Auto", "On", "Off"]
@@ -29,6 +42,7 @@ export function ChatInput() {
   const handleSend = () => {
     if (message.trim()) {
       console.log("Sending message:", message)
+      // Here you would send the message to your chat service
       setMessage("")
     }
   }
@@ -41,41 +55,40 @@ export function ChatInput() {
   }
 
   return (
-    <div className="w-full mx-auto">
-      <div className="bg-white/5 rounded-xl backdrop-blur-sm overflow-hidden border border-white/10">
+    <div className="w-full max-w-3xl mx-auto p-2 mb-4">
+      <div className="border rounded-xl overflow-hidden">
         <div className="w-full pt-2">
           <Textarea
             ref={textareaRef}
-            placeholder="Describe your advertisement idea..."
+            placeholder="Message Echo..."
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             onKeyDown={handleKeyDown}
-            className="chat-input"
-            rows={3}
+            className="w-full min-h-[80px] max-h-[100px] py-2 px-4 resize-none overflow-auto border-0 focus-visible:ring-0 focus-visible:ring-offset-0 mb-0"
+            rows={1}
           />
         </div>
 
-        <div className="flex items-center px-4 py-3 justify-between bg-white/5">
-          <div className="flex gap-2">
-            <Button variant="ghost" className="text-white hover:bg-white/10">
-              <Paperclip className="w-5 h-5" />
-              <span className="ml-2">Attach</span>
-            </Button>
+        <div className="flex items-center pr-2 justify-between bg-background mt-[-4px] pb-2">
+          <div className="pl-1">
+                <Button variant="ghost" className="chat-button">
+                  <span className="sr-only">Attach File</span>
+                  <Paperclip className="w-5 h-5" /> Attach
+                </Button>
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="text-white hover:bg-white/10">
-                  <RectangleHorizontal className="w-5 h-5" />
-                  <span className="ml-2">{selectedRatio}</span>
+                <Button variant="ghost" className="chat-button">
+                  <span className="sr-only">Aspect Ratio</span>
+                  <RectangleHorizontal className="w-5 h-5" /> {selectedRatio}
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="bg-white/10 backdrop-blur-lg border-white/20">
+              <DropdownMenuContent align="start" className="dropdown-menu dropdown-grid w-auto columns-3">
                 {aspectRatios.map((ratio) => (
                   <DropdownMenuCheckboxItem
                     key={ratio}
                     checked={selectedRatio === ratio}
                     onCheckedChange={() => setSelectedRatio(ratio)}
-                    className="text-white hover:bg-white/20"
                   >
                     {ratio}
                   </DropdownMenuCheckboxItem>
@@ -85,18 +98,17 @@ export function ChatInput() {
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="text-white hover:bg-white/10">
-                  <Eclipse className="w-5 h-5" />
-                  <span className="ml-2">{selectedStyle}</span>
+                <Button variant="ghost" className="chat-button">
+                  <span className="sr-only">Style Type</span>
+                  <Eclipse className="w-5 h-5" /> {selectedStyle}
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="bg-white/10 backdrop-blur-lg border-white/20">
+              <DropdownMenuContent align="start" className="dropdown-menu">
                 {styleTypes.map((style) => (
                   <DropdownMenuCheckboxItem
                     key={style}
                     checked={selectedStyle === style}
                     onCheckedChange={() => setSelectedStyle(style)}
-                    className="text-white hover:bg-white/20"
                   >
                     {style}
                   </DropdownMenuCheckboxItem>
@@ -106,33 +118,30 @@ export function ChatInput() {
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="text-white hover:bg-white/10">
-                  <Sparkles className="w-5 h-5" />
-                  <span className="ml-2">{selectedEnhance}</span>
+                <Button variant="ghost" className="chat-button">
+                  <span className="sr-only">Magic Prompt</span>
+                  <Sparkles className="w-5 h-5" /> {selectedEnhance}
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="bg-white/10 backdrop-blur-lg border-white/20">
+              <DropdownMenuContent align="start" className="dropdown-menu">
                 {magicPrompts.map((prompt) => (
                   <DropdownMenuCheckboxItem
                     key={prompt}
                     checked={selectedEnhance === prompt}
                     onCheckedChange={() => setSelectedEnhance(prompt)}
-                    className="text-white hover:bg-white/20"
                   >
-                    {prompt}
+                    
+                      {prompt}
                   </DropdownMenuCheckboxItem>
                 ))}
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
 
-          <Button 
-            onClick={handleSend} 
-            disabled={!message.trim()} 
-            className="bg-white/10 hover:bg-white/20 text-white"
-          >
-            <SendHorizonal className="w-5 h-5 mr-2" />
+          <Button onClick={handleSend} className="chat-button" disabled={!message.trim()} variant="ghost">
+            <SendHorizonal className="h-5 w-5" />
             Send
+            <span className="sr-only">Send</span>
           </Button>
         </div>
       </div>
