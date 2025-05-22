@@ -8,6 +8,8 @@ import {
   Eclipse,
   SendHorizonal,
   Paperclip,
+  Video,
+  Image
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -17,8 +19,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Textarea } from "@/components/ui/textarea";
 
-const aspectRatios = ["1:1", "3:4", "4:3", "16:9", "9:16"];
-// const type = ["clone a ad", "3:4", "4:3", "16:9", "9:16"];
+const Adtype = ["Static AD", "Video AD"];
 const magicPrompts = ["Auto", "On", "Off"];
 const styleTypes = ["Auto", "General", "Realistic", "Design"];
 
@@ -60,24 +61,22 @@ export function ChatInput() {
         </div>
 
         <div className="flex items-center pr-2 justify-between bg-background mt-[-4px] pb-2">
+          <div className="flex justify-between">
           <div className="pl-1">
             <Button variant="ghost" className="chat-button">
               <span className="sr-only">Attach File</span>
               <Paperclip className="w-5 h-5" /> Attach
             </Button>
-
-            <DropdownMenu>
+          </div>
+          <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="chat-button border-rounded">
-                  <span className="sr-only">Aspect Ratio</span>
-                  <RectangleHorizontal className="w-5 h-5" /> {selectedRatio}
+                <Button variant="ghost" className="chat-button">
+                  <span className="sr-only">AD type</span>
+                  {selectedRatio === "Video AD" ? <Video className="w-5 h-5"/> : <Image className="w-5 h-5"/>} {selectedRatio}
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent
-                align="start"
-                className="dropdown-menu dropdown-grid w-auto columns-1"
-              >
-                {aspectRatios.map((ratio) => (
+              <DropdownMenuContent align="start" className="dropdown-menu dropdown-grid w-auto">
+                {Adtype.map((ratio) => (
                   <DropdownMenuCheckboxItem
                     key={ratio}
                     checked={selectedRatio === ratio}
@@ -91,23 +90,23 @@ export function ChatInput() {
           </div>
 
           <div className="flex justify-between">
-          <div className="pr-2">
-          <Button className="Enhance" variant="ghost">
-            <Sparkles className="w-5 h-5"></Sparkles>
-          </Button>
-          </div>
+            <div className="pr-2">
+              <Button className="Enhance" variant="ghost">
+                <Sparkles className="w-5 h-5"></Sparkles>
+              </Button>
+            </div>
 
-          <div>
-          <Button
-            onClick={handleSend}
-            className="chat-button"
-            disabled={!message.trim()}
-            // variant="ghost"
-          >
-            <SendHorizonal className="h-5 w-5" />
-            <span className="sr-only">Send</span>
-          </Button>
-          </div>
+            <div>
+              <Button
+                onClick={handleSend}
+                className="chat-button"
+                disabled={!message.trim()}
+                // variant="ghost"
+              >
+                <SendHorizonal className="h-5 w-5" />
+                <span className="sr-only">Send</span>
+              </Button>
+            </div>
           </div>
         </div>
       </div>
