@@ -5,11 +5,11 @@ import React from "react"
 export function HeroSection() {
   return (
     <div className="text-center mb-8 max-w-3xl mx-auto px-4">
-      <h1 className="text-6xl md:text-5xl font-bold tracking-tight mb-4 font-inter">
-        Create any AD with{" "} <br/>
+      <h1 className="text-6xl md:text-5xl font-bold tracking-tight mb-4 font-inter ">
+        Create any{" "}
         <span className="relative inline-block">
           <span className="relative z-10 bg-gradient-to-r from-purple-500 via-pink-500 to-orange-500 text-transparent bg-clip-text">
-            AI
+            Ad
           </span>
           <span className="absolute inset-0 blur-sm bg-gradient-to-r from-purple-500/40 via-pink-500/40 to-orange-500/40 rounded-lg z-0"></span>
         </span>{" "}
