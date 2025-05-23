@@ -26,7 +26,7 @@ const styleTypes = ["Auto", "General", "Realistic", "Design"];
 export function ChatInput() {
   const [message, setMessage] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const [selectedRatio, setSelectedRatio] = useState("1:1");
+  const [selectedRatio, setSelectedRatio] = useState("AdType");
   const [selectedStyle, setSelectedStyle] = useState("Auto");
   const [selectedEnhance, setSelectedEnhance] = useState("Auto");
 
@@ -62,7 +62,7 @@ export function ChatInput() {
 
         <div className="flex items-center pr-2 justify-between bg-background mt-[-4px] pb-2">
           <div className="flex justify-between">
-          <div className="pl-1">
+          <div className="pl-2">
             <Button variant="ghost" className="chat-button">
               <span className="sr-only">Attach File</span>
               <Paperclip className="w-5 h-5" /> Attach
