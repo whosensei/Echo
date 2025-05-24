@@ -18,7 +18,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuCheckboxItem,
 } from "@/components/ui/dropdown-menu";
-
+import FileUploader from "./fileupload";
 const Adtype = ["Static AD", "Video AD"];
 
 export function ChatInput() {
@@ -72,72 +72,68 @@ export function ChatInput() {
 
         <div className="flex items-center justify-between bg-background px-3 py-2">
           <div className="flex items-center space-x-2">
-            <Button variant="outline" size="icon" className="rounded-full h-9 w-9 p-0">
-              <span className="sr-only">Attach File</span>
-              <Paperclip className="w-4 h-4" />
-            </Button>
-            
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="rounded-full h-9 px-4 space-x-1">
-                  {selectedRatio === "Video AD" ? (
-                    <Video className="w-4 h-4" />
-                  ) : (
-                    <Image className="w-4 h-4" />
-                  )}
-                  <span>{selectedRatio}</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent
-                align="start"
-                className="dropdown-menu dropdown-grid w-auto"
-              >
-                {Adtype.map((ratio) => (
-                  <DropdownMenuCheckboxItem
-                    key={ratio}
-                    checked={selectedRatio === ratio}
-                    onCheckedChange={() => setSelectedRatio(ratio)}
-                  >
-                    {ratio}
-                  </DropdownMenuCheckboxItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
 
-            <Button
-              variant="outline"
-              onClick={() => setcloneselect(!cloneselect)}
-              className={`rounded-full h-9 px-4 ${
-                cloneselect
-                  ? buttonSelectedStyles
-                  : `${buttonHoverStyles} ${buttonTextStyles}`
-              }`}
+          <FileUploader />
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="rounded-full h-9 px-4 space-x-1">
+                {selectedRatio === "Video AD" ? (
+                  <Video className="w-4 h-4" />
+                ) : (
+                  <Image className="w-4 h-4" />
+                )}
+                <span>{selectedRatio}</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              align="start"
+              className="dropdown-menu dropdown-grid w-auto"
             >
-              clone
-            </Button>
-          </div>
+              {Adtype.map((ratio) => (
+                <DropdownMenuCheckboxItem
+                  key={ratio}
+                  checked={selectedRatio === ratio}
+                  onCheckedChange={() => setSelectedRatio(ratio)}
+                >
+                  {ratio}
+                </DropdownMenuCheckboxItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
 
-          <div className="flex items-center space-x-2">
-            <Button variant="outline" size="icon" className="rounded-full h-9 w-9 p-0">
-              <Sparkles className="w-4 h-4" />
-            </Button>
-
-            <Button
-              onClick={handleSend}
-              disabled={!message.trim()}
-              size="icon"
-              className={`rounded-full h-9 w-9 p-0 transition-all duration-300 ${
-                !message.trim()
-                  ? "bg-gray-200/60 dark:bg-gray-700/60 text-gray-400 dark:text-gray-500"
-                  : "bg-gradient-to-r from-blue-500 to-blue-600 dark:from-blue-600 dark:to-blue-700 text-white hover:from-blue-600 hover:to-blue-700 dark:hover:from-blue-700 dark:hover:to-blue-800"
+          <Button
+            variant="outline"
+            onClick={() => setcloneselect(!cloneselect)}
+            className={`rounded-full h-9 px-4 ${cloneselect
+              ? buttonSelectedStyles
+              : `${buttonHoverStyles} ${buttonTextStyles}`
               }`}
-            >
-              <SendHorizonal className="w-4 h-4" />
-              <span className="sr-only">Send</span>
-            </Button>
-          </div>
+          >
+            clone
+          </Button>
+        </div>
+
+        <div className="flex items-center space-x-2">
+          <Button variant="outline" size="icon" className="rounded-full h-9 w-9 p-0">
+            <Sparkles className="w-4 h-4" />
+          </Button>
+
+          <Button
+            onClick={handleSend}
+            disabled={!message.trim()}
+            size="icon"
+            className={`rounded-full h-9 w-9 p-0 transition-all duration-300 ${!message.trim()
+              ? "bg-gray-200/60 dark:bg-gray-700/60 text-gray-400 dark:text-gray-500"
+              : "bg-gradient-to-r from-blue-500 to-blue-600 dark:from-blue-600 dark:to-blue-700 text-white hover:from-blue-600 hover:to-blue-700 dark:hover:from-blue-700 dark:hover:to-blue-800"
+              }`}
+          >
+            <SendHorizonal className="w-4 h-4" />
+            <span className="sr-only">Send</span>
+          </Button>
         </div>
       </div>
     </div>
+    </div >
   );
 }
