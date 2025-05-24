@@ -2,6 +2,7 @@
 import type * as React from "react";
 import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
+import { buttonBaseStyles, buttonHoverStyles, buttonSelectedStyles, buttonTextStyles } from "./ui/buttonstyles";
 import {
   RectangleHorizontal,
   Sparkles,
@@ -9,7 +10,7 @@ import {
   SendHorizonal,
   Paperclip,
   Video,
-  Image
+  Image,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -17,23 +18,19 @@ import {
   DropdownMenuTrigger,
   DropdownMenuCheckboxItem,
 } from "@/components/ui/dropdown-menu";
-import { Textarea } from "@/components/ui/textarea";
 
 const Adtype = ["Static AD", "Video AD"];
-const magicPrompts = ["Auto", "On", "Off"];
-const styleTypes = ["Auto", "General", "Realistic", "Design"];
 
 export function ChatInput() {
   const [message, setMessage] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [selectedRatio, setSelectedRatio] = useState("AdType");
-  const [selectedStyle, setSelectedStyle] = useState("Auto");
-  const [selectedEnhance, setSelectedEnhance] = useState("Auto");
+  const [cloneselect, setcloneselect] = useState(false);
 
   const handleSend = () => {
     if (message.trim()) {
       console.log("Sending message:", message);
-      // Here you would send the message to your chat service
+      // send the message to your chat service
       setMessage("");
     }
   };
@@ -45,37 +42,56 @@ export function ChatInput() {
     }
   };
 
+  const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setMessage(e.target.value);
+    // Auto-resize the textarea
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "auto";
+      textareaRef.current.style.height = `${Math.min(
+        textareaRef.current.scrollHeight,
+        100
+      )}px`;
+    }
+  };
+
   return (
     <div className="w-full max-w-3xl mx-auto p-2 mb-4">
-      <div className="border rounded-xl overflow-hidden">
+      <div className="border rounded-xl overflow-hidden bg-background/50 backdrop-blur-sm gap-2">
         <div className="w-full pt-2">
-          <Textarea
+          <textarea
             ref={textareaRef}
-            placeholder="Message Echo..."
             value={message}
-            onChange={(e) => setMessage(e.target.value)}
+            onChange={handleInput}
             onKeyDown={handleKeyDown}
-            className="w-full min-h-[80px] max-h-[100px] py-2 px-4 resize-none overflow-auto border-0 focus-visible:ring-0 focus-visible:ring-offset-0 mb-0"
+            placeholder="Message Echo..."
+            className="w-full min-h-[80px] max-h-[150px] py-2 px-4 resize-none border-0 focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 mb-0 bg-transparent text-foreground placeholder:text-muted-foreground overflow-hidden"
             rows={1}
+            style={{ minHeight: "70px", maxHeight: "100px" }}
           />
         </div>
 
-        <div className="flex items-center pr-2 justify-between bg-background mt-[-4px] pb-2">
-          <div className="flex justify-between">
-          <div className="pl-2">
-            <Button variant="ghost" className="chat-button">
+        <div className="flex items-center justify-between bg-background px-3 py-2">
+          <div className="flex items-center space-x-2">
+            <Button variant="outline" size="icon" className="rounded-full h-9 w-9 p-0">
               <span className="sr-only">Attach File</span>
-              <Paperclip className="w-5 h-5" /> Attach
+              <Paperclip className="w-4 h-4" />
             </Button>
-          </div>
-          <DropdownMenu>
+            
+            <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="chat-button">
-                  <span className="sr-only">AD type</span>
-                  {selectedRatio === "Video AD" ? <Video className="w-5 h-5"/> : <Image className="w-5 h-5"/>} {selectedRatio}
+                <Button variant="outline" className="rounded-full h-9 px-4 space-x-1">
+                  {selectedRatio === "Video AD" ? (
+                    <Video className="w-4 h-4" />
+                  ) : (
+                    <Image className="w-4 h-4" />
+                  )}
+                  <span>{selectedRatio}</span>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="dropdown-menu dropdown-grid w-auto">
+              <DropdownMenuContent
+                align="start"
+                className="dropdown-menu dropdown-grid w-auto"
+              >
                 {Adtype.map((ratio) => (
                   <DropdownMenuCheckboxItem
                     key={ratio}
@@ -87,26 +103,38 @@ export function ChatInput() {
                 ))}
               </DropdownMenuContent>
             </DropdownMenu>
+
+            <Button
+              variant="outline"
+              onClick={() => setcloneselect(!cloneselect)}
+              className={`rounded-full h-9 px-4 ${
+                cloneselect
+                  ? buttonSelectedStyles
+                  : `${buttonHoverStyles} ${buttonTextStyles}`
+              }`}
+            >
+              clone
+            </Button>
           </div>
 
-          <div className="flex justify-between">
-            <div className="pr-2">
-              <Button className="Enhance" variant="ghost">
-                <Sparkles className="w-5 h-5"></Sparkles>
-              </Button>
-            </div>
+          <div className="flex items-center space-x-2">
+            <Button variant="outline" size="icon" className="rounded-full h-9 w-9 p-0">
+              <Sparkles className="w-4 h-4" />
+            </Button>
 
-            <div>
-              <Button
-                onClick={handleSend}
-                className="chat-button"
-                disabled={!message.trim()}
-                // variant="ghost"
-              >
-                <SendHorizonal className="h-5 w-5" />
-                <span className="sr-only">Send</span>
-              </Button>
-            </div>
+            <Button
+              onClick={handleSend}
+              disabled={!message.trim()}
+              size="icon"
+              className={`rounded-full h-9 w-9 p-0 transition-all duration-300 ${
+                !message.trim()
+                  ? "bg-gray-200/60 dark:bg-gray-700/60 text-gray-400 dark:text-gray-500"
+                  : "bg-gradient-to-r from-blue-500 to-blue-600 dark:from-blue-600 dark:to-blue-700 text-white hover:from-blue-600 hover:to-blue-700 dark:hover:from-blue-700 dark:hover:to-blue-800"
+              }`}
+            >
+              <SendHorizonal className="w-4 h-4" />
+              <span className="sr-only">Send</span>
+            </Button>
           </div>
         </div>
       </div>
