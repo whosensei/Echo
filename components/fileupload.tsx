@@ -1,15 +1,23 @@
-import React, { useCallback, useState, useEffect } from 'react';
+import React, { useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Button } from './ui/button';
 import { Paperclip } from 'lucide-react';
-import { any } from 'zod/v4';
+import axios from 'axios';
+import { uploadToS3 } from '@/lib/uploadtoS3';
 
 const FileUploader = () => {
 
-   const onDrop = useCallback((acceptedFiles:File[])=> {
-    // Do something with the files
-    console.log(acceptedFiles)
-  }, [])
+   const onDrop = useCallback(async (acceptedFiles: File[]) => {
+
+      console.log(acceptedFiles);
+      const file = acceptedFiles[0];
+      const data = await uploadToS3(file)
+      if (!data?.file_key || !data.file_name) {
+        console.log("Something went wrong with the upload")
+        return
+      }
+      console.log(data)
+  }, []);
 
     const { getRootProps, getInputProps } = useDropzone({
         onDrop,
