@@ -9,6 +9,7 @@ import {
   Image,
   Sparkles,
   Copy,
+  X,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -16,7 +17,8 @@ import {
   DropdownMenuTrigger,
   DropdownMenuCheckboxItem,
 } from "@/components/ui/dropdown-menu";
-import FileUploader from "./fileupload";
+import FileUploader, { UploadedFile } from "./fileupload";
+import axios from "axios"
 
 const Adtype = ["Static AD", "Video AD"];
 
@@ -25,16 +27,27 @@ export function ChatInput() {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [selectedRatio, setSelectedRatio] = useState("Static AD");
   const [isCloneSelected, setIsCloneSelected] = useState(false);
+  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
 
   const handleSend = () => {
     if (message.trim()) {
       console.log("Sending message:", message);
+      console.log("Uploaded files:", uploadedFiles);
       setMessage("");
+      // Clear uploaded files after sending
+      uploadedFiles.forEach(file => {
+        if (file.preview_url) {
+          URL.revokeObjectURL(file.preview_url);
+        }
+      });
+      setUploadedFiles([]);
     }
   };
 
-  const handleEnhance = () => {
+  const handleEnhance = async () => {
     console.log("Enhancing message:", message);
+    // const enhancedprompt = await axios.get("/api/enhanceprompt",{message})
   };
 
   const handleClone = () => {
@@ -59,6 +72,20 @@ export function ChatInput() {
     }
   };
 
+  const handleFilesUploaded = (newFiles: UploadedFile[]) => {
+    setUploadedFiles(prev => [...prev, ...newFiles]);
+  };
+
+  const removeFile = (fileKey: string) => {
+    setUploadedFiles(prev => {
+      const fileToRemove = prev.find(f => f.file_key === fileKey);
+      if (fileToRemove?.preview_url) {
+        URL.revokeObjectURL(fileToRemove.preview_url);
+      }
+      return prev.filter(f => f.file_key !== fileKey);
+    });
+  };
+
   return (
     <div className="w-full space-y-4">
       <div className="relative glass-enhanced rounded-2xl p-1 hover:shadow-xl transition-all duration-300">
@@ -66,6 +93,57 @@ export function ChatInput() {
         <div className="absolute -bottom-1 left-8 right-8 h-0.5 bg-gradient-to-r from-transparent via-blue-400/50 to-transparent rounded-full"></div>
         
         <div className="flex flex-col">
+          {/* File Previews - Above textarea */}
+          {uploadedFiles.length > 0 && (
+            <div className="px-5 pt-3 pb-2">
+              <div className="flex flex-wrap gap-2">
+                {uploadedFiles.map((file) => (
+                  <div
+                    key={file.file_key}
+                    className="relative group glass-enhanced rounded-lg p-1 border border-border/30"
+                  >
+                    {file.preview_url ? (
+                      // Image preview
+                      <div className="relative">
+                        <img
+                          src={file.preview_url}
+                          alt={file.file_name}
+                          className="w-16 h-16 object-cover rounded-md"
+                        />
+                        <button
+                          onClick={() => removeFile(file.file_key)}
+                          className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 shadow-lg"
+                          aria-label={`Remove ${file.file_name}`}
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ) : (
+                      // File name fallback
+                      <div className="w-16 h-16 bg-muted rounded-md flex items-center justify-center relative">
+                        <Paperclip className="w-4 h-4 text-muted-foreground" />
+                        <button
+                          onClick={() => removeFile(file.file_key)}
+                          className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 shadow-lg"
+                          aria-label={`Remove ${file.file_name}`}
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    )}
+                    
+                    {/* File name tooltip on hover */}
+                    <div className="absolute bottom-26 left-1/2 transform -translate-x-1/2 translate-y-full opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10">
+                      <div className="bg-black/80 text-white text-xs px-2 py-1 rounded mt-1 whitespace-nowrap max-w-32 truncate">
+                        {file.file_name}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           <textarea
             ref={textareaRef}
             value={message}
@@ -78,7 +156,11 @@ export function ChatInput() {
           
           <div className="flex items-center justify-between p-4 pt-2 border-t border-transparent">
             <div className="flex items-center gap-3">
-              <FileUploader />
+              <FileUploader 
+                onFilesUploaded={handleFilesUploaded}
+                isUploading={isUploading}
+                setIsUploading={setIsUploading}
+              />
               
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
