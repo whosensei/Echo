@@ -17,7 +17,8 @@ import {
   DropdownMenuTrigger,
   DropdownMenuCheckboxItem,
 } from "@/components/ui/dropdown-menu";
-import FileUploader, { UploadedFile } from "./fileupload";
+import FileUploader from "./fileupload";
+import { UploadedFile } from "@/lib/hooks/useFileUploader";
 import axios from "axios"
 
 const Adtype = ["Static AD", "Video AD"];
@@ -28,8 +29,7 @@ export function ChatInput() {
   const [selectedRatio, setSelectedRatio] = useState("Static AD");
   const [isCloneSelected, setIsCloneSelected] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
-  const [isUploading, setIsUploading] = useState(false);
-
+  
   const handleSend = () => {
     if (message.trim()) {
       console.log("Sending message:", message);
@@ -44,24 +44,24 @@ export function ChatInput() {
       setUploadedFiles([]);
     }
   };
-
+  
   const handleEnhance = async () => {
     console.log("Enhancing message:", message);
     // const enhancedprompt = await axios.get("/api/enhanceprompt",{message})
   };
-
+  
   const handleClone = () => {
     setIsCloneSelected(!isCloneSelected);
     console.log("Cloning message:", message, "Selected:", !isCloneSelected);
   };
-
+  
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSend();
     }
   };
-
+  
   const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setMessage(e.target.value);
     if (textareaRef.current) {
@@ -71,7 +71,7 @@ export function ChatInput() {
       textareaRef.current.style.height = `${newHeight}px`;
     }
   };
-
+  
   const handleFilesUploaded = (newFiles: UploadedFile[]) => {
     setUploadedFiles(prev => [...prev, ...newFiles]);
   };
@@ -158,8 +158,6 @@ export function ChatInput() {
             <div className="flex items-center gap-3">
               <FileUploader 
                 onFilesUploaded={handleFilesUploaded}
-                isUploading={isUploading}
-                setIsUploading={setIsUploading}
               />
               
               <DropdownMenu>
