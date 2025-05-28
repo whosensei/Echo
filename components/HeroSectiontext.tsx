@@ -6,7 +6,7 @@ export function HeroSection() {
   return (
     <div className="text-center space-y-8 hero-glow">
       <div className="space-y-4">
-        <h1 className="text-4xl md:text-7xl lg:text-8xl font-bold tracking-tight leading-tight">
+        <h1 className="text-[60px] md:text-[70px] lg:text-[80px] font-semibold tracking-[-0.02em] leading-tight">
           <span className="text-gradient-hero">Create</span>{" "}
           <span className="text-foreground">stunning</span>{" "}
           <span className="word-highlight">ads</span>
@@ -16,7 +16,7 @@ export function HeroSection() {
           <span className="text-foreground">with AI</span>
         </h1>
         
-        <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto leading-relaxed font-light">
+        <p className="text-[16px] md:text-[18px] lg:text-[20px] font-medium tracking-[0.00em] text-muted-foreground max-w-3xl mx-auto leading-[1.5]">
           Transform any concept into{" "}
           <span className="text-gradient font-medium">high-converting advertisements</span>{" "}
           that capture attention and drive results across all platforms.
