@@ -1,6 +1,6 @@
 "use client";
 import type * as React from "react";
-import { useState, useRef } from "react";
+import { useState, useRef ,useCallback,useEffect} from "react";
 import { Button } from "@/components/ui/button";
 import {
   SendHorizonal,
@@ -19,12 +19,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 import FileUploader from "./fileupload";
 import { UploadedFile } from "@/lib/hooks/useFileUploader";
-import axios from "axios"
+import useEnhanceUserPrompt from "@/lib/hooks/enhanceuserPrompt";
 
 const Adtype = ["Static AD", "Video AD"];
 
 export function ChatInput() {
   const [message, setMessage] = useState("");
+  const { enhancePrompt, isEnhancing, error } = useEnhanceUserPrompt();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [selectedRatio, setSelectedRatio] = useState("Static AD");
   const [isCloneSelected, setIsCloneSelected] = useState(false);
@@ -46,8 +47,18 @@ export function ChatInput() {
   };
   
   const handleEnhance = async () => {
-    console.log("Enhancing message:", message);
-    // const enhancedprompt = await axios.get("/api/enhanceprompt",{message})
+    if (!message.trim() || isEnhancing) return;
+    
+    const originalMessage = message;
+    setMessage("");
+    
+    try {
+      await enhancePrompt(originalMessage, (chunk) => {
+        setMessage(prev => prev + chunk);
+      });
+    } catch (error) {
+      setMessage(originalMessage); 
+    }
   };
   
   const handleClone = () => {
@@ -61,15 +72,23 @@ export function ChatInput() {
       handleSend();
     }
   };
+
+  const resizetextarea = useCallback(()=>{
+    if(textareaRef.current){
+      textareaRef.current.style.height="auto";
+      const maxHeight = 240;
+      const newHeight = Math.min(textareaRef.current.scrollHeight,maxHeight);
+      textareaRef.current.style.height=`${newHeight}px`
+    }
+  },[])
+
+  useEffect(()=>{
+    resizetextarea();
+  },[message,resizetextarea])
   
   const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setMessage(e.target.value);
-    if (textareaRef.current) {
-      textareaRef.current.style.height = "auto";
-      const maxHeight = 240; // 10 rows approximately
-      const newHeight = Math.min(textareaRef.current.scrollHeight, maxHeight);
-      textareaRef.current.style.height = `${newHeight}px`;
-    }
+
   };
   
   const handleFilesUploaded = (newFiles: UploadedFile[]) => {
@@ -93,7 +112,6 @@ export function ChatInput() {
         <div className="absolute -bottom-1 left-8 right-8 h-0.5 bg-gradient-to-r from-transparent via-blue-400/50 to-transparent rounded-full"></div>
         
         <div className="flex flex-col">
-          {/* File Previews - Above textarea */}
           {uploadedFiles.length > 0 && (
             <div className="px-5 pt-3 pb-2">
               <div className="flex flex-wrap gap-2">
@@ -103,7 +121,6 @@ export function ChatInput() {
                     className="relative group glass-enhanced rounded-lg p-1 border border-border/30"
                   >
                     {file.preview_url ? (
-                      // Image preview
                       <div className="relative">
                         <img
                           src={file.preview_url}
@@ -119,7 +136,6 @@ export function ChatInput() {
                         </button>
                       </div>
                     ) : (
-                      // File name fallback
                       <div className="w-16 h-16 bg-muted rounded-md flex items-center justify-center relative">
                         <Paperclip className="w-4 h-4 text-muted-foreground" />
                         <button
@@ -132,7 +148,6 @@ export function ChatInput() {
                       </div>
                     )}
                     
-                    {/* File name tooltip on hover */}
                     <div className="absolute bottom-26 left-1/2 transform -translate-x-1/2 translate-y-full opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10">
                       <div className="bg-black/80 text-white text-xs px-2 py-1 rounded mt-1 whitespace-nowrap max-w-32 truncate">
                         {file.file_name}
@@ -212,11 +227,12 @@ export function ChatInput() {
             <div className="flex items-center gap-2">            
               <Button
                 onClick={handleEnhance}
+                disabled={!message.trim() || isEnhancing}
                 variant="outline"
                 size="icon"
                 className="text-sm font-normal bg-background/50 border-border/50 hover:bg-primary hover:text-white hover:border-primary transition-all duration-200"
               >
-                <Sparkles className="w-3 h-3" />
+                <Sparkles className={`w-3 h-3 ${isEnhancing ? 'animate-spin' : ''}`} />
               </Button>
               
               <Button
