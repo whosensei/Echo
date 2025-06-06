@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import Replicate from "replicate";
 import { z } from "zod";
-import path from "path";
-import fs from "fs";
-import { writeFile } from "fs/promises";
 
 const replicate = new Replicate();
 
@@ -25,20 +22,11 @@ const inputSchema = z.object({
 });
 
 type Aspectratio =
-  // | "1:3"
-  // | "3:1"
-  // | "1:2"
-  // | "2:1"
   | "9:16"
   | "16:9"
-  // | "10:16"
-  // | "16:10"
-  // | "2:3"
-  // | "3:2"
   | "3:4"
   | "4:3"
-  // | "4:5"
-  // | "5:4"
+
   | "1:1";
 type MagicPrompt = "Auto" | "On" | "Off";
 type Styletype = "None" | "Auto" | "General" | "Realistic" | "Design";
