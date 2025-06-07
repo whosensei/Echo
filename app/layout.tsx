@@ -3,6 +3,12 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { StagewiseToolbar } from "@stagewise/toolbar-next";
+import {
+  SidebarInset,
+  SidebarProvider,
+  SidebarTrigger,
+} from "@/components/ui/sidebar";
+import { AppSidebar } from "@/components/app-sidebar";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -17,7 +23,7 @@ export const metadata: Metadata = {
 
 // Stagewise configuration
 const stagewiseConfig = {
-  plugins: []
+  plugins: [],
 };
 
 export default function RootLayout({
@@ -34,10 +40,17 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          {children}
+          <SidebarProvider defaultOpen={false}>
+              <AppSidebar />
+              <main className="flex-1">
+                <SidebarTrigger />
+
+                {children}
+              </main>
+          </SidebarProvider>
         </ThemeProvider>
         {/* Stagewise toolbar - only in development */}
-        {process.env.NODE_ENV === 'development' && (
+        {process.env.NODE_ENV === "development" && (
           <StagewiseToolbar config={stagewiseConfig} />
         )}
       </body>
