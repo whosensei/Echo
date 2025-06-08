@@ -1,25 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import Replicate from "replicate";
-import { z } from "zod";
+import { inputSchema } from "@/lib/schema/types";
 
 const replicate = new Replicate();
-
-const inputSchema = z.object({
-  prompt: z.string(),
-  aspect_ratio: z
-    .enum([
-      "9:16",
-      "16:9",
-      "3:4",
-      "4:3",
-      "1:1",
-    ])
-    .optional(),
-  magic_prompt_option: z.enum(["Auto", "On", "Off"]).optional(),
-  style_type: z
-    .enum(["None", "Auto", "General", "Realistic", "Design"])
-    .optional(),
-});
 
 type Aspectratio =
   | "9:16"
