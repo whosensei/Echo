@@ -33,7 +33,7 @@ export function QuickActions() {
     },
     {
         Type: "Social Media Post",
-        Description: "Generate captivating Posts with a single click",
+        Description: "Generate captivating Posts for social media with a single click",
         icon: PlusIcon,
         url:""
 
@@ -43,17 +43,18 @@ export function QuickActions() {
   ];
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4 gap-x-5">
+    <div className="grid grid-cols-1 min-w-0 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4">
       {QuickActions.map((quickaction) => (
-        <div className="flex items-center bg-white rounded-xl hover:shadow-md border border-gray-200 hover:border-gray-300 w-100 p-5 hover:cursor-pointer"
-        onClick={()=>router.push(quickaction.url)}>
-          <div className="flex" key={quickaction.Type}>
-            <div className="pr-4 pt-4 items-center justify-center">
-              <quickaction.icon className="flex w-8 h-8 text-white bg-blue-600 rounded-full" />
+        <div className="flex items-center bg-white rounded-xl hover:shadow-md border border-gray-200 hover:border-gray-300 p-4 hover:cursor-pointer transition-all duration-200 min-w-0"
+        onClick={()=>router.push(quickaction.url)}
+        key={quickaction.Type}>
+          <div className="flex w-full min-w-0 overflow-hidden">
+            <div className="flex pr-3 items-center justify-center flex-shrink-0">
+              <quickaction.icon className="w-8 h-8 text-white bg-blue-600 rounded-full p-1" />
             </div>
-            <div className="flex flex-col">
-              <div className="font-semibold">{quickaction.Type}</div>
-              <div className="text-gray-400 pr-2">{quickaction.Description}</div>
+            <div className="flex flex-col min-w-0 flex-1">
+              <div className="font-semibold text-sm lg:text-base truncate font-inter">{quickaction.Type}</div>
+              <div className="text-gray-400 text-xs lg:text-sm leading-tight line-clamp-2  font-inter pr-2">{quickaction.Description}</div>
             </div>
           </div>
         </div>
