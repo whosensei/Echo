@@ -5,11 +5,9 @@ import { Button } from "@/components/ui/button";
 import {
   SendHorizonal,
   Paperclip,
-  Video,
-  Image,
   Sparkles,
-  Copy,
   X,
+  ChevronDown,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -20,21 +18,60 @@ import {
 import FileUploader from "./fileupload";
 import { UploadedFile } from "@/lib/hooks/useFileUploader";
 import useEnhanceUserPrompt from "@/lib/hooks/enhanceuserPrompt";
-
-const Adtype = ["Static AD", "Video AD"];
+import  useSettings  from "@/lib/hooks/use-settings";
 
 export function ChatInput() {
+  const {
+    modeltype,
+    setSelectedModel,
+    selectedModel,
+    ideogramaspectRatio,
+    ideogramstyleType,
+    ideogrammagicPrompt,
+    ideogrammodelType,
+    imagenaspectRatio,
+    imagenmodelType,
+    imagenoutputFormat
+  } = useSettings();
   const [message, setMessage] = useState("");
   const { enhancePrompt, isEnhancing, error } = useEnhanceUserPrompt();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const [selectedRatio, setSelectedRatio] = useState("Static AD");
   const [isCloneSelected, setIsCloneSelected] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   
-  const handleSend = () => {
+  const handleSend = async () => {
+
     if (message.trim()) {
       console.log("Sending message:", message);
       console.log("Uploaded files:", uploadedFiles);
+
+      const settings = selectedModel === "Ideogram" ? {
+        model_type : ideogrammodelType,
+        aspect_ratio : ideogramaspectRatio,
+        style_type : ideogramstyleType,
+        magic_prompt : ideogrammagicPrompt 
+      }:{
+        model_type : imagenmodelType,
+        aspect_ratio : imagenaspectRatio,
+        output_format : imagenoutputFormat
+      }
+
+      const response = await fetch("api/generate",{
+        method: "POST",
+        headers:{
+          "Content-Type":"application/json",
+        },
+        body:JSON.stringify({
+          prompt:message,
+          settings:settings,
+          model:selectedModel
+        })
+      })
+
+      if(!response.ok){
+        throw new Error("Failed to send the message")
+      }
+
       setMessage("");
       // Clear uploaded files after sending
       uploadedFiles.forEach(file => {
@@ -106,10 +143,10 @@ export function ChatInput() {
   };
 
   return (
-    <div className="w-full space-y-4">
-      <div className="relative glass-enhanced rounded-2xl p-1 hover:shadow-xl transition-all duration-300">
-        <div className="absolute -bottom-2 left-4 right-4 h-1 bg-gradient-to-r from-transparent via-blue-500/30 to-transparent rounded-full blur-sm"></div>
-        <div className="absolute -bottom-1 left-8 right-8 h-0.5 bg-gradient-to-r from-transparent via-blue-400/50 to-transparent rounded-full"></div>
+    <div className="w-full items-center justify-center space-y-4">
+      <div className="glass-enhanced rounded-2xl p-1 hover:shadow-xl transition-all duration-300">
+        {/* <div className="absolute -bottom-2 left-4 right-4 h-1 bg-gradient-to-r from-transparent via-blue-500/30 to-transparent rounded-full blur-sm"></div> */}
+        {/* <div className="absolute -bottom-1 left-8 right-8 h-0.5 bg-gradient-to-r from-transparent via-blue-400/50 to-transparent rounded-full"></div> */}
         
         <div className="flex flex-col">
           {uploadedFiles.length > 0 && (
@@ -178,38 +215,29 @@ export function ChatInput() {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button 
-                    variant="outline" 
+                    variant="ghost" 
                     size="sm"
-                    className="text-sm font-normal bg-background/50 border-border/50 hover:bg-primary hover:text-white hover:border-primary transition-all duration-200"
+                    className="text-sm font-semibold text-gray-500 bg-background/50 border-border/50 hover:bg-primary hover:text-white hover:border-primary transition-all duration-200"
                   >
-                    {selectedRatio === "Video AD" ? (
-                      <Video className="w-3 h-3 mr-1.5" />
-                    ) : (
-                      <Image className="w-3 h-3 mr-1.5" />
-                    )}
-                    {selectedRatio}
+                    {selectedModel}
+                    <ChevronDown className="h-4 w-4 ml-2 " />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="start" className="w-36 glass-enhanced">
-                  {Adtype.map((ratio) => (
+                  {modeltype.map((model) => (
                     <DropdownMenuCheckboxItem
-                      key={ratio}
-                      checked={selectedRatio === ratio}
-                      onCheckedChange={() => setSelectedRatio(ratio)}
+                      key={model}
+                      checked={selectedModel === model}
+                      onCheckedChange={() => setSelectedModel(model)}
                       className="text-sm"
                     >
-                      {ratio === "Video AD" ? (
-                        <Video className="w-3 h-3 mr-2" />
-                      ) : (
-                        <Image className="w-3 h-3 mr-2" />
-                      )}
-                      {ratio}
+                      {model}
                     </DropdownMenuCheckboxItem>
                   ))}
                 </DropdownMenuContent>
               </DropdownMenu>
 
-              <Button
+              {/* <Button
                 onClick={handleClone}
                 variant="outline"
                 size="sm"
@@ -221,7 +249,7 @@ export function ChatInput() {
               >
                 <Copy className="w-3 h-3 mr-1.5 relative z-10" />
                 <span className="relative z-10">Clone</span>
-              </Button>
+              </Button> */}
             </div>
 
             <div className="flex items-center gap-2">            
