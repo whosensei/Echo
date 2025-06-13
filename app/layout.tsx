@@ -9,6 +9,9 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
+import { ProfileDropdown } from "@/components/ProfileDropdown";
+import { Separator } from "@radix-ui/react-separator";
+import { SiteHeader } from "@/components/site-header";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -41,12 +44,13 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <SidebarProvider defaultOpen={false}>
-              <AppSidebar />
-              <main className="flex-1">
-                <SidebarTrigger className="p-4 m-4"/>
-
+            <AppSidebar />
+            <main className="flex-1">
+              <SiteHeader />
+              <div className="p-6">
                 {children}
-              </main>
+              </div>
+            </main>
           </SidebarProvider>
         </ThemeProvider>
         {/* Stagewise toolbar - only in development */}

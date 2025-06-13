@@ -23,7 +23,7 @@ export function ProfileDropdown() {
   };
 
   return (
-    <div className="fixed top-6 right-6 z-50">
+    <div>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button 
