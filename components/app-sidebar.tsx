@@ -19,6 +19,7 @@ import {
   IconSettings,
   IconUserCircle,
   IconUsers,
+  type Icon,
 } from "@tabler/icons-react"
 
 // import { NavDocuments } from "@/components/nav-documents"
@@ -34,7 +35,11 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
-import { FolderOpen, Image, Images, Library, Receipt, ReceiptText, Sparkles } from "lucide-react"
+import { FolderOpen, Image, Images, Library, Receipt, ReceiptText, Sparkles, type LucideIcon } from "lucide-react"
+import { NavGen } from "./nav-gen"
+
+// Union type to handle both Tabler and Lucide icons
+type IconComponent = Icon | LucideIcon
 
 const data = {
   user: {
@@ -48,25 +53,44 @@ const data = {
       url: "#",
       icon: IconDashboard,
     },
-    {
-      title: "Generate",
-      url: "#",
-      icon: Sparkles,
-    },
+   
     // {
     //   title: "Creations",
     //   url: "#",
     //   icon: Images,
     // },
-    {
-      title: "Projects",
-      url: "#",
-      icon: FolderOpen,
-    },
+
     {
       title: "Library",
       url: "#",
       icon: Library,
+    },
+  ],
+  navGenerate: [
+    {
+      title: "Headshots",
+      url: "#",
+      icon: IconUserCircle,
+    },
+    {
+      title: "Portraits",
+      url: "#",
+      icon: Image,
+    },
+    {
+      title: "Hairstyles",
+      url: "#",
+      icon: IconInnerShadowTop,
+    },
+    {
+      title: "Images",
+      url: "#",
+      icon: Images,
+    },
+    {
+      title: "ADs",
+      url: "#",
+      icon: IconFileDescription,
     },
   ],
   navClouds: [
@@ -173,7 +197,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />
-        {/* <NavDocuments items={data.documents} /> */}
+        <NavGen items={data.navGenerate} />
+        {/* <NavDocument items={data.documents} />  */}
         <NavSecondary items={data.navSecondary} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>

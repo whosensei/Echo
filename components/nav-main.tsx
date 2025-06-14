@@ -1,6 +1,7 @@
 "use client"
 
 import { IconCirclePlusFilled, IconMail, type Icon } from "@tabler/icons-react"
+import { type LucideIcon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -11,13 +12,16 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
 
+// Union type to handle both Tabler and Lucide icons
+type IconComponent = Icon | LucideIcon
+
 export function NavMain({
   items,
 }: {
   items: {
     title: string
     url: string
-    icon?: Icon
+    icon?: IconComponent
   }[]
 }) {
   return (

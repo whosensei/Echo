@@ -53,10 +53,6 @@ export default function RootLayout({
             </main>
           </SidebarProvider>
         </ThemeProvider>
-        {/* Stagewise toolbar - only in development */}
-        {process.env.NODE_ENV === "development" && (
-          <StagewiseToolbar config={stagewiseConfig} />
-        )}
       </body>
     </html>
   );
