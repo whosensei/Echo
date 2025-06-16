@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 
 export default function Home() {
-  const Router = useRouter();
+  const router = useRouter();
   
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -23,7 +23,7 @@ export default function Home() {
         <div className="pt-2">
           <Button
             size="lg"
-            onClick={() => Router.push("/Images")}
+            onClick={() => router.push("/Images")}
             className="group relative px-8 py-4 font-semibold"
           >
             <span className="relative z-10 flex items-center space-x-2">
