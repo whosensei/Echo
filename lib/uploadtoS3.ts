@@ -1,30 +1,36 @@
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import axios from "axios";
 
-const s3Client = new S3Client({
-  region: process.env.NEXT_PUBLIC_AWS_REGION!,
-  credentials: {
-    accessKeyId: process.env.NEXT_PUBLIC_AWS_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.NEXT_PUBLIC_AWS_SECRET_ACCESS_KEY!,
-  },
-});
-
-export async function uploadToS3(
+export async function uploadToS3Presigned(
   file: File
 ): Promise<{ file_key: string; file_name: string }> {
   try {
-    const file_key = "uploads/" + Date.now().toString() + "-" + file.name.replace(/\s+/g, "-");
-    
-    const fileArrayBuffer = await file.arrayBuffer();
-    
-    const params = {
-      Bucket: process.env.NEXT_PUBLIC_S3_BUCKET_NAME!,
-      Key: file_key,
-      Body: Buffer.from(fileArrayBuffer),
-      ContentType: file.type,
-    };
 
-    const command = new PutObjectCommand(params);
-    await s3Client.send(command);
+    const data = {
+      filename: file.name,
+      file_type: file.type
+    }
+
+    const presignedresponse = await axios.post("/api/presign", data, {
+      headers: {
+        "Content-Type": "application/json"
+      }
+    })
+
+    if(!presignedresponse.data){
+      throw new Error("Failed to get presigned URL");
+    }
+
+    const {url,file_key,file_name} = presignedresponse.data
+
+    const uploadResponse = await axios.put(url, file, {
+      headers: {
+        'Content-Type': file.type,
+      }
+    });
+
+    if(uploadResponse.status !== 200){
+      throw new Error("Failed to upload to S3")
+    }
     
     return {
       file_key,
