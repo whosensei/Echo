@@ -9,7 +9,6 @@ type Aspectratio =
   | "16:9"
   | "3:4"
   | "4:3"
-
   | "1:1";
 type MagicPrompt = "Auto" | "On" | "Off";
 type Styletype = "None" | "Auto" | "General" | "Realistic" | "Design";
