@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
-import "./globals.css";
+import '@/app/globals.css'
 import { ThemeProvider } from "@/components/theme-provider";
 import { StagewiseToolbar } from "@stagewise/toolbar-next";
 import {
@@ -43,11 +43,15 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
+          <SidebarProvider defaultOpen={false}>
+            <AppSidebar />
             <main className="flex-1">
+                <SidebarTrigger />
               <div className="p-6">
                 {children}
               </div>
             </main>
+          </SidebarProvider>
         </ThemeProvider>
       </body>
     </html>
