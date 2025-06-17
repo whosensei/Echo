@@ -1,39 +1,45 @@
 import { useState } from "react";
+import axios from "axios";
 
-const useMediaGeneration = () => {
+export const useMediaGeneration = () => {
   const [mediaUrl, setMediaUrl] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  const callApi = async (endpoint: string, prompt: string) => {
+  const callApi = async (endpoint: string, data: string) => {
     setLoading(true);
-    const res = await fetch(endpoint, {
-      method: "POST",
-      body: JSON.stringify({ prompt }),
-      headers: { "Content-Type": "application/json" },
+    const res = await axios.post(endpoint, data, {
+      headers: {
+        "Content-Type": "application/json" 
+      }
     });
-    const { imageUri } = await res.json();
+    // const res = await fetch(endpoint, {
+    //   method: "POST",
+    //   body: JSON.stringify({ data }),
+    // });
+    const imageUri = res.data.uri;
     setMediaUrl(imageUri);
     setLoading(false);
   };
 
-  const generateheadshots = (prompt: string) =>
-    callApi("/api/flux-headshot", prompt);
+  const generateheadshots = (data: string) =>
+    callApi("/api/flux-headshot", data);
 
-  const generateportraits = (prompt: string) =>
-    callApi("api/flux-portraits", prompt);
+  const generateportraits = (data: string) =>
+    callApi("api/flux-portraits", data);
 
-  const generatehairstyles = (prompt: string) =>
-    callApi("/api/flux-hairstyle", prompt);
+  const generatehairstyles = (data: string) =>
+    callApi("/api/flux-hairstyle", data);
 
-  const generateimages = (prompt: string) =>
-     callApi("api/imagen-4", prompt);
+  const generateimages = (data: string) =>
+     callApi("api/imagen-4", data);
 
-  const editimages = (prompt: string) =>
-    callApi("api/flux-kontext(edit)", prompt);
+  const editimages = (data: string) =>
+    callApi("api/flux-kontext(edit)", data);
 
   return {
     mediaUrl,
     loading,
+    setLoading,
     generateheadshots,
     generateportraits,
     generatehairstyles,
