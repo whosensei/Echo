@@ -29,7 +29,7 @@ export function ProfileDropdown() {
           <Button 
             variant="outline" 
             size="icon"
-            className="h-10 w-10 glass-enhanced border-border/30 hover:shadow-lg transition-all duration-300 hover:scale-105"
+            className="h-10 w-10 glass-enhanced border-border/30 hover:shadow-lg transition-all duration-300 hover:scale-105 focus-visible:ring-0 focus-visible:ring-offset-0"
           >
             <User className="h-4 w-4" />
           </Button>

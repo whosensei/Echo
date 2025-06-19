@@ -9,10 +9,33 @@ import {
 } from "./ui/dropdown-menu";
 import { useState } from "react";
 import { DropdownMenuLabel } from "@radix-ui/react-dropdown-menu";
+import { useMediaGeneration } from "@/lib/hooks/use-mediageneration";
 
 export function TwolayoutDesign() {
-  const options1 = ["10", "20", "30"];
-  const [selected1, setSelected1] = useState(options1[0]);
+  
+  const background = ["white","black","neutral","gray","office"];
+  const aspect_ratio = ["1:1","16:9","9:16","4:3","3:4","3:2","2:3","4:5","5:4","21:9","9:21","2:1","1:2"]
+  const gender = ["male","female","none"]
+  const output_format = ["jpg","png"]
+  const [uploadedimguri, setUploadeduri] = useState("")
+  const [bg, setBg] = useState(background[0]);
+  const [gen, setGen] = useState(gender[0]);
+  const [aspect, setAspect] = useState(aspect_ratio[0])
+  const [outputformat, setOutputformat] = useState(output_format[0])
+
+  const {loading, setLoading, generateheadshots} = useMediaGeneration();
+
+  const handleGenerate = ()=>{
+    const data = JSON.stringify({
+      uploadedimguri,
+      gen,
+      bg,
+      aspect,
+      outputformat
+    })
+    console.log(data)
+    // generateheadshots(data);
+  }
 
   return (
     <div className="flex h-screen p-2 rounded-xl border border-gray-300 overflow-hidden">
@@ -21,22 +44,22 @@ export function TwolayoutDesign() {
         <div className="grid grid-cols-2 gap-1 mb-6 justify-center pt-5">
           <div className="flex flex-col space-y-2 mb-3">
             <DropdownMenu>
-              <DropdownMenuLabel className="pl-4 text-gray-500">Button1</DropdownMenuLabel>
+              <DropdownMenuLabel className="pl-4 text-gray-500">Gender</DropdownMenuLabel>
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="outline"
-                  className="w-3/6 justify-between p-5 shadow"
+                  className="w-2/3 justify-between p-5 shadow focus-visible:ring-0 focus-visible:ring-offset-0"
                   size="lg"
                 >
-                  {selected1}
+                  {gen}
                   <ChevronDown className="h-4 w-4 ml-2" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-[200px]">
-                {options1.map((option) => (
+                {gender.map((option) => (
                   <DropdownMenuItem
                     key={option}
-                    onClick={() => setSelected1(option)}
+                    onClick={() => setGen(option)}
                   >
                     {option}
                   </DropdownMenuItem>
@@ -47,22 +70,22 @@ export function TwolayoutDesign() {
 
           <div className="flex flex-col space-y-2 mb-3 ">
             <DropdownMenu>
-              <DropdownMenuLabel className="pl-4">Button1</DropdownMenuLabel>
+              <DropdownMenuLabel className="pl-4  text-gray-500">Background</DropdownMenuLabel>
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="outline"
-                  className="w-3/6 justify-between p-5 shadow"
+                  className="w-2/3 justify-between p-5 shadow focus-visible:ring-0 focus-visible:ring-offset-0"
                   size="lg"
                 >
-                  {selected1}
+                  {bg}
                   <ChevronDown className="h-4 w-4 ml-2 " />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-[200px]">
-                {options1.map((option) => (
+                {background.map((option) => (
                   <DropdownMenuItem
                     key={option}
-                    onClick={() => setSelected1(option)}
+                    onClick={() => setBg(option)}
                   >
                     {option}
                   </DropdownMenuItem>
@@ -73,22 +96,22 @@ export function TwolayoutDesign() {
 
           <div className="flex flex-col space-y-2 mb-3">
             <DropdownMenu>
-              <DropdownMenuLabel className="pl-4">Button1</DropdownMenuLabel>
+              <DropdownMenuLabel className="pl-4  text-gray-500">Aspect Ratio</DropdownMenuLabel>
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="outline"
-                  className="w-3/6 justify-between p-5 shadow"
+                  className="w-2/3 justify-between p-5 shadow focus-visible:ring-0 focus-visible:ring-offset-0"
                   size="lg"
                 >
-                  {selected1}
+                  {aspect}
                   <ChevronDown className="h-4 w-4 ml-2" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-[200px]">
-                {options1.map((option) => (
+                {aspect_ratio.map((option) => (
                   <DropdownMenuItem
                     key={option}
-                    onClick={() => setSelected1(option)}
+                    onClick={() => setAspect(option)}
                   >
                     {option}
                   </DropdownMenuItem>
@@ -99,22 +122,22 @@ export function TwolayoutDesign() {
 
           <div className="flex flex-col space-y-2 mb-3">
             <DropdownMenu>
-              <DropdownMenuLabel className="pl-4">Button1</DropdownMenuLabel>
+              <DropdownMenuLabel className="pl-4  text-gray-500">Output Format</DropdownMenuLabel>
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="outline"
-                  className="w-3/6 justify-between p-5 shadow"
+                  className="w-2/3 justify-between p-5 shadow focus-visible:ring-0 focus-visible:ring-offset-0"
                   size="lg"
                 >
-                  {selected1}
+                  {outputformat}
                   <ChevronDown className="h-4 w-4 ml-2" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-[200px]">
-                {options1.map((option) => (
+                {output_format.map((option) => (
                   <DropdownMenuItem
                     key={option}
-                    onClick={() => setSelected1(option)}
+                    onClick={() => setOutputformat(option)}
                   >
                     {option}
                   </DropdownMenuItem>
@@ -130,10 +153,10 @@ export function TwolayoutDesign() {
           <Sparkles className="w-4 h-4 mt-1 text-blue-700" / >
           <span className="text-blue-700 pl-2">Credit cost</span>
           </div>
-          <span className="text-blue-500">1 cost</span>
+          <span className="text-blue-500">Each image will cost 1 credit</span>
         </div>
         <div className="flex justify-center">
-          <Button className="w-3/4 p-5 text-md shadow" onClick={() => alert("hit")} variant="default">
+          <Button className="w-3/4 p-5 text-md shadow focus-visible:ring-0 focus-visible:ring-offset-0" onClick={handleGenerate} variant="default">
             <Sparkles className="w-6 h-6"/>
             Generate
           </Button>

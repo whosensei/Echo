@@ -94,7 +94,7 @@ export function ImageGallerySidebar({
           variant="ghost"
           size="icon"
           onClick={onOpen}
-          className="fixed top-4 right-4 z-50 h-10 w-10 bg-sidebar border border-sidebar-border shadow-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+          className="fixed top-4 right-4 z-50 h-10 w-10 bg-sidebar border border-sidebar-border shadow-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-0 focus-visible:ring-offset-0"
         >
           <IconMenu2 className="h-4 w-4" />
         </Button>
@@ -114,7 +114,7 @@ export function ImageGallerySidebar({
                   variant="ghost"
                   size="icon"
                   onClick={onClose}
-                  className="h-8 w-8 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                  className="h-8 w-8 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-0 focus-visible:ring-offset-0"
                 >
                   <IconMenu2 className="h-4 w-4" />
                 </Button>
@@ -137,7 +137,7 @@ export function ImageGallerySidebar({
                     size="sm"
                     onClick={() => setSelectedCategory(category.id)}
                     className={cn(
-                      "text-xs bg-sidebar border-sidebar-border text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                      "text-xs bg-sidebar border-sidebar-border text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-0 focus-visible:ring-offset-0",
                       selectedCategory === category.id && "bg-sidebar-accent text-sidebar-accent-foreground"
                     )}
                   >

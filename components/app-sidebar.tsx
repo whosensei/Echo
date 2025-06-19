@@ -35,7 +35,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
-import { FolderOpen, Image, Images, Library, Receipt, ReceiptText, Sparkles, type LucideIcon } from "lucide-react"
+import { FolderOpen, Image, Images, Library, Receipt, ReceiptText, Sparkles, User, type LucideIcon } from "lucide-react"
 import { NavGen } from "./nav-gen"
 
 // Union type to handle both Tabler and Lucide icons
@@ -80,7 +80,7 @@ const data = {
     {
       title: "Hairstyles",
       url: "#",
-      icon: IconInnerShadowTop,
+      icon: User,
     },
     {
       title: "Images",
@@ -179,7 +179,7 @@ const data = {
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
-    <Sidebar collapsible="icon" {...props}>
+    <Sidebar {...props}>
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>

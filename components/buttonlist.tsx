@@ -44,7 +44,7 @@ export default function Buttonlist() {
         <>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="lg">
+              <Button variant="ghost" size="lg" className="focus-visible:ring-0 focus-visible:ring-offset-0">
                 {ideogrammodelType}
                 <ChevronDown className="h-4 w-4 ml-2 " />
               </Button>
@@ -67,7 +67,7 @@ export default function Buttonlist() {
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="lg">
+              <Button variant="ghost" size="lg" className="focus-visible:ring-0 focus-visible:ring-offset-0">
                 {ideogramaspectRatio}
                 <ChevronDown className="h-4 w-4 ml-2 " />
               </Button>
@@ -93,7 +93,7 @@ export default function Buttonlist() {
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="lg">
+              <Button variant="ghost" size="lg" className="focus-visible:ring-0 focus-visible:ring-offset-0">
                 {ideogramstyleType}
                 <ChevronDown className="h-4 w-4 ml-2 " />
               </Button>
@@ -116,7 +116,7 @@ export default function Buttonlist() {
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="lg">
+              <Button variant="ghost" size="lg" className="focus-visible:ring-0 focus-visible:ring-offset-0">
                 {ideogrammagicPrompt}
                 <ChevronDown className="h-4 w-4 ml-2 " />
               </Button>
@@ -141,7 +141,7 @@ export default function Buttonlist() {
         <>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="lg">
+              <Button variant="ghost" size="lg" className="focus-visible:ring-0 focus-visible:ring-offset-0">
                 {imagenmodelType}
                 <ChevronDown className="h-4 w-4 ml-2 " />
               </Button>
@@ -164,7 +164,7 @@ export default function Buttonlist() {
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="lg">
+              <Button variant="ghost" size="lg" className="focus-visible:ring-0 focus-visible:ring-offset-0">
                 {imagenaspectRatio}
                 <ChevronDown className="h-4 w-4 ml-2 " />
               </Button>
@@ -187,7 +187,7 @@ export default function Buttonlist() {
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="lg">
+              <Button variant="ghost" size="lg" className="focus-visible:ring-0 focus-visible:ring-offset-0">
                 {imagenoutputFormat}
                 <ChevronDown className="h-4 w-4 ml-2 " />
               </Button>
