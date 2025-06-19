@@ -45,6 +45,7 @@ export default function RootLayout({
         >
             <main className="flex-1">
               <div className="p-6">
+                {/* <ProfileDropdown /> */}
                 {children}
               </div>
             </main>

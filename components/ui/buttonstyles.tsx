@@ -1,4 +1,0 @@
-export const buttonBaseStyles = "backdrop-blur-md bg-white/40 dark:bg-gray-800/40 border border-gray-200/60 dark:border-gray-700/60 rounded-lg shadow-sm transition-all duration-300 ease-in-out";
-export const buttonHoverStyles = "hover:bg-gradient-to-r hover:from-blue-400/20 hover:to-blue-500/20 hover:border-blue-300/50 dark:hover:border-blue-500/50 hover:scale-[1.02]";
-export const buttonSelectedStyles = "bg-gradient-to-r from-blue-500/30 to-blue-600/30 border-blue-400/60 dark:border-blue-500/60 text-blue-900 dark:text-blue-100 shadow-md";
-export const buttonTextStyles = "text-gray-800 dark:text-gray-200 font-medium bg-clip-text bg-gradient-to-r from-blue-600 to-blue-500 dark:from-blue-400 dark:to-blue-300";

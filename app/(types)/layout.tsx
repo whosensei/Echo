@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import '@/app/globals.css'
 import { ThemeProvider } from "@/components/theme-provider";
-import { StagewiseToolbar } from "@stagewise/toolbar-next";
 import {
   SidebarInset,
   SidebarProvider,
@@ -10,8 +9,6 @@ import {
 } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { ProfileDropdown } from "@/components/ProfileDropdown";
-import { Separator } from "@radix-ui/react-separator";
-import { SiteHeader } from "@/components/site-header";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -22,11 +19,6 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "Echo",
   description: "AI-Powered Ad Creation Platform",
-};
-
-// Stagewise configuration
-const stagewiseConfig = {
-  plugins: [],
 };
 
 export default function RootLayout({
@@ -43,10 +35,10 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <SidebarProvider defaultOpen={false}>
+          <SidebarProvider defaultOpen={false} className="fixed top-4 left-4">
             <AppSidebar />
             <main className="flex-1">
-                <SidebarTrigger />
+                <SidebarTrigger className="top-4 left-4 z-50 h-10 w-10 bg-sidebar border border-sidebar-border shadow-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground "/>
               <div className="p-6">
                 {children}
               </div>
