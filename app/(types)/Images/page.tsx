@@ -10,7 +10,7 @@ export default function ADcomponent() {
   const [isGalleryOpen, setIsGalleryOpen] = useState(false);
   
   return (
-    <div className="flex flex-col justify-center items-center h-160">
+    <div className="flex flex-col justify-center items-center h-180">
       <div className="pb-4 font-medium text-4xl tracking-tighter text-balance">
         What do you wish to create !
       </div>
