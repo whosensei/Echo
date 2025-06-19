@@ -3,22 +3,42 @@ import type * as React from "react";
 import { useState, useRef ,useCallback,useEffect} from "react";
 import { Button } from "@/components/ui/button";
 import {
-  SendHorizonal,
   Paperclip,
   Sparkles,
   X,
   ChevronDown,
+  ArrowUp,
 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuTrigger,
-  DropdownMenuCheckboxItem,
+  DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
 import FileUploader from "./fileupload";
+import { CircularSettingsButton } from "./circular-settings-button";
 import { UploadedFile } from "@/lib/hooks/useFileUploader";
 import useEnhanceUserPrompt from "@/lib/hooks/enhanceuserPrompt";
 import  useSettings  from "@/lib/hooks/use-settings";
+import { useTheme } from "next-themes";
+
+// Helper function to get model logos
+const getModelLogo = (modelName: string, theme: string | undefined) => {
+  const isDark = theme === 'dark';
+  
+  switch (modelName) {
+    case 'OpenAI-image-1':
+      return isDark ? '/OpenAI Logo(dark).png' : '/OpenAI Logo (light).png';
+    case 'Flux-kontext':
+      return isDark ? '/Flux Logo (dark).png' : '/Flux Logo (light).png';
+    case 'Ideogram':
+      return isDark ? '/Ideogram Logo (dark).png' : '/Ideogram Logo (light).png';
+    case 'Imagen-4':
+      return '/Google Logo.png';
+    default:
+      return null;
+  }
+};
 
 export function ChatInput() {
   const {
@@ -31,12 +51,12 @@ export function ChatInput() {
     ideogrammodelType,
     imagenaspectRatio,
     imagenmodelType,
-    imagenoutputFormat
+    imagenoutputFormat,
   } = useSettings();
+  const { theme } = useTheme();
   const [message, setMessage] = useState("");
   const { enhancePrompt, isEnhancing, error } = useEnhanceUserPrompt();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const [isCloneSelected, setIsCloneSelected] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   
   const handleSend = async () => {
@@ -56,21 +76,25 @@ export function ChatInput() {
         output_format : imagenoutputFormat
       }
 
-      const response = await fetch("api/generate",{
-        method: "POST",
-        headers:{
-          "Content-Type":"application/json",
-        },
-        body:JSON.stringify({
-          prompt:message,
-          settings:settings,
-          model:selectedModel
-        })
+      const datasend = JSON.stringify({
+        prompt:message,
+        settings:settings,
+        model:selectedModel
       })
 
-      if(!response.ok){
-        throw new Error("Failed to send the message")
-      }
+      console.log(datasend)
+
+      // const response = await fetch("api/generate",{
+      //   method: "POST",
+      //   headers:{
+      //     "Content-Type":"application/json",
+      //   },
+      //   body:datasend
+      // })
+
+      // if(!response.ok){
+      //   throw new Error("Failed to send the message")
+      // }
 
       setMessage("");
       // Clear uploaded files after sending
@@ -98,10 +122,6 @@ export function ChatInput() {
     }
   };
   
-  const handleClone = () => {
-    setIsCloneSelected(!isCloneSelected);
-    console.log("Cloning message:", message, "Selected:", !isCloneSelected);
-  };
   
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -144,7 +164,7 @@ export function ChatInput() {
 
   return (
     <div className="w-full items-center justify-center space-y-4">
-      <div className="glass-enhanced rounded-2xl p-1 hover:shadow-xl transition-all duration-300">
+      <div className="glass-enhanced rounded-2xl p-1 shadow-sm transition-all duration-300">
         {/* <div className="absolute -bottom-2 left-4 right-4 h-1 bg-gradient-to-r from-transparent via-blue-500/30 to-transparent rounded-full blur-sm"></div> */}
         {/* <div className="absolute -bottom-1 left-8 right-8 h-0.5 bg-gradient-to-r from-transparent via-blue-400/50 to-transparent rounded-full"></div> */}
         
@@ -202,7 +222,7 @@ export function ChatInput() {
             onChange={handleInput}
             onKeyDown={handleKeyDown}
             placeholder="Describe the ad you want to create..."
-            className="w-full min-h-[30px] max-h-[240px] resize-none border-0 bg-transparent px-5 py-3 text-foreground placeholder:text-muted-foreground focus-visible:outline-none text-base leading-relaxed overflow-y-auto custom-scrollbar"
+            className="w-full min-h-[10px] max-h-[240px] resize-none border-0 bg-transparent px-5 py-3 text-foreground placeholder:text-muted-foreground focus-visible:outline-none text-base leading-relaxed overflow-y-auto custom-scrollbar"
             rows={2}
           />
           
@@ -215,41 +235,45 @@ export function ChatInput() {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button 
-                    variant="ghost" 
+                    variant="outline" 
                     size="sm"
-                    className="text-sm font-semibold text-gray-500 bg-background/50 border-border/50 hover:bg-primary hover:text-white hover:border-primary transition-all duration-200"
+                    className="border border-gray-200 dark:border-accent rounded-3xl h-9 flex items-center gap-2 focus-visible:ring-0 focus-visible:ring-offset-0"
                   >
+                    {getModelLogo(selectedModel, theme) && (
+                      <img 
+                        src={getModelLogo(selectedModel, theme)!} 
+                        alt={`${selectedModel} logo`}
+                        className="w-5 h-5 object-contain"
+                      />
+                    )}
                     {selectedModel}
-                    <ChevronDown className="h-4 w-4 ml-2 " />
+                    <ChevronDown className="h-4 w-4 text-accent-foreground" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className="w-36 glass-enhanced">
+                <DropdownMenuContent align="start" className="w-48 glass-enhanced">
                   {modeltype.map((model) => (
-                    <DropdownMenuCheckboxItem
+                    <DropdownMenuItem
                       key={model}
-                      checked={selectedModel === model}
-                      onCheckedChange={() => setSelectedModel(model)}
-                      className="text-sm"
+                      onClick={() => setSelectedModel(model)}
+                      className={`text-sm flex items-center gap-2 pb-2${
+                        selectedModel === model ? 'bg-muted text-accent-foreground' : ''
+                      }`}
                     >
-                      {model}
-                    </DropdownMenuCheckboxItem>
+                      {getModelLogo(model, theme) && (
+                        <img 
+                          src={getModelLogo(model, theme)!} 
+                          alt={`${model} logo`}
+                          className="w-5 h-5 object-contain flex-shrink-0"
+                        />
+                      )}
+                      <span className="flex-grow">{model}</span>
+                    </DropdownMenuItem>
                   ))}
                 </DropdownMenuContent>
               </DropdownMenu>
 
-              {/* <Button
-                onClick={handleClone}
-                variant="outline"
-                size="sm"
-                className={`text-sm font-normal relative overflow-hidden transition-all duration-300 ${
-                  isCloneSelected
-                    ? "btn-gradient text-white hover:text-white hover:shadow-lg hover:shadow-blue-500/25 hover:scale-105"
-                    : "bg-background/50 border-border/50 hover:bg-primary hover:text-white hover:border-primary"
-                }`}
-              >
-                <Copy className="w-3 h-3 mr-1.5 relative z-10" />
-                <span className="relative z-10">Clone</span>
-              </Button> */}
+              <CircularSettingsButton />
+
             </div>
 
             <div className="flex items-center gap-2">            
@@ -258,7 +282,7 @@ export function ChatInput() {
                 disabled={!message.trim() || isEnhancing}
                 variant="outline"
                 size="icon"
-                className="text-sm font-normal bg-background/50 border-border/50 hover:bg-primary hover:text-white hover:border-primary transition-all duration-200"
+                className="focus-visible:ring-0 focus-visible:ring-offset-0"
               >
                 <Sparkles className={`w-3 h-3 ${isEnhancing ? 'animate-spin' : ''}`} />
               </Button>
@@ -267,14 +291,9 @@ export function ChatInput() {
                 onClick={handleSend}
                 disabled={!message.trim()}
                 size="sm"
-                className={`relative overflow-hidden transition-all duration-300 ${
-                  !message.trim()
-                    ? "bg-muted text-muted-foreground cursor-not-allowed"
-                    : "btn-gradient text-white hover:shadow-lg hover:shadow-blue-500/25 hover:scale-105"
-                }`}
+                className="w-9 h-9 rounded-full focus-visible:ring-0 focus-visible:ring-offset-0"
               >
-                <SendHorizonal className="w-3 h-3 mr-1.5 relative z-10" />
-                <span className="relative z-10">Send</span>
+                <ArrowUp className="w-5 h-5" />
               </Button>
             </div>
           </div>
