@@ -16,3 +16,22 @@ export const inputSchema = z.object({
       .enum(["None", "Auto", "General", "Realistic", "Design"])
       .optional(),
   });
+
+// Image Library Types
+export interface ImageData {
+  id: string;
+  url: string;
+  aspectRatio: number; // width/height ratio
+  title?: string;
+  description?: string;
+  tags?: string[];
+  createdAt?: Date;
+  userId?: string;
+}
+
+export interface ImageLibraryConfig {
+  imagesPerLoad: number;
+  gridMinWidth: number;
+  enableInfiniteScroll: boolean;
+  showImageInfo: boolean;
+}
