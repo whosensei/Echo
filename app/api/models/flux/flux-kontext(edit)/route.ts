@@ -4,8 +4,8 @@ import Replicate from "replicate";
 const replicate = new Replicate();
 
 export async function POST(req: NextRequest) {
+  
   const body = await req.json();
-
   const { prompt, input_img, output_format,aspect_ratio } = body;
 
   const input = {

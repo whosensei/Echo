@@ -1,5 +1,5 @@
 import { useDropzone } from "react-dropzone";
-import { Button } from "./ui/button";
+import { Button } from "../ui/button";
 import { Paperclip, Upload, Check, Plus } from "lucide-react";
 import { UploadedFile, useFileUploader } from "@/lib/hooks/useFileUploader";
 
