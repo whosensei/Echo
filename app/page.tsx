@@ -20,7 +20,7 @@ export default function Home() {
         </div>
 
         {/* CTA Section */}
-        <div className="pt-2">
+        <div className="pt-2 space-y-4">
           <Button
             size="lg"
             onClick={() => router.push("/Images")}
@@ -43,6 +43,23 @@ export default function Home() {
               </svg>
             </span>
           </Button>
+          
+          {/* Auth Links */}
+          <div className="flex items-center justify-center space-x-4 pt-6">
+            <Button
+              variant="outline"
+              onClick={() => router.push("/auth/signin")}
+              className="font-medium"
+            >
+              Sign In
+            </Button>
+            <Button
+              onClick={() => router.push("/auth/signup")}
+              className="font-medium"
+            >
+              Sign Up
+            </Button>
+          </div>
         </div>
 
         {/* Decorative Elements */}

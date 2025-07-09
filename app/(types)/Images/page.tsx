@@ -35,7 +35,7 @@ export default function ADcomponent() {
         What do you wish to create !
       </div>
       
-      <div className="mb-6">
+      {/* <div className="mb-6">
         <Button 
           onClick={() => setShowImageLibrary(true)}
           variant="outline"
@@ -43,7 +43,7 @@ export default function ADcomponent() {
         >
           🖼️ Browse Image Library
         </Button>
-      </div>
+      </div> */}
       
       <SettingsProvider>
         <div className="w-full max-w-2xl mx-auto">
