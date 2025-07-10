@@ -7,6 +7,7 @@ import { ImageGallerySidebar } from "@/components/image-gallery-sidebar";
 import { ImageLibrary } from "@/components/image-library";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
+import { SiteHeader } from "@/components/site-header";
 
 export default function ADcomponent() {
   const [isGalleryOpen, setIsGalleryOpen] = useState(false);
@@ -44,7 +45,6 @@ export default function ADcomponent() {
           🖼️ Browse Image Library
         </Button>
       </div> */}
-      
       <SettingsProvider>
         <div className="w-full max-w-2xl mx-auto">
           <ChatInput />

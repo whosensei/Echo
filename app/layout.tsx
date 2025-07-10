@@ -8,7 +8,7 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
-import { AppSidebar } from "@/components/app-sidebar";
+import { AppSidebar } from "@/components/sidebar";
 import { ProfileDropdown } from "@/components/ProfileDropdown";
 import { Separator } from "@radix-ui/react-separator";
 import { SiteHeader } from "@/components/site-header";

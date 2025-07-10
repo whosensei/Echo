@@ -15,6 +15,13 @@
       "when": 1751899390356,
       "tag": "0001_minor_may_parker",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1752178403673,
+      "tag": "0002_hot_the_captain",
+      "breakpoints": true
     }
   ]
 }
