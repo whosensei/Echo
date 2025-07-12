@@ -70,6 +70,19 @@ export const versions = pgTable('versions', {
   createdAt: timestamp('created_at').defaultNow(),
 });
 
+// Predictions table - tracks Replicate prediction status
+export const predictions = pgTable('predictions', {
+  predictionID: serial('prediction_id').primaryKey(),
+  versionID: integer('version_id').references(() => versions.versionID).notNull(),
+  replicateID: text('replicate_id').notNull().unique(),
+  status: varchar('status', { length: 50 }).notNull(), // starting, processing, succeeded, failed, canceled
+  output: text('output'), // JSON string for model output
+  error: text('error'), // Error message if failed
+  model: varchar('model', { length: 100 }).notNull(),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+
 // Images table
 export const images = pgTable('images', {
   imageID: serial('image_id').primaryKey(),
@@ -80,6 +93,7 @@ export const images = pgTable('images', {
   prompt: text('prompt'), // Cached from version
   model: varchar('model', { length: 100 }),
   visibility: visibilityEnum('visibility').default('private'),
+  predictionID: integer('prediction_id').references(() => predictions.predictionID), // Link to prediction
   createdAt: timestamp('created_at').defaultNow(),
 });
 
