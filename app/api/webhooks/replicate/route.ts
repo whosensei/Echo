@@ -15,7 +15,7 @@ async function downloadAndUploadImage(imageUrl: string, versionID: string, userI
         
         // Generate unique filename
         const timestamp = Date.now();
-        const filename = `generated-image-${versionID}-${timestamp}.png`;
+        const filename = `${userID}-${versionID}-${timestamp}.png`;
         
         // Upload to S3 using AWS SDK
         const { S3Client, PutObjectCommand } = await import("@aws-sdk/client-s3");
