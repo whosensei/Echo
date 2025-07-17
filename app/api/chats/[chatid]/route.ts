@@ -3,6 +3,30 @@ import { db } from "@/lib/db";
 import { chats, versions } from "@/lib/db/schema";
 import { desc, eq } from "drizzle-orm";
 
+export async function GET(req: NextRequest, {params}: {params: {chatid: string}}) {
+    try {
+        const {chatid} = await params;
+        const chatID = parseInt(chatid);
+
+        const chat = await db.select().from(chats).where(eq(chats.chatID, chatID));
+        if (chat.length === 0) {
+            return NextResponse.json({error: "Chat not found"}, {status: 404});
+        }
+
+        const chatVersions = await db.select().from(versions)
+            .where(eq(versions.chatID, chatID))
+            .orderBy(desc(versions.versionNum));
+
+        return NextResponse.json({
+            chat: chat[0],
+            versions: chatVersions
+        }, {status: 200});
+    } catch (error) {
+        console.error(error);
+        return NextResponse.json({error: "Internal Server Error"}, {status: 500});
+    }
+}
+
 export async function POST(req: NextRequest, {params}: {params: {chatid: string}}) {
     const body = await req.json()
     const{prompt ,settings} = body
