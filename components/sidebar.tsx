@@ -273,7 +273,6 @@ function ThemeToggle() {
       <SidebarMenuItem>
         <SidebarMenuButton
           onClick={toggleTheme}
-          className="data-[slot=sidebar-menu-button]:!p-2"
         >
           <Moon className="!size-4" />
           <span>Theme</span>
@@ -286,7 +285,6 @@ function ThemeToggle() {
     <SidebarMenuItem>
       <SidebarMenuButton
         onClick={toggleTheme}
-        className="data-[slot=sidebar-menu-button]:!p-2"
       >
         {theme === 'dark' ? (
           <>
