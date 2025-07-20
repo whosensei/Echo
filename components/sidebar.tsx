@@ -59,7 +59,9 @@ import {
   SidebarGroupLabel,
   useSidebar,
 } from "@/components/ui/sidebar"
-import { FolderOpen, Image, Images, Library, Receipt, ReceiptText, Sparkles, User } from "lucide-react"
+import { FolderOpen, Image, Images, Library, Receipt, ReceiptText, Sparkles, User, MessageCircle } from "lucide-react"
+import { useChatFlow } from "@/lib/hooks/useChatFlow"
+import type { Chat } from "@/lib/types/chat"
 
 type IconComponent = Icon | LucideIcon
 
@@ -85,18 +87,6 @@ const data = {
       title: "Creations",
       url: "#",
       icon: Images,
-    },
-  ],
-  navGenerate: [
-    {
-      title: "AI Image",
-      url: "#",
-      icon: IconCamera,
-    },
-    {
-      title: "Documents",
-      url: "#",
-      icon: IconFileDescription,
     },
   ],
   navSecondary: [
@@ -157,29 +147,52 @@ function NavMain({
   )
 }
 
-// NavGen Component
-function NavGen({
-  items,
-}: {
-  items: {
-    title: string
-    url: string
-    icon?: IconComponent
-  }[]
-}) {
+
+// NavChats Component
+function NavChats() {
+  const { chats, currentChat, loadChat, isLoading } = useChatFlow()
+
+  const handleChatClick = async (chat: Chat) => {
+    try {
+      await loadChat(chat.chatID)
+    } catch (error) {
+      console.error('Failed to load chat:', error)
+    }
+  }
+
   return (
     <SidebarGroup>
-      <SidebarGroupLabel>Generate</SidebarGroupLabel>
+      <SidebarGroupLabel>Chats</SidebarGroupLabel>
       <SidebarGroupContent className="flex flex-col gap-2">
         <SidebarMenu>
-          {items.map((item) => (
-            <SidebarMenuItem key={item.title}>
-              <SidebarMenuButton tooltip={item.title}>
-                {item.icon && <item.icon />}
-                <span>{item.title}</span>
+          {isLoading ? (
+            <SidebarMenuItem>
+              <SidebarMenuButton disabled>
+                <MessageCircle />
+                <span className="text-muted-foreground">Loading chats...</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
-          ))}
+          ) : chats.length === 0 ? (
+            <SidebarMenuItem>
+              <SidebarMenuButton disabled>
+                <MessageCircle />
+                <span className="text-muted-foreground">No chats yet</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          ) : (
+            chats.map((chat) => (
+              <SidebarMenuItem key={chat.chatID}>
+                <SidebarMenuButton 
+                  tooltip={chat.title || 'Untitled Chat'} 
+                  onClick={() => handleChatClick(chat)}
+                  className={`${currentChat?.chatID === chat.chatID ? 'bg-sidebar-accent text-sidebar-accent-foreground' : ''}`}
+                >
+                  <MessageCircle />
+                  <span className="truncate">{chat.title}</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            ))
+          )}
         </SidebarMenu>
       </SidebarGroupContent>
     </SidebarGroup>
@@ -267,7 +280,6 @@ function ThemeToggle() {
     setTheme(theme === 'dark' ? 'light' : 'dark')
   }
 
-  // Don't render theme-specific content until mounted
   if (!mounted) {
     return (
       <SidebarMenuItem>
@@ -323,7 +335,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />
-        <NavGen items={data.navGenerate} />
+        <NavChats />
         <NavSecondary items={data.navSecondary} className="mt-auto" />
         
         {/* Theme Toggle */}
