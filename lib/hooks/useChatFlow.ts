@@ -36,7 +36,8 @@ export const useChatFlow = () => {
   // Create a new chat
   const createChat = useCallback(async (prompt: string, settings: any) => {
     if (!session?.user?.id) {
-      updateState({ error: 'User not authenticated' });
+      updateState({ error: 'User not authenticated please login' });
+      // redirect to login page
       return;
     }
 

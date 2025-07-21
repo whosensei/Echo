@@ -1,14 +1,8 @@
 "use client";
 import type * as React from "react";
-import { useState, useRef ,useCallback,useEffect} from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import {
-  Paperclip,
-  Sparkles,
-  X,
-  ChevronDown,
-  ArrowUp,
-} from "lucide-react";
+import { Paperclip, Sparkles, X, ChevronDown, ArrowUp } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,22 +13,26 @@ import FileUploader from "./fileupload";
 import { CircularSettingsButton } from "./circular-settings-button";
 import { UploadedFile } from "@/lib/hooks/useFileUploader";
 import useEnhanceUserPrompt from "@/lib/hooks/enhanceuserPrompt";
-import  useSettings  from "@/lib/hooks/use-settings";
+import useSettings from "@/lib/hooks/use-settings";
 import { useTheme } from "next-themes";
+import { useChatFlow } from "@/lib/hooks/useChatFlow";
+import { Island_Moments } from "next/font/google";
 
 // Helper function to get model logos
 const getModelLogo = (modelName: string, theme: string | undefined) => {
-  const isDark = theme === 'dark';
-  
+  const isDark = theme === "dark";
+
   switch (modelName) {
-    case 'OpenAI-image-1':
-      return isDark ? '/OpenAI Logo(dark).png' : '/OpenAI Logo (light).png';
-    case 'Flux-kontext':
-      return isDark ? '/Flux Logo (dark).png' : '/Flux Logo (light).png';
-    case 'Ideogram':
-      return isDark ? '/Ideogram Logo (dark).png' : '/Ideogram Logo (light).png';
-    case 'Imagen-4':
-      return '/Google Logo.png';
+    case "OpenAI-image-1":
+      return isDark ? "/OpenAI Logo(dark).png" : "/OpenAI Logo (light).png";
+    case "Flux-kontext":
+      return isDark ? "/Flux Logo (dark).png" : "/Flux Logo (light).png";
+    case "Ideogram":
+      return isDark
+        ? "/Ideogram Logo (dark).png"
+        : "/Ideogram Logo (light).png";
+    case "Imagen-4":
+      return "/Google Logo.png";
     default:
       return null;
   }
@@ -53,36 +51,64 @@ export function ChatInput() {
     imagenmodelType,
     imagenoutputFormat,
   } = useSettings();
+
+  const {
+    createChat,
+    generateImages,
+    addVersion,
+    currentChat,
+    currentVersion,
+    isLoading,
+    error,
+  } = useChatFlow();
+
   const { theme } = useTheme();
   const [message, setMessage] = useState("");
-  const { enhancePrompt, isEnhancing, error } = useEnhanceUserPrompt();
+  // const { enhancePrompt, isEnhancing, error } = useEnhanceUserPrompt();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
-  
-  const handleSend = async () => {
 
+  const handleSend = async () => {
     if (message.trim()) {
       console.log("Sending message:", message);
       console.log("Uploaded files:", uploadedFiles);
 
-      const settings = selectedModel === "Ideogram" ? {
-        model_type : ideogrammodelType,
-        aspect_ratio : ideogramaspectRatio,
-        style_type : ideogramstyleType,
-        magic_prompt : ideogrammagicPrompt 
-      }:{
-        model_type : imagenmodelType,
-        aspect_ratio : imagenaspectRatio,
-        output_format : imagenoutputFormat
+      const settings =
+        selectedModel === "Ideogram"
+          ? {
+              model_type: ideogrammodelType,
+              aspect_ratio: ideogramaspectRatio,
+              style_type: ideogramstyleType,
+              magic_prompt: ideogrammagicPrompt,
+            }
+          : {
+              model_type: imagenmodelType,
+              aspect_ratio: imagenaspectRatio,
+              output_format: imagenoutputFormat,
+            };
+
+      if (!currentChat) {
+        const result = await createChat(message, settings);
+        if (result) {
+          const imagegeneration = await generateImages(selectedModel);
+          // get the image url from the imagegeneration
+        }
+      } else {
+        const result = await addVersion(message, settings);
+        if (result) {
+          const imagegeneration = await generateImages(selectedModel);
+          // {isLoading && <div> Generating Images ... </div>}
+          // get the image url from the imagegeneration
+        }
       }
 
       const datasend = JSON.stringify({
-        prompt:message,
-        settings:settings,
-        model:selectedModel
-      })
+        prompt: message,
+        settings: settings,
+        model: selectedModel,
+      });
 
-      console.log(datasend)
+      console.log(datasend);
 
       // const response = await fetch("api/generate",{
       //   method: "POST",
@@ -98,7 +124,7 @@ export function ChatInput() {
 
       setMessage("");
       // Clear uploaded files after sending
-      uploadedFiles.forEach(file => {
+      uploadedFiles.forEach((file) => {
         if (file.preview_url) {
           URL.revokeObjectURL(file.preview_url);
         }
@@ -106,23 +132,22 @@ export function ChatInput() {
       setUploadedFiles([]);
     }
   };
-  
-  const handleEnhance = async () => {
-    if (!message.trim() || isEnhancing) return;
-    
-    const originalMessage = message;
-    setMessage("");
-    
-    try {
-      await enhancePrompt(originalMessage, (chunk) => {
-        setMessage(prev => prev + chunk);
-      });
-    } catch (error) {
-      setMessage(originalMessage); 
-    }
-  };
-  
-  
+
+  // const handleEnhance = async () => {
+  //   if (!message.trim() || isEnhancing) return;
+
+  //   const originalMessage = message;
+  //   setMessage("");
+
+  //   try {
+  //     await enhancePrompt(originalMessage, (chunk) => {
+  //       setMessage((prev) => prev + chunk);
+  //     });
+  //   } catch (error) {
+  //     setMessage(originalMessage);
+  //   }
+  // };
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -130,35 +155,34 @@ export function ChatInput() {
     }
   };
 
-  const resizetextarea = useCallback(()=>{
-    if(textareaRef.current){
-      textareaRef.current.style.height="auto";
+  const resizetextarea = useCallback(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "auto";
       const maxHeight = 240;
-      const newHeight = Math.min(textareaRef.current.scrollHeight,maxHeight);
-      textareaRef.current.style.height=`${newHeight}px`
+      const newHeight = Math.min(textareaRef.current.scrollHeight, maxHeight);
+      textareaRef.current.style.height = `${newHeight}px`;
     }
-  },[])
+  }, []);
 
-  useEffect(()=>{
+  useEffect(() => {
     resizetextarea();
-  },[message,resizetextarea])
-  
+  }, [message, resizetextarea]);
+
   const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setMessage(e.target.value);
-
   };
-  
+
   const handleFilesUploaded = (newFiles: UploadedFile[]) => {
-    setUploadedFiles(prev => [...prev, ...newFiles]);
+    setUploadedFiles((prev) => [...prev, ...newFiles]);
   };
 
   const removeFile = (fileKey: string) => {
-    setUploadedFiles(prev => {
-      const fileToRemove = prev.find(f => f.file_key === fileKey);
+    setUploadedFiles((prev) => {
+      const fileToRemove = prev.find((f) => f.file_key === fileKey);
       if (fileToRemove?.preview_url) {
         URL.revokeObjectURL(fileToRemove.preview_url);
       }
-      return prev.filter(f => f.file_key !== fileKey);
+      return prev.filter((f) => f.file_key !== fileKey);
     });
   };
 
@@ -167,7 +191,7 @@ export function ChatInput() {
       <div className="glass-enhanced rounded-2xl p-1 shadow-sm transition-all duration-300">
         {/* <div className="absolute -bottom-2 left-4 right-4 h-1 bg-gradient-to-r from-transparent via-blue-500/30 to-transparent rounded-full blur-sm"></div> */}
         {/* <div className="absolute -bottom-1 left-8 right-8 h-0.5 bg-gradient-to-r from-transparent via-blue-400/50 to-transparent rounded-full"></div> */}
-        
+
         <div className="flex flex-col">
           {uploadedFiles.length > 0 && (
             <div className="px-5 pt-3 pb-2">
@@ -204,7 +228,7 @@ export function ChatInput() {
                         </button>
                       </div>
                     )}
-                    
+
                     <div className="absolute bottom-26 left-1/2 transform -translate-x-1/2 translate-y-full opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10">
                       <div className="bg-black/80 text-white text-xs px-2 py-1 rounded mt-1 whitespace-nowrap max-w-32 truncate">
                         {file.file_name}
@@ -225,23 +249,21 @@ export function ChatInput() {
             className="w-full min-h-[10px] max-h-[240px] resize-none border-0 bg-transparent px-5 py-3 text-foreground placeholder:text-muted-foreground focus-visible:outline-none text-base leading-relaxed overflow-y-auto custom-scrollbar"
             rows={2}
           />
-          
+
           <div className="flex items-center justify-between p-4 pt-2 border-t border-transparent">
             <div className="flex items-center gap-3">
-              <FileUploader 
-                onFilesUploaded={handleFilesUploaded}
-              />
-              
+              <FileUploader onFilesUploaded={handleFilesUploaded} />
+
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     size="sm"
                     className="border border-gray-200 dark:border-accent rounded-3xl h-9 flex items-center gap-2 focus-visible:ring-0 focus-visible:ring-offset-0"
                   >
                     {getModelLogo(selectedModel, theme) && (
-                      <img 
-                        src={getModelLogo(selectedModel, theme)!} 
+                      <img
+                        src={getModelLogo(selectedModel, theme)!}
                         alt={`${selectedModel} logo`}
                         className="w-5 h-5 object-contain"
                       />
@@ -250,18 +272,23 @@ export function ChatInput() {
                     <ChevronDown className="h-4 w-4 text-accent-foreground" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className="w-48 glass-enhanced">
+                <DropdownMenuContent
+                  align="start"
+                  className="w-48 glass-enhanced"
+                >
                   {modeltype.map((model) => (
                     <DropdownMenuItem
                       key={model}
                       onClick={() => setSelectedModel(model)}
                       className={`text-sm flex items-center gap-2 pb-2${
-                        selectedModel === model ? 'bg-muted text-accent-foreground' : ''
+                        selectedModel === model
+                          ? "bg-muted text-accent-foreground"
+                          : ""
                       }`}
                     >
                       {getModelLogo(model, theme) && (
-                        <img 
-                          src={getModelLogo(model, theme)!} 
+                        <img
+                          src={getModelLogo(model, theme)!}
                           alt={`${model} logo`}
                           className="w-5 h-5 object-contain flex-shrink-0"
                         />
@@ -273,20 +300,21 @@ export function ChatInput() {
               </DropdownMenu>
 
               <CircularSettingsButton />
-
             </div>
 
-            <div className="flex items-center gap-2">            
-              <Button
+            <div className="flex items-center gap-2">
+              {/* <Button
                 onClick={handleEnhance}
                 disabled={!message.trim() || isEnhancing}
                 variant="outline"
                 size="icon"
                 className="focus-visible:ring-0 focus-visible:ring-offset-0"
               >
-                <Sparkles className={`w-3 h-3 ${isEnhancing ? 'animate-spin' : ''}`} />
-              </Button>
-              
+                <Sparkles
+                  className={`w-3 h-3 ${isEnhancing ? "animate-spin" : ""}`}
+                />
+              </Button> */}
+
               <Button
                 onClick={handleSend}
                 disabled={!message.trim()}

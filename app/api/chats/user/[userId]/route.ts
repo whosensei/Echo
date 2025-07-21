@@ -3,9 +3,9 @@ import { db } from "@/lib/db";
 import { chats, versions } from "@/lib/db/schema";
 import { desc, eq, count, max } from "drizzle-orm";
 
-export async function GET(req: NextRequest, {params}: {params: {userId: string}}) {
+export async function GET(req: NextRequest, {params}: {params: Promise<{userId: string}>}) {
     try {
-        const {userId} = params;
+        const {userId} = await params;
 
         // Get user chats with additional metadata
         const userChats = await db
