@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Clock, User, MessageSquare } from "lucide-react"
+import { Clock, User, MessageSquare, Plus } from "lucide-react"
 import type { GladiaTranscriptionResult } from "@/lib/gladia-service"
 import type { MeetingSummary } from "@/lib/gemini-service"
 
@@ -12,9 +12,10 @@ interface TabbedTranscriptDisplayProps {
   transcription: GladiaTranscriptionResult | null
   summary: MeetingSummary | null
   isLoading?: boolean
+  onNewRecording?: () => void
 }
 
-export function TabbedTranscriptDisplay({ transcription, summary, isLoading }: TabbedTranscriptDisplayProps) {
+export function TabbedTranscriptDisplay({ transcription, summary, isLoading, onNewRecording }: TabbedTranscriptDisplayProps) {
   // Navigation items
   const navItems = [
     { id: 'transcript', label: 'Transcript', icon: User },
@@ -119,23 +120,37 @@ export function TabbedTranscriptDisplay({ transcription, summary, isLoading }: T
     <div className="h-full flex flex-col bg-background">
       {/* Navigation Header */}
       <div className="border-b border-border bg-card sticky top-0 z-10">
-        <div className="p-4">
-          <div className="flex justify-center gap-2">
-            {navItems.map((item) => {
-              const Icon = item.icon
-              return (
-                <Button
-                  key={item.id}
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => scrollToSection(item.id)}
-                  className="flex items-center gap-2 text-sm"
-                >
-                  <Icon className="h-4 w-4" />
-                  {item.label}
-                </Button>
-              )
-            })}
+        <div className="py-4 pl-4 pr-0 relative">
+          <div className="flex items-center justify-center">
+            {/* Nav items centered */}
+            <div className="flex gap-2">
+              {navItems.map((item) => {
+                const Icon = item.icon
+                return (
+                  <Button
+                    key={item.id}
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => scrollToSection(item.id)}
+                    className="flex items-center gap-2 text-sm"
+                  >
+                    <Icon className="h-4 w-4" />
+                    {item.label}
+                  </Button>
+                )
+              })}
+            </div>
+            {/* New Recording Button - Absolutely positioned to right edge */}
+            {onNewRecording && (
+              <Button
+                onClick={onNewRecording}
+                size="sm"
+                className="absolute right-5 top-1/2 -translate-y-1/2 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 h-8 w-8 p-0"
+                title="New Recording"
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
+            )}
           </div>
         </div>
       </div>

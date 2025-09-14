@@ -309,7 +309,7 @@ export default function Home() {
               transcription={currentTranscription}
               summary={currentSummary}
               isLoading={isProcessing}
-              audioData={currentAudioData}
+              onNewRecording={handleNewRecording}
             />
           </div>
         ) : (
