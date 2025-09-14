@@ -8,6 +8,7 @@ import { config } from '@/config/env';
 
 export interface MeetingSummaryRequest {
   transcript: string;
+  rawTranscript?: string; // Original transcript without speaker labels
   speakers?: Array<{
     speaker: string;
     time_begin: number;
@@ -18,6 +19,7 @@ export interface MeetingSummaryRequest {
     type: string;
     confidence: number;
   }>;
+  speakerMapping?: { [key: string]: string }; // Maps speaker IDs to names
   meetingContext?: string;
 }
 
@@ -40,7 +42,7 @@ export class GeminiService {
 
   constructor() {
     const apiKey = config.gemini.apiKey;
-    
+
     if (!apiKey) {
       throw new Error('Gemini API key is required');
     }
@@ -55,7 +57,7 @@ export class GeminiService {
   async generateMeetingSummary(request: MeetingSummaryRequest): Promise<MeetingSummary> {
     try {
       const prompt = this.buildSummaryPrompt(request);
-      
+
       const result = await this.model.generateContent(prompt);
       const response = await result.response;
       const text = response.text();
@@ -72,19 +74,27 @@ export class GeminiService {
    * Build the prompt for Gemini to generate meeting summary
    */
   private buildSummaryPrompt(request: MeetingSummaryRequest): string {
-    const { transcript, speakers, namedEntities, meetingContext } = request;
+    const { transcript, rawTranscript, speakers, namedEntities, speakerMapping, meetingContext } = request;
 
     let prompt = `
 You are an expert meeting analyst. Please analyze the following meeting transcript and provide a comprehensive summary in JSON format.
 
-**Meeting Transcript:**
+**Speaker-Labeled Meeting Transcript:**
 ${transcript}
 `;
+
+    if (speakerMapping && Object.keys(speakerMapping).length > 0) {
+      prompt += `\n**Speaker Mapping:**\n`;
+      Object.entries(speakerMapping).forEach(([speakerId, speakerName]) => {
+        prompt += `- Speaker ${speakerId} = ${speakerName}\n`;
+      });
+    }
 
     if (speakers && speakers.length > 0) {
       prompt += `\n**Speakers Information:**\n`;
       speakers.forEach(speaker => {
-        prompt += `- ${speaker.speaker}: ${speaker.time_begin}s - ${speaker.time_end}s\n`;
+        const speakerName = speakerMapping?.[speaker.speaker] || `Speaker ${speaker.speaker}`;
+        prompt += `- ${speakerName}: ${speaker.time_begin}s - ${speaker.time_end}s\n`;
       });
     }
 
@@ -105,10 +115,10 @@ Please provide a comprehensive analysis in the following JSON structure:
 {
   "title": "A concise, descriptive title for the meeting",
   "overview": "A 2-3 sentence summary of the meeting's main purpose and outcomes",
-  "keyPoints": ["Array of main discussion points and important topics covered"],
+  "keyPoints": ["Array of specific, individual discussion points - each point should be a distinct statement, not a combination of multiple topics"],
   "actionItems": ["Array of specific tasks, assignments, or follow-ups mentioned"],
   "decisions": ["Array of decisions made during the meeting"],
-  "participants": ["Array of identified participants/speakers"],
+  "participants": ["Array of identified participants/speakers using their actual names when available"],
   "topics": ["Array of main topics/themes discussed"],
   "duration": "Estimated meeting duration based on transcript",
   "sentiment": "Overall meeting sentiment: positive, neutral, or negative",
@@ -116,13 +126,20 @@ Please provide a comprehensive analysis in the following JSON structure:
 }
 
 Guidelines:
+- Use the speaker-labeled transcript with timestamps and speaker names for better context
+- When referencing speakers in summaries, use their actual names from the speaker mapping when available
+- For keyPoints: Extract each distinct discussion point as a separate item. DO NOT combine multiple unrelated topics into one point
+  * GOOD: "John mentioned wanting to buy a new iPhone", "Sarah discussed her sleep schedule issues", "Mike talked about playing badminton"
+  * BAD: "Individual statements regarding personal interests and desires (e.g., iPhone purchase, sleep, badminton)"
+- Each keyPoint should be specific and standalone, mentioning who said what when relevant
 - Be concise but comprehensive
 - Focus on actionable items and key decisions
-- Identify all participants mentioned
 - Extract concrete next steps and deadlines if mentioned
+- Pay attention to who said what by using the speaker labels
 - Assess the overall tone and productivity of the meeting
 - Use clear, professional language
 - Ensure all JSON fields are properly formatted
+- Avoid vague generalizations - be specific about what was actually discussed
 
 Respond ONLY with valid JSON, no additional text or formatting.
 `;
@@ -137,7 +154,7 @@ Respond ONLY with valid JSON, no additional text or formatting.
     try {
       // Clean up the response to extract JSON
       let cleanedResponse = response.trim();
-      
+
       // Remove any markdown formatting
       if (cleanedResponse.startsWith('```json')) {
         cleanedResponse = cleanedResponse.replace(/```json\n?/, '').replace(/\n?```$/, '');
@@ -151,7 +168,7 @@ Respond ONLY with valid JSON, no additional text or formatting.
       if (!parsed.title || !parsed.overview) {
         throw new Error('AI response missing required fields: title or overview');
       }
-      
+
       if (!Array.isArray(parsed.keyPoints) || !Array.isArray(parsed.actionItems)) {
         throw new Error('AI response has invalid format for keyPoints or actionItems');
       }
@@ -162,7 +179,7 @@ Respond ONLY with valid JSON, no additional text or formatting.
         keyPoints: parsed.keyPoints,
         actionItems: parsed.actionItems,
         decisions: Array.isArray(parsed.decisions) ? parsed.decisions : [],
-        participants: Array.isArray(parsed.participants) ? parsed.participants : this.extractParticipants(request.speakers),
+        participants: Array.isArray(parsed.participants) ? parsed.participants : this.extractParticipants(request.speakers, request.speakerMapping),
         topics: Array.isArray(parsed.topics) ? parsed.topics : [],
         duration: parsed.duration,
         sentiment: ['positive', 'neutral', 'negative'].includes(parsed.sentiment) ? parsed.sentiment : null,
@@ -177,11 +194,13 @@ Respond ONLY with valid JSON, no additional text or formatting.
   /**
    * Extract participant names from speakers data
    */
-  private extractParticipants(speakers?: Array<{ speaker: string }>): string[] {
+  private extractParticipants(speakers?: Array<{ speaker: string }>, speakerMapping?: { [key: string]: string }): string[] {
     if (!speakers) return [];
-    
+
     const uniqueSpeakers = new Set(speakers.map(s => s.speaker));
-    return Array.from(uniqueSpeakers);
+    return Array.from(uniqueSpeakers).map(speakerId =>
+      speakerMapping?.[speakerId] || `Speaker ${speakerId}`
+    );
   }
 
 

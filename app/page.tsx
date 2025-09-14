@@ -21,6 +21,98 @@ export default function Home() {
   const [currentAudioData, setCurrentAudioData] = useState<string | undefined>()
   const { toast } = useToast()
 
+  // Function to create speaker-labeled transcript with name mapping
+  const createSpeakerLabeledTranscript = (transcriptionResult: GladiaTranscriptionResult) => {
+    if (!transcriptionResult?.result?.transcription?.utterances) {
+      return {
+        labeledTranscript: transcriptionResult?.result?.transcription?.full_transcript || "",
+        speakerMapping: {},
+        groups: []
+      }
+    }
+
+    const utterances = transcriptionResult.result.transcription.utterances
+    const namedEntities = transcriptionResult.result.named_entities || []
+    const fullTranscript = transcriptionResult.result.transcription.full_transcript || ""
+
+    // Extract potential speaker names from named entities (people)
+    const personNames = namedEntities
+      .filter(entity => entity.type?.toLowerCase() === 'person' || entity.type?.toLowerCase() === 'per')
+      .map(entity => entity.entity)
+      .filter(name => name && name.length > 1)
+
+    // Also try to extract names from common introductory phrases
+    const namePatterns = [
+      /(?:I'm|I am|My name is|This is|I'm called)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)/gi,
+      /(?:Hi|Hello),?\s+(?:I'm|I am|this is)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)/gi,
+      /([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\s+(?:speaking|here|talking)/gi
+    ]
+
+    const extractedNames = new Set<string>()
+    namePatterns.forEach(pattern => {
+      let match
+      while ((match = pattern.exec(fullTranscript)) !== null) {
+        const name = match[1].trim()
+        if (name.length > 1 && !name.match(/^(Speaker|Um|Uh|Oh|Yeah|Yes|No|Okay|Alright)$/i)) {
+          extractedNames.add(name)
+        }
+      }
+    })
+
+    // Combine extracted names with named entities
+    const allPotentialNames = [...new Set([...personNames, ...Array.from(extractedNames)])]
+
+    // Create speaker mapping
+    const speakerMapping: { [key: string]: string } = {}
+    const uniqueSpeakers = [...new Set(utterances.map((u: any) => u.speaker))].sort()
+
+    // Try to map speakers to names if we have enough names
+    if (allPotentialNames.length > 0) {
+      uniqueSpeakers.forEach((speaker, index) => {
+        if (index < allPotentialNames.length) {
+          speakerMapping[speaker] = allPotentialNames[index]
+        } else {
+          speakerMapping[speaker] = `Speaker ${speaker}`
+        }
+      })
+    } else {
+      // Default mapping
+      uniqueSpeakers.forEach(speaker => {
+        speakerMapping[speaker] = `Speaker ${speaker}`
+      })
+    }
+
+    // Group consecutive utterances by the same speaker
+    const groups: any[] = []
+    utterances.forEach((utterance: any) => {
+      const lastGroup = groups[groups.length - 1]
+      if (lastGroup && lastGroup.speaker === utterance.speaker) {
+        lastGroup.text += " " + utterance.text
+        lastGroup.end = utterance.end
+      } else {
+        groups.push({
+          speaker: utterance.speaker,
+          text: utterance.text,
+          start: utterance.start,
+          end: utterance.end,
+        })
+      }
+    })
+
+    // Format the transcript with speaker labels
+    const labeledTranscript = groups.map(group => {
+      const speakerName = speakerMapping[group.speaker] || `Speaker ${group.speaker}`
+      const startTime = Math.floor(group.start / 60) + ":" + String(Math.floor(group.start % 60)).padStart(2, '0')
+      return `[${startTime}] ${speakerName}: ${group.text}`
+    }).join('\n\n')
+
+    return {
+      labeledTranscript,
+      speakerMapping,
+      groups
+    }
+  }
+
   const handleRecordingComplete = async (audioBlob: Blob, filename: string) => {
     setIsProcessing(true)
     setCurrentTranscription(null)
@@ -136,13 +228,18 @@ export default function Home() {
           let summaryData: MeetingSummary | undefined
 
           try {
+            // Create speaker-labeled transcript with name mapping
+            const transcriptData = createSpeakerLabeledTranscript(result)
+
             const summaryResponse = await fetch("/api/summarize", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
-                transcript: result.result.transcription.full_transcript,
+                transcript: transcriptData.labeledTranscript,
+                rawTranscript: result.result.transcription.full_transcript,
                 speakers: result.result.speakers,
                 namedEntities: result.result.named_entities,
+                speakerMapping: transcriptData.speakerMapping,
               }),
             })
 
@@ -240,13 +337,18 @@ export default function Home() {
       setIsProcessing(true)
 
       try {
+        // Create speaker-labeled transcript with name mapping
+        const transcriptData = createSpeakerLabeledTranscript(storedTranscription.transcriptionData)
+
         const summaryResponse = await fetch("/api/summarize", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            transcript: storedTranscription.transcriptionData.result.transcription.full_transcript,
+            transcript: transcriptData.labeledTranscript,
+            rawTranscript: storedTranscription.transcriptionData.result.transcription.full_transcript,
             speakers: storedTranscription.transcriptionData.result.speakers,
             namedEntities: storedTranscription.transcriptionData.result.named_entities,
+            speakerMapping: transcriptData.speakerMapping,
           }),
         })
 
