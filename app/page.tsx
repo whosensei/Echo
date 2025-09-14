@@ -310,6 +310,7 @@ export default function Home() {
               summary={currentSummary}
               isLoading={isProcessing}
               onNewRecording={handleNewRecording}
+              isSidebarCollapsed={isSidebarCollapsed}
             />
           </div>
         ) : (

@@ -14,9 +14,10 @@ interface TabbedTranscriptDisplayProps {
   summary: MeetingSummary | null
   isLoading?: boolean
   onNewRecording?: () => void
+  isSidebarCollapsed?: boolean
 }
 
-export function TabbedTranscriptDisplay({ transcription, summary, isLoading, onNewRecording }: TabbedTranscriptDisplayProps) {
+export function TabbedTranscriptDisplay({ transcription, summary, isLoading, onNewRecording, isSidebarCollapsed }: TabbedTranscriptDisplayProps) {
   // Navigation items
   const navItems = [
     { id: 'transcript', label: 'Transcript', icon: User },
@@ -142,7 +143,7 @@ export function TabbedTranscriptDisplay({ transcription, summary, isLoading, onN
               })}
             </div>
             {/* New Recording Button - Absolutely positioned to right edge */}
-            {onNewRecording && (
+            {onNewRecording && isSidebarCollapsed && (
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button

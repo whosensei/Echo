@@ -255,13 +255,15 @@ export function TranscriptionSidebar({
             </div>
 
             {/* New Recording Button */}
-            <button
-              onClick={onNewRecording}
-              className="btn-new-recording-glass w-full flex items-center justify-center gap-2"
-            >
-              <Plus className="h-4 w-4" />
-              New Recording
-            </button>
+            <div className="px-0 pr-2">
+              <button
+                onClick={onNewRecording}
+                className="btn-new-recording-glass w-full flex items-center justify-center gap-2"
+              >
+                <Plus className="h-4 w-4" />
+                New Recording
+              </button>
+            </div>
           </div>
         </>
       )}
