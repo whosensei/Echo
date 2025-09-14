@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input"
 import { FileText, Clock, Menu, Trash2, Plus, Edit2, Check, X, Play, Pause } from "lucide-react"
 import { LocalStorageService, type StoredTranscription } from "@/lib/local-storage"
 import { useToast } from "@/components/ui/toaster"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 
 interface TranscriptionSidebarProps {
   onTranscriptionSelect: (transcription: StoredTranscription) => void
@@ -328,13 +329,20 @@ export function TranscriptionSidebar({
                               }}
                             />
                           ) : (
-                            <h3 className={`font-medium text-sm break-words leading-tight line-clamp-2 overflow-hidden ${
-                              selectedTranscriptionId === transcription.id
-                                ? "text-primary font-semibold"
-                                : "text-foreground"
-                            }`} title={transcription.filename || `Recording ${index + 1}`}>
-                              {transcription.filename || `Recording ${index + 1}`}
-                            </h3>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <h3 className={`font-medium text-sm break-words leading-tight line-clamp-2 overflow-hidden cursor-default ${
+                                  selectedTranscriptionId === transcription.id
+                                    ? "text-primary font-semibold"
+                                    : "text-foreground"
+                                }`}>
+                                  {transcription.filename || `Recording ${index + 1}`}
+                                </h3>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>{transcription.filename || `Recording ${index + 1}`}</p>
+                              </TooltipContent>
+                            </Tooltip>
                           )}
                         </div>
 
@@ -342,55 +350,85 @@ export function TranscriptionSidebar({
                         <div className="flex gap-1 opacity-70 hover:opacity-100 transition-opacity flex-shrink-0">
                           {editingId === transcription.id ? (
                             <>
-                              <button
-                                onClick={(e) => handleSaveEdit(e, transcription.id)}
-                                className="w-6 h-6 rounded-full bg-blue-100 hover:bg-blue-200 flex items-center justify-center border border-blue-200"
-                                title="Save"
-                              >
-                                <Check className="h-3 w-3 text-blue-600" />
-                              </button>
-                              <button
-                                onClick={(e) => handleCancelEdit(e)}
-                                className="w-6 h-6 rounded-full bg-blue-100 hover:bg-blue-200 flex items-center justify-center border border-blue-200"
-                                title="Cancel"
-                              >
-                                <X className="h-3 w-3 text-blue-600" />
-                              </button>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <button
+                                    onClick={(e) => handleSaveEdit(e, transcription.id)}
+                                    className="w-6 h-6 rounded-full bg-blue-100 hover:bg-blue-200 flex items-center justify-center border border-blue-200"
+                                  >
+                                    <Check className="h-3 w-3 text-blue-600" />
+                                  </button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Save</p>
+                                </TooltipContent>
+                              </Tooltip>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <button
+                                    onClick={(e) => handleCancelEdit(e)}
+                                    className="w-6 h-6 rounded-full bg-blue-100 hover:bg-blue-200 flex items-center justify-center border border-blue-200"
+                                  >
+                                    <X className="h-3 w-3 text-blue-600" />
+                                  </button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Cancel</p>
+                                </TooltipContent>
+                              </Tooltip>
                             </>
                           ) : (
                             <>
                               {/* Play/Pause button - only show if audio data exists */}
                               {transcription.audioData && (
-                                <button
-                                  className={`w-6 h-6 rounded-full flex items-center justify-center shadow-sm border ${
-                                    playingId === transcription.id
-                                      ? "bg-orange-100 hover:bg-orange-200 border-orange-200"
-                                      : "bg-blue-100 hover:bg-blue-200 border-blue-200"
-                                  }`}
-                                  onClick={(e) => handlePlayAudio(e, transcription)}
-                                  title={playingId === transcription.id ? "Pause audio" : "Play audio"}
-                                >
-                                  {playingId === transcription.id ? (
-                                    <Pause className="h-3 w-3 text-orange-600" />
-                                  ) : (
-                                    <Play className="h-3 w-3 text-blue-600" />
-                                  )}
-                                </button>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <button
+                                      className={`w-6 h-6 rounded-full flex items-center justify-center shadow-sm border ${
+                                        playingId === transcription.id
+                                          ? "bg-orange-100 hover:bg-orange-200 border-orange-200"
+                                          : "bg-blue-100 hover:bg-blue-200 border-blue-200"
+                                      }`}
+                                      onClick={(e) => handlePlayAudio(e, transcription)}
+                                    >
+                                      {playingId === transcription.id ? (
+                                        <Pause className="h-3 w-3 text-orange-600" />
+                                      ) : (
+                                        <Play className="h-3 w-3 text-blue-600" />
+                                      )}
+                                    </button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>{playingId === transcription.id ? "Pause audio" : "Play audio"}</p>
+                                  </TooltipContent>
+                                </Tooltip>
                               )}
-                              <button
-                                className="w-6 h-6 rounded-full bg-blue-100 hover:bg-blue-200 flex items-center justify-center shadow-sm border border-blue-200"
-                                onClick={(e) => handleStartEdit(e, transcription)}
-                                title="Edit name"
-                              >
-                                <Edit2 className="h-3 w-3 text-blue-600" />
-                              </button>
-                              <button
-                                className="w-6 h-6 rounded-full bg-blue-100 hover:bg-blue-200 flex items-center justify-center shadow-sm border border-blue-200"
-                                onClick={(e) => handleDeleteTranscription(e, transcription.id)}
-                                title="Delete transcription"
-                              >
-                                <Trash2 className="h-3 w-3 text-blue-600" />
-                              </button>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <button
+                                    className="w-6 h-6 rounded-full bg-blue-100 hover:bg-blue-200 flex items-center justify-center shadow-sm border border-blue-200"
+                                    onClick={(e) => handleStartEdit(e, transcription)}
+                                  >
+                                    <Edit2 className="h-3 w-3 text-blue-600" />
+                                  </button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Edit name</p>
+                                </TooltipContent>
+                              </Tooltip>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <button
+                                    className="w-6 h-6 rounded-full bg-blue-100 hover:bg-blue-200 flex items-center justify-center shadow-sm border border-blue-200"
+                                    onClick={(e) => handleDeleteTranscription(e, transcription.id)}
+                                  >
+                                    <Trash2 className="h-3 w-3 text-blue-600" />
+                                  </button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Delete transcription</p>
+                                </TooltipContent>
+                              </Tooltip>
                             </>
                           )}
                         </div>

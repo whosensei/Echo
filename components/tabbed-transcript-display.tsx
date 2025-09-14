@@ -5,6 +5,7 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Clock, User, MessageSquare, Plus } from "lucide-react"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import type { GladiaTranscriptionResult } from "@/lib/gladia-service"
 import type { MeetingSummary } from "@/lib/gemini-service"
 
@@ -142,14 +143,20 @@ export function TabbedTranscriptDisplay({ transcription, summary, isLoading, onN
             </div>
             {/* New Recording Button - Absolutely positioned to right edge */}
             {onNewRecording && (
-              <Button
-                onClick={onNewRecording}
-                size="sm"
-                className="absolute right-5 top-1/2 -translate-y-1/2 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 h-8 w-8 p-0"
-                title="New Recording"
-              >
-                <Plus className="h-4 w-4" />
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    onClick={onNewRecording}
+                    size="sm"
+                    className="absolute right-5 top-1/2 -translate-y-1/2 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 h-8 w-8 p-0"
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>New Recording</p>
+                </TooltipContent>
+              </Tooltip>
             )}
           </div>
         </div>
