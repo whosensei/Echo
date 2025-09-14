@@ -1,11 +1,10 @@
 "use client"
 
-import { useState, useRef, useEffect } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Clock, User, MessageSquare, Play, Pause, Volume2 } from "lucide-react"
+import { Clock, User, MessageSquare } from "lucide-react"
 import type { GladiaTranscriptionResult } from "@/lib/gladia-service"
 import type { MeetingSummary } from "@/lib/gemini-service"
 
@@ -13,71 +12,15 @@ interface TabbedTranscriptDisplayProps {
   transcription: GladiaTranscriptionResult | null
   summary: MeetingSummary | null
   isLoading?: boolean
-  audioData?: string // Base64 audio data
 }
 
-export function TabbedTranscriptDisplay({ transcription, summary, isLoading, audioData }: TabbedTranscriptDisplayProps) {
-  const [isPlaying, setIsPlaying] = useState(false)
-  const [currentTime, setCurrentTime] = useState(0)
-  const [duration, setDuration] = useState(0)
-  const audioRef = useRef<HTMLAudioElement | null>(null)
-
+export function TabbedTranscriptDisplay({ transcription, summary, isLoading }: TabbedTranscriptDisplayProps) {
   // Navigation items
   const navItems = [
-    { id: 'audio', label: 'Audio', icon: Volume2 },
-    { id: 'fulltext', label: 'Full Text', icon: MessageSquare },
     { id: 'transcript', label: 'Transcript', icon: User },
+    { id: 'fulltext', label: 'Full Text', icon: MessageSquare },
     { id: 'summary', label: 'Summary', icon: Clock },
   ]
-
-  // Audio controls
-  useEffect(() => {
-    if (audioData && audioRef.current) {
-      const audio = audioRef.current
-
-      const handleLoadedMetadata = () => {
-        setDuration(audio.duration)
-      }
-
-      const handleTimeUpdate = () => {
-        setCurrentTime(audio.currentTime)
-      }
-
-      const handleEnded = () => {
-        setIsPlaying(false)
-      }
-
-      audio.addEventListener('loadedmetadata', handleLoadedMetadata)
-      audio.addEventListener('timeupdate', handleTimeUpdate)
-      audio.addEventListener('ended', handleEnded)
-
-      return () => {
-        audio.removeEventListener('loadedmetadata', handleLoadedMetadata)
-        audio.removeEventListener('timeupdate', handleTimeUpdate)
-        audio.removeEventListener('ended', handleEnded)
-      }
-    }
-  }, [audioData])
-
-  const handlePlayPause = () => {
-    if (audioRef.current) {
-      if (isPlaying) {
-        audioRef.current.pause()
-      } else {
-        audioRef.current.play()
-      }
-      setIsPlaying(!isPlaying)
-    }
-  }
-
-  const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const audio = audioRef.current
-    if (audio) {
-      const newTime = parseFloat(e.target.value)
-      audio.currentTime = newTime
-      setCurrentTime(newTime)
-    }
-  }
 
   const scrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId)
@@ -186,7 +129,7 @@ export function TabbedTranscriptDisplay({ transcription, summary, isLoading, aud
                   variant="ghost"
                   size="sm"
                   onClick={() => scrollToSection(item.id)}
-                  className="flex items-center gap-2 text-sm hover:bg-muted"
+                  className="flex items-center gap-2 text-sm"
                 >
                   <Icon className="h-4 w-4" />
                   {item.label}
@@ -200,78 +143,6 @@ export function TabbedTranscriptDisplay({ transcription, summary, isLoading, aud
       {/* Content */}
       <ScrollArea className="flex-1">
         <div className="space-y-8 p-6">
-          {/* Audio Section */}
-          {audioData && (
-            <section id="audio" className="space-y-6">
-              <div className="space-y-4">
-                <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
-                  <Volume2 className="h-6 w-6" />
-                  Audio Player
-                </h2>
-
-                <Card>
-                  <CardContent className="p-6">
-                    <audio ref={audioRef} src={audioData} preload="metadata" />
-
-                    <div className="space-y-4">
-                      {/* Play/Pause Button */}
-                      <div className="flex items-center justify-center">
-                        <Button
-                          onClick={handlePlayPause}
-                          size="lg"
-                          className="w-16 h-16 rounded-full"
-                        >
-                          {isPlaying ? (
-                            <Pause className="h-8 w-8" />
-                          ) : (
-                            <Play className="h-8 w-8" />
-                          )}
-                        </Button>
-                      </div>
-
-                      {/* Timeline */}
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-3">
-                          <span className="text-sm text-muted-foreground min-w-[50px]">
-                            {formatTime(currentTime)}
-                          </span>
-                          <input
-                            type="range"
-                            min="0"
-                            max={duration || 0}
-                            value={currentTime}
-                            onChange={handleSeek}
-                            className="flex-1 h-2 bg-muted rounded-lg appearance-none cursor-pointer slider"
-                          />
-                          <span className="text-sm text-muted-foreground min-w-[50px]">
-                            {formatTime(duration)}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            </section>
-          )}
-
-          {/* Full Text Section */}
-          {transcription?.result?.transcription?.full_transcript && (
-            <section id="fulltext" className="space-y-6">
-              <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
-                <MessageSquare className="h-6 w-6" />
-                Full Text
-              </h2>
-              <Card>
-                <CardContent className="p-6">
-                  <p className="text-foreground leading-relaxed whitespace-pre-wrap">
-                    {transcription.result.transcription.full_transcript}
-                  </p>
-                </CardContent>
-              </Card>
-            </section>
-          )}
-
           {/* Transcript Section */}
           {transcription && (
             <section id="transcript" className="space-y-6">
@@ -300,6 +171,23 @@ export function TabbedTranscriptDisplay({ transcription, summary, isLoading, aud
                   </Card>
                 ))}
               </div>
+            </section>
+          )}
+
+          {/* Full Text Section */}
+          {transcription?.result?.transcription?.full_transcript && (
+            <section id="fulltext" className="space-y-6">
+              <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
+                <MessageSquare className="h-6 w-6" />
+                Full Text
+              </h2>
+              <Card>
+                <CardContent className="p-6">
+                  <p className="text-foreground leading-relaxed whitespace-pre-wrap">
+                    {transcription.result.transcription.full_transcript}
+                  </p>
+                </CardContent>
+              </Card>
             </section>
           )}
 
