@@ -51,6 +51,25 @@ export default function Home() {
 
       const uploadData = await uploadResponse.json()
 
+      // Convert audio blob to base64 for storage right after upload
+      const audioBase64 = await new Promise<string>((resolve) => {
+        const reader = new FileReader()
+        reader.onloadend = () => resolve(reader.result as string)
+        reader.readAsDataURL(audioBlob)
+      })
+
+      // Generate the filename and save transcription immediately with audio data
+      const currentCount = LocalStorageService.getTranscriptionCount()
+      const nextNumber = currentCount + 1
+      const finalFilename = `Audio-${nextNumber}.wav`
+
+      // Save new transcription with audio data from the start
+      LocalStorageService.saveNewTranscription(transcriptionId, finalFilename)
+      LocalStorageService.updateTranscription(transcriptionId, { audioData: audioBase64 })
+
+      // Trigger sidebar refresh to show the new item
+      setRefreshTrigger(prev => prev + 1)
+
       // Step 2: Start transcription
       toast({
         title: "Starting transcription...",
@@ -144,31 +163,11 @@ export default function Home() {
             // Continue without summary - don't fail the whole process
           }
 
-          // Generate the final filename based on successful transcriptions count
-          const currentCount = LocalStorageService.getTranscriptionCount()
-          const nextNumber = currentCount + 1
-          const finalFilename = `Audio-${nextNumber}.wav`
-
-          // Convert audio blob to base64 for storage
-          const audioBase64 = await new Promise<string>((resolve) => {
-            const reader = new FileReader()
-            reader.onloadend = () => resolve(reader.result as string)
-            reader.readAsDataURL(audioBlob)
-          })
-
-          // Save completed transcription to local storage with proper filename and audio data
-          LocalStorageService.saveNewTranscription(transcriptionId, finalFilename)
+          // Complete transcription with results
           LocalStorageService.completeTranscription(transcriptionId, result, summaryData)
-
-          // Update with audio data
-          LocalStorageService.updateTranscription(transcriptionId, { audioData: audioBase64 })
 
           // Set current audio data for display
           setCurrentAudioData(audioBase64)
-
-          // Trigger sidebar refresh
-          console.log("Triggering sidebar refresh...")
-          setRefreshTrigger(prev => prev + 1)
 
           toast({
             title: "Processing complete!",
