@@ -53,13 +53,13 @@ export function MeetingDetailsCard({ meetingId }: MeetingDetailsProps) {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "accepted":
-        return "bg-green-100 text-green-800 border-green-200";
+        return "bg-chart-1/10 text-chart-1 border-chart-1/20";
       case "declined":
-        return "bg-red-100 text-red-800 border-red-200";
+        return "bg-destructive/10 text-destructive border-destructive/20";
       case "tentative":
-        return "bg-yellow-100 text-yellow-800 border-yellow-200";
+        return "bg-chart-4/10 text-chart-4 border-chart-4/20";
       default:
-        return "bg-gray-100 text-gray-800 border-gray-200";
+        return "bg-muted text-muted-foreground border-border";
     }
   };
 
@@ -76,17 +76,17 @@ export function MeetingDetailsCard({ meetingId }: MeetingDetailsProps) {
               )}
             </div>
             {timing?.isUpcoming && (
-              <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+              <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
                 Upcoming
               </Badge>
             )}
             {timing?.isOngoing && (
-              <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+              <Badge variant="outline" className="bg-chart-1/10 text-chart-1 border-chart-1/20">
                 In Progress
               </Badge>
             )}
             {timing?.isPast && (
-              <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200">
+              <Badge variant="outline" className="bg-muted text-muted-foreground border-border">
                 Past
               </Badge>
             )}
@@ -217,25 +217,25 @@ export function MeetingDetailsCard({ meetingId }: MeetingDetailsProps) {
           <div className="mt-6 pt-4 border-t">
             <div className="grid grid-cols-4 gap-4 text-center">
               <div>
-                <p className="text-2xl font-semibold text-green-600">
+                <p className="text-2xl font-semibold text-chart-1">
                   {participants.summary.accepted}
                 </p>
-                <p className="text-xs text-slate-500">Accepted</p>
+                <p className="text-xs text-muted-foreground">Accepted</p>
               </div>
               <div>
-                <p className="text-2xl font-semibold text-red-600">
+                <p className="text-2xl font-semibold text-destructive">
                   {participants.summary.declined}
                 </p>
-                <p className="text-xs text-slate-500">Declined</p>
+                <p className="text-xs text-muted-foreground">Declined</p>
               </div>
               <div>
-                <p className="text-2xl font-semibold text-yellow-600">
+                <p className="text-2xl font-semibold text-chart-4">
                   {participants.summary.tentative}
                 </p>
-                <p className="text-xs text-slate-500">Tentative</p>
+                <p className="text-xs text-muted-foreground">Tentative</p>
               </div>
               <div>
-                <p className="text-2xl font-semibold text-gray-600">
+                <p className="text-2xl font-semibold text-muted-foreground">
                   {participants.summary.pending}
                 </p>
                 <p className="text-xs text-slate-500">Pending</p>

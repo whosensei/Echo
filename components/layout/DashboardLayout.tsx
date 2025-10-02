@@ -11,9 +11,11 @@ import {
   Settings,
   FileText,
   LogOut,
+  BarChart3,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { ThemeToggle } from "@/components/theme-toggle";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -33,6 +35,7 @@ const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { name: "Calendar", href: "/calendar", icon: Calendar },
   { name: "Meetings", href: "/meetings", icon: FileText },
+  { name: "Analytics", href: "/analytics", icon: BarChart3 },
   { name: "Record", href: "/record", icon: Mic },
   { name: "Settings", href: "/settings", icon: Settings },
 ];
@@ -48,15 +51,15 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   };
 
   return (
-    <div className="flex h-screen bg-slate-50">
+    <div className="flex h-screen bg-background">
       {/* Sidebar */}
       <aside className="hidden md:flex md:flex-shrink-0">
-        <div className="flex flex-col w-64 bg-white border-r border-slate-200">
+        <div className="flex flex-col w-64 bg-card border-r border-border">
           {/* Logo */}
-          <div className="flex items-center h-16 px-6 border-b border-slate-200">
+          <div className="flex items-center h-16 px-6 border-b border-border">
             <div className="flex items-center space-x-2">
               <Mic className="h-6 w-6 text-primary" />
-              <span className="text-xl font-semibold text-slate-900">
+              <span className="text-xl font-semibold text-foreground">
                 Meeting AI
               </span>
             </div>
@@ -73,8 +76,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                   className={cn(
                     "flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors",
                     isActive
-                      ? "bg-slate-100 text-slate-900"
-                      : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                      ? "bg-accent text-accent-foreground"
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
                   )}
                 >
                   <item.icon className="mr-3 h-5 w-5" />
@@ -85,10 +88,16 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           </nav>
 
           {/* User menu */}
-          <div className="flex-shrink-0 border-t border-slate-200 p-4">
+          <div className="flex-shrink-0 border-t border-border p-4">
+            <div className="flex items-center justify-between mb-3 px-3">
+              <span className="text-xs font-medium text-muted-foreground">
+                Appearance
+              </span>
+              <ThemeToggle />
+            </div>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="flex items-center w-full px-3 py-2 text-sm rounded-lg hover:bg-slate-50 transition-colors">
+                <button className="flex items-center w-full px-3 py-2 text-sm rounded-lg hover:bg-muted transition-colors">
                   <Avatar className="h-8 w-8">
                     <AvatarImage src={session?.user?.image || ""} />
                     <AvatarFallback>
@@ -96,10 +105,10 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                     </AvatarFallback>
                   </Avatar>
                   <div className="ml-3 text-left flex-1 min-w-0">
-                    <p className="text-sm font-medium text-slate-900 truncate">
+                    <p className="text-sm font-medium text-foreground truncate">
                       {session?.user?.name || "User"}
                     </p>
-                    <p className="text-xs text-slate-500 truncate">
+                    <p className="text-xs text-muted-foreground truncate">
                       {session?.user?.email || ""}
                     </p>
                   </div>
@@ -128,14 +137,15 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       {/* Main content */}
       <div className="flex flex-col flex-1 overflow-hidden">
         {/* Mobile header */}
-        <header className="md:hidden flex items-center h-16 px-4 border-b border-slate-200 bg-white">
+        <header className="md:hidden flex items-center h-16 px-4 border-b border-border bg-card">
           <div className="flex items-center space-x-2">
             <Mic className="h-6 w-6 text-primary" />
-            <span className="text-xl font-semibold text-slate-900">
+            <span className="text-xl font-semibold text-foreground">
               Meeting AI
             </span>
           </div>
-          <div className="ml-auto">
+          <div className="ml-auto flex items-center gap-2">
+            <ThemeToggle />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon">
@@ -169,7 +179,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         </header>
 
         {/* Page content */}
-        <main className="flex-1 overflow-y-auto bg-slate-50">
+        <main className="flex-1 overflow-y-auto bg-background">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             {children}
           </div>

@@ -242,13 +242,13 @@ export default function MeetingDetailsPage() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "completed":
-        return "bg-green-500";
+        return "bg-chart-1";
       case "processing":
-        return "bg-yellow-500";
+        return "bg-chart-4";
       case "failed":
-        return "bg-red-500";
+        return "bg-destructive";
       default:
-        return "bg-gray-500";
+        return "bg-muted-foreground";
     }
   };
 
@@ -274,7 +274,7 @@ export default function MeetingDetailsPage() {
           <div className="flex items-center justify-center min-h-[400px]">
             <div className="text-center">
               <FileText className="h-16 w-16 mx-auto text-slate-400 mb-4" />
-              <h2 className="text-2xl font-semibold text-slate-900 mb-2">Meeting not found</h2>
+              <h2 className="text-2xl font-semibold text-foreground mb-2">Meeting not found</h2>
               <p className="text-slate-600 mb-4">This meeting doesn't exist or you don't have access to it.</p>
               <Link href="/dashboard">
                 <Button>
@@ -304,7 +304,7 @@ export default function MeetingDetailsPage() {
                     <ArrowLeft className="h-4 w-4" />
                   </Button>
                 </Link>
-                <h1 className="text-3xl font-semibold text-slate-900">{meeting.title}</h1>
+                <h1 className="text-3xl font-semibold text-foreground">{meeting.title}</h1>
               </div>
               <div className="flex items-center gap-2 ml-12">
                 <Badge className={getStatusColor(meeting.status)}>
@@ -323,7 +323,7 @@ export default function MeetingDetailsPage() {
               </Button>
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700">
+                  <Button variant="outline" size="sm" className="text-destructive hover:text-destructive/80">
                     <Trash2 className="mr-2 h-4 w-4" />
                     Delete
                   </Button>
@@ -340,7 +340,7 @@ export default function MeetingDetailsPage() {
                     <AlertDialogCancel>Cancel</AlertDialogCancel>
                     <AlertDialogAction
                       onClick={handleDelete}
-                      className="bg-red-600 hover:bg-red-700"
+                      className="bg-destructive hover:bg-destructive/90"
                       disabled={isDeleting}
                     >
                       {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Delete"}
@@ -502,10 +502,10 @@ export default function MeetingDetailsPage() {
                             <ul className="space-y-2">
                               {summary.actionPoints.map((point: any, index: number) => (
                                 <li key={index} className="flex items-start gap-2">
-                                  <div className="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center flex-shrink-0 mt-0.5">
-                                    <span className="text-white text-xs font-bold">{index + 1}</span>
+                                  <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center flex-shrink-0 mt-0.5">
+                                    <span className="text-primary-foreground text-xs font-bold">{index + 1}</span>
                                   </div>
-                                  <p className="text-sm text-slate-700">{typeof point === 'string' ? point : point.text || JSON.stringify(point)}</p>
+                                  <p className="text-sm text-foreground/80">{typeof point === 'string' ? point : point.text || JSON.stringify(point)}</p>
                                 </li>
                               ))}
                             </ul>
@@ -554,10 +554,10 @@ export default function MeetingDetailsPage() {
                             <Badge
                               className={
                                 summary.sentiment === "positive"
-                                  ? "bg-green-500"
+                                  ? "bg-chart-1 text-primary-foreground"
                                   : summary.sentiment === "negative"
-                                  ? "bg-red-500"
-                                  : "bg-gray-500"
+                                  ? "bg-destructive text-destructive-foreground"
+                                  : "bg-muted text-muted-foreground"
                               }
                             >
                               {summary.sentiment}

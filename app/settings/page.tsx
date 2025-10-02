@@ -13,6 +13,7 @@ import { Separator } from "@/components/ui/separator";
 import { useSession } from "@/lib/auth-client";
 import { useToast } from "@/components/ui/toaster";
 import { User, Mail, Calendar, Key, CheckCircle2, XCircle, Loader2 } from "lucide-react";
+import { EmailTemplates } from "@/components/EmailTemplates";
 
 export default function SettingsPage() {
   const { data: session } = useSession();
@@ -70,7 +71,7 @@ export default function SettingsPage() {
         <div className="space-y-8">
           {/* Page header */}
           <div>
-            <h1 className="text-3xl font-semibold text-slate-900">Settings</h1>
+            <h1 className="text-3xl font-semibold text-foreground">Settings</h1>
             <p className="text-slate-600 mt-1">
               Manage your account settings and integrations
             </p>
@@ -78,10 +79,11 @@ export default function SettingsPage() {
 
           {/* Settings Tabs */}
           <Tabs defaultValue="profile" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-3 lg:w-[400px]">
+            <TabsList className="grid w-full grid-cols-4 lg:w-[600px]">
               <TabsTrigger value="profile">Profile</TabsTrigger>
               <TabsTrigger value="integrations">Integrations</TabsTrigger>
               <TabsTrigger value="api-keys">API Keys</TabsTrigger>
+              <TabsTrigger value="templates">Email Templates</TabsTrigger>
             </TabsList>
 
             {/* Profile Tab */}
@@ -122,16 +124,16 @@ export default function SettingsPage() {
 
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-red-600">Danger Zone</CardTitle>
+                  <CardTitle className="text-destructive">Danger Zone</CardTitle>
                   <CardDescription>
                     Irreversible actions for your account
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="flex items-center justify-between p-4 border border-red-200 rounded-lg bg-red-50">
+                  <div className="flex items-center justify-between p-4 border border-destructive/20 rounded-lg bg-destructive/10">
                     <div>
-                      <p className="text-sm font-medium text-red-900">Delete Account</p>
-                      <p className="text-xs text-red-700">
+                      <p className="text-sm font-medium text-destructive">Delete Account</p>
+                      <p className="text-xs text-destructive/80">
                         Permanently delete your account and all data
                       </p>
                     </div>
@@ -156,14 +158,14 @@ export default function SettingsPage() {
                   {/* Gmail Integration */}
                   <div className="flex items-start justify-between p-4 border rounded-lg">
                     <div className="flex items-start gap-4">
-                      <div className="p-2 bg-blue-100 rounded-lg">
-                        <Mail className="h-5 w-5 text-blue-600" />
+                      <div className="p-2 bg-primary/10 rounded-lg">
+                        <Mail className="h-5 w-5 text-primary" />
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
                           <h3 className="text-sm font-semibold">Gmail</h3>
                           {gmailConnected ? (
-                            <Badge variant="default" className="bg-green-500">
+                            <Badge variant="default" className="bg-chart-1 text-primary-foreground">
                               <CheckCircle2 className="h-3 w-3 mr-1" />
                               Connected
                             </Badge>
@@ -212,14 +214,14 @@ export default function SettingsPage() {
                   {/* Calendar Integration */}
                   <div className="flex items-start justify-between p-4 border rounded-lg">
                     <div className="flex items-start gap-4">
-                      <div className="p-2 bg-purple-100 rounded-lg">
-                        <Calendar className="h-5 w-5 text-purple-600" />
+                      <div className="p-2 bg-chart-3/10 rounded-lg">
+                        <Calendar className="h-5 w-5 text-chart-3" />
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
                           <h3 className="text-sm font-semibold">Google Calendar</h3>
                           {calendarConnected ? (
-                            <Badge variant="default" className="bg-green-500">
+                            <Badge variant="default" className="bg-chart-1 text-primary-foreground">
                               <CheckCircle2 className="h-3 w-3 mr-1" />
                               Connected
                             </Badge>
@@ -267,8 +269,8 @@ export default function SettingsPage() {
 
                   <Separator />
 
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                    <p className="text-sm text-blue-900">
+                  <div className="bg-accent border border-accent-foreground/20 rounded-lg p-4">
+                    <p className="text-sm text-accent-foreground">
                       <strong>Note:</strong> Gmail and Calendar integrations require Google OAuth
                       authentication. Make sure you grant the necessary permissions during the
                       connection process.
@@ -303,13 +305,13 @@ export default function SettingsPage() {
                       placeholder="Enter your Gladia API key"
                       defaultValue="••••••••••••••••"
                     />
-                    <p className="text-xs text-slate-500">
+                    <p className="text-xs text-muted-foreground">
                       Used for audio transcription and speaker diarization. Get your key from{" "}
                       <a
                         href="https://gladia.io"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-blue-600 hover:underline"
+                        className="text-primary hover:underline"
                       >
                         gladia.io
                       </a>
@@ -333,13 +335,13 @@ export default function SettingsPage() {
                       placeholder="Enter your Gemini API key"
                       defaultValue="••••••••••••••••"
                     />
-                    <p className="text-xs text-slate-500">
+                    <p className="text-xs text-muted-foreground">
                       Used for AI-powered meeting summaries and action points. Get your key from{" "}
                       <a
                         href="https://makersuite.google.com/app/apikey"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-blue-600 hover:underline"
+                        className="text-primary hover:underline"
                       >
                         Google AI Studio
                       </a>
@@ -358,6 +360,11 @@ export default function SettingsPage() {
                   </div>
                 </CardContent>
               </Card>
+            </TabsContent>
+
+            {/* Email Templates Tab */}
+            <TabsContent value="templates" className="space-y-6">
+              <EmailTemplates />
             </TabsContent>
           </Tabs>
         </div>

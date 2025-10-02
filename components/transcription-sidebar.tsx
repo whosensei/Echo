@@ -356,9 +356,9 @@ export function TranscriptionSidebar({
                                 <TooltipTrigger asChild>
                                   <button
                                     onClick={(e) => handleSaveEdit(e, transcription.id)}
-                                    className="w-6 h-6 rounded-full bg-blue-100 hover:bg-blue-200 flex items-center justify-center border border-blue-200"
+                                    className="w-6 h-6 rounded-full bg-primary/10 hover:bg-primary/20 flex items-center justify-center border border-primary/20"
                                   >
-                                    <Check className="h-3 w-3 text-blue-600" />
+                                    <Check className="h-3 w-3 text-primary" />
                                   </button>
                                 </TooltipTrigger>
                                 <TooltipContent>
@@ -369,9 +369,9 @@ export function TranscriptionSidebar({
                                 <TooltipTrigger asChild>
                                   <button
                                     onClick={(e) => handleCancelEdit(e)}
-                                    className="w-6 h-6 rounded-full bg-blue-100 hover:bg-blue-200 flex items-center justify-center border border-blue-200"
+                                    className="w-6 h-6 rounded-full bg-primary/10 hover:bg-primary/20 flex items-center justify-center border border-primary/20"
                                   >
-                                    <X className="h-3 w-3 text-blue-600" />
+                                    <X className="h-3 w-3 text-primary" />
                                   </button>
                                 </TooltipTrigger>
                                 <TooltipContent>
@@ -388,15 +388,15 @@ export function TranscriptionSidebar({
                                     <button
                                       className={`w-6 h-6 rounded-full flex items-center justify-center shadow-sm border ${
                                         playingId === transcription.id
-                                          ? "bg-orange-100 hover:bg-orange-200 border-orange-200"
-                                          : "bg-blue-100 hover:bg-blue-200 border-blue-200"
+                                          ? "bg-chart-4/10 hover:bg-chart-4/20 border-chart-4/20"
+                                          : "bg-primary/10 hover:bg-primary/20 border-primary/20"
                                       }`}
                                       onClick={(e) => handlePlayAudio(e, transcription)}
                                     >
                                       {playingId === transcription.id ? (
-                                        <Pause className="h-3 w-3 text-orange-600" />
+                                        <Pause className="h-3 w-3 text-chart-4" />
                                       ) : (
-                                        <Play className="h-3 w-3 text-blue-600" />
+                                        <Play className="h-3 w-3 text-primary" />
                                       )}
                                     </button>
                                   </TooltipTrigger>
@@ -408,10 +408,10 @@ export function TranscriptionSidebar({
                               <Tooltip>
                                 <TooltipTrigger asChild>
                                   <button
-                                    className="w-6 h-6 rounded-full bg-blue-100 hover:bg-blue-200 flex items-center justify-center shadow-sm border border-blue-200"
+                                    className="w-6 h-6 rounded-full bg-primary/10 hover:bg-primary/20 flex items-center justify-center shadow-sm border border-primary/20"
                                     onClick={(e) => handleStartEdit(e, transcription)}
                                   >
-                                    <Edit2 className="h-3 w-3 text-blue-600" />
+                                    <Edit2 className="h-3 w-3 text-primary" />
                                   </button>
                                 </TooltipTrigger>
                                 <TooltipContent>
@@ -421,10 +421,10 @@ export function TranscriptionSidebar({
                               <Tooltip>
                                 <TooltipTrigger asChild>
                                   <button
-                                    className="w-6 h-6 rounded-full bg-blue-100 hover:bg-blue-200 flex items-center justify-center shadow-sm border border-blue-200"
+                                    className="w-6 h-6 rounded-full bg-primary/10 hover:bg-primary/20 flex items-center justify-center shadow-sm border border-primary/20"
                                     onClick={(e) => handleDeleteTranscription(e, transcription.id)}
                                   >
-                                    <Trash2 className="h-3 w-3 text-blue-600" />
+                                    <Trash2 className="h-3 w-3 text-primary" />
                                   </button>
                                 </TooltipTrigger>
                                 <TooltipContent>
@@ -444,8 +444,8 @@ export function TranscriptionSidebar({
 
                       {/* Error state */}
                       {transcription.error && (
-                        <div className="mt-2 p-2 rounded bg-red-50 border border-red-200">
-                          <p className="text-xs text-red-700 truncate">
+                        <div className="mt-2 p-2 rounded bg-destructive/10 border border-destructive/20">
+                          <p className="text-xs text-destructive truncate">
                             Error: {transcription.error}
                           </p>
                         </div>

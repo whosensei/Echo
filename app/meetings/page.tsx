@@ -108,15 +108,15 @@ export default function MeetingsPage() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "completed":
-        return "bg-green-500";
+        return "bg-chart-1";
       case "processing":
-        return "bg-yellow-500";
+        return "bg-chart-4";
       case "failed":
-        return "bg-red-500";
+        return "bg-destructive";
       case "pending":
-        return "bg-blue-500";
+        return "bg-primary";
       default:
-        return "bg-gray-500";
+        return "bg-muted-foreground";
     }
   };
 
@@ -127,7 +127,7 @@ export default function MeetingsPage() {
           {/* Header */}
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-semibold text-slate-900">All Meetings</h1>
+              <h1 className="text-3xl font-semibold text-foreground">All Meetings</h1>
               <p className="text-slate-600 mt-1">
                 View and manage all your meeting recordings
               </p>
@@ -208,7 +208,7 @@ export default function MeetingsPage() {
                 <CardContent className="flex items-center justify-center py-12">
                   <div className="text-center">
                     <FileText className="h-16 w-16 mx-auto text-slate-400 mb-4 opacity-50" />
-                    <h3 className="text-lg font-semibold text-slate-900 mb-2">
+                    <h3 className="text-lg font-semibold text-foreground mb-2">
                       {searchQuery || statusFilter !== "all" ? "No meetings found" : "No meetings yet"}
                     </h3>
                     <p className="text-slate-600 mb-4">
@@ -235,7 +235,7 @@ export default function MeetingsPage() {
                       <div className="flex items-start justify-between">
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-3 mb-2">
-                            <h3 className="text-lg font-semibold text-slate-900 truncate">
+                            <h3 className="text-lg font-semibold text-foreground truncate">
                               {meeting.title}
                             </h3>
                             <Badge className={getStatusColor(meeting.status)}>

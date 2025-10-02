@@ -150,6 +150,21 @@ export const apiKey = pgTable("api_key", {
   updatedAt: timestamp("updatedAt").notNull().defaultNow(),
 });
 
+// Email Templates table - stores custom email templates
+export const emailTemplate = pgTable("email_template", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: text("userId")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  type: text("type").notNull(), // transcript, summary, action_points
+  subject: text("subject").notNull(),
+  body: text("body").notNull(), // HTML template with variables
+  isDefault: boolean("isDefault").notNull().default(false),
+  createdAt: timestamp("createdAt").notNull().defaultNow(),
+  updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+});
+
 // Relations
 export const userRelations = relations(user, ({ many, one }) => ({
   sessions: many(session),
@@ -158,6 +173,7 @@ export const userRelations = relations(user, ({ many, one }) => ({
   emailLogs: many(emailLog),
   settings: one(userSettings),
   apiKeys: many(apiKey),
+  emailTemplates: many(emailTemplate),
 }));
 
 export const sessionRelations = relations(session, ({ one }) => ({
@@ -223,6 +239,13 @@ export const apiKeyRelations = relations(apiKey, ({ one }) => ({
   }),
 }));
 
+export const emailTemplateRelations = relations(emailTemplate, ({ one }) => ({
+  user: one(user, {
+    fields: [emailTemplate.userId],
+    references: [user.id],
+  }),
+}));
+
 // Type exports for TypeScript
 export type User = typeof user.$inferSelect;
 export type NewUser = typeof user.$inferInsert;
@@ -250,3 +273,6 @@ export type NewUserSettings = typeof userSettings.$inferInsert;
 
 export type ApiKey = typeof apiKey.$inferSelect;
 export type NewApiKey = typeof apiKey.$inferInsert;
+
+export type EmailTemplate = typeof emailTemplate.$inferSelect;
+export type NewEmailTemplate = typeof emailTemplate.$inferInsert;

@@ -79,6 +79,10 @@ export default function DashboardPage() {
         const calendarData = await calendarRes.json();
         setUpcomingCalendar(calendarData.meetings || []);
         setStats(prev => ({ ...prev, upcomingEvents: calendarData.meetings?.length || 0 }));
+      } else if (calendarRes.status === 401) {
+        // Calendar not connected - this is OK, just skip it
+        console.log("Google Calendar not connected");
+        setUpcomingCalendar([]);
       }
     } catch (error) {
       console.error("Failed to fetch dashboard data:", error);
@@ -93,6 +97,17 @@ export default function DashboardPage() {
       const response = await fetch("/api/calendar/sync", {
         method: "POST",
       });
+
+      if (response.status === 401) {
+        const data = await response.json();
+        toast({
+          title: "Google Calendar not connected",
+          description: data.error || "Please connect your Google account in Settings.",
+          variant: "destructive",
+        });
+        setIsSyncing(false);
+        return;
+      }
 
       if (!response.ok) {
         throw new Error("Failed to sync calendar");
@@ -133,7 +148,7 @@ export default function DashboardPage() {
           {/* Page header */}
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-semibold text-slate-900">Dashboard</h1>
+              <h1 className="text-3xl font-semibold text-foreground">Dashboard</h1>
               <p className="text-slate-600 mt-1">
                 Welcome back! Here's an overview of your meetings.
               </p>
@@ -245,12 +260,12 @@ export default function DashboardPage() {
                 <div className="space-y-4">
                   {isLoading ? (
                     <div className="flex items-center justify-center py-8">
-                      <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
+                      <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
                     </div>
                   ) : upcomingCalendar.length === 0 ? (
-                    <div className="flex items-center justify-center py-8 text-slate-500">
+                    <div className="flex items-center justify-center py-8 text-muted-foreground">
                       <div className="text-center">
-                        <Calendar className="h-12 w-12 mx-auto mb-2 text-slate-400" />
+                        <Calendar className="h-12 w-12 mx-auto mb-2 text-muted-foreground" />
                         <p className="text-sm">No upcoming meetings</p>
                         <Link href="/settings">
                           <Button variant="link" className="mt-2">
@@ -261,24 +276,24 @@ export default function DashboardPage() {
                     </div>
                   ) : (
                     upcomingCalendar.map((event) => (
-                      <div key={event.id} className="flex items-start gap-3 p-3 rounded-lg border hover:bg-slate-50 transition-colors">
+                      <div key={event.id} className="flex items-start gap-3 p-3 rounded-lg border hover:bg-accent transition-colors">
                         <div className="mt-0.5">
                           <Calendar className="h-4 w-4 text-primary" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-slate-900 truncate">
+                          <p className="text-sm font-medium text-foreground truncate">
                             {event.summary}
                           </p>
                           <div className="flex items-center gap-2 mt-1">
-                            <Clock className="h-3 w-3 text-slate-400" />
-                            <p className="text-xs text-slate-500">
+                            <Clock className="h-3 w-3 text-muted-foreground" />
+                            <p className="text-xs text-muted-foreground">
                               {formatDate(event.start)}
                             </p>
                           </div>
                           {event.attendees && event.attendees.length > 0 && (
                             <div className="flex items-center gap-1 mt-1">
-                              <Users className="h-3 w-3 text-slate-400" />
-                              <p className="text-xs text-slate-500">
+                              <Users className="h-3 w-3 text-muted-foreground" />
+                              <p className="text-xs text-muted-foreground">
                                 {event.attendees.length} attendees
                               </p>
                             </div>
@@ -303,12 +318,12 @@ export default function DashboardPage() {
                 <div className="space-y-4">
                   {isLoading ? (
                     <div className="flex items-center justify-center py-8">
-                      <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
+                      <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
                     </div>
                   ) : recentMeetings.length === 0 ? (
-                    <div className="flex items-center justify-center py-8 text-slate-500">
+                    <div className="flex items-center justify-center py-8 text-muted-foreground">
                       <div className="text-center">
-                        <Mic className="h-12 w-12 mx-auto mb-2 text-slate-400" />
+                        <Mic className="h-12 w-12 mx-auto mb-2 text-muted-foreground" />
                         <p className="text-sm">No recordings yet</p>
                         <Link href="/">
                           <Button variant="link" className="mt-2">
@@ -320,12 +335,12 @@ export default function DashboardPage() {
                   ) : (
                     recentMeetings.map((meeting) => (
                       <Link key={meeting.id} href={`/meetings/${meeting.id}`}>
-                        <div className="flex items-start gap-3 p-3 rounded-lg border hover:bg-slate-50 transition-colors cursor-pointer">
+                        <div className="flex items-start gap-3 p-3 rounded-lg border hover:bg-accent transition-colors cursor-pointer">
                           <div className="mt-0.5">
                             <FileText className="h-4 w-4 text-primary" />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-slate-900 truncate">
+                            <p className="text-sm font-medium text-foreground truncate">
                               {meeting.title}
                             </p>
                             <div className="flex items-center gap-2 mt-1">
@@ -333,7 +348,7 @@ export default function DashboardPage() {
                                 {meeting.status}
                               </Badge>
                               {meeting.startTime && (
-                                <p className="text-xs text-slate-500">
+                                <p className="text-xs text-muted-foreground">
                                   {formatDate(meeting.startTime)}
                                 </p>
                               )}

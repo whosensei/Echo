@@ -168,19 +168,19 @@ export function AudioRecorderComponent({
       <div className="max-w-5xl mx-auto p-8 space-y-8">
         {/* Status Messages */}
         {error && (
-          <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+          <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
             <div className="flex items-center gap-2">
-              <div className="w-2 h-2 bg-red-500 rounded-full" />
-              <span className="text-sm font-medium text-red-700">{error}</span>
+              <div className="w-2 h-2 bg-destructive rounded-full" />
+              <span className="text-sm font-medium text-destructive">{error}</span>
             </div>
           </div>
         )}
 
         {!isInitialized && !error && (
-          <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+          <div className="p-4 bg-primary/10 border border-primary/20 rounded-lg">
             <div className="flex items-center gap-2">
-              <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
-              <span className="text-sm font-medium text-blue-700">Initializing recorder...</span>
+              <div className="w-2 h-2 bg-primary rounded-full animate-pulse" />
+              <span className="text-sm font-medium text-primary">Initializing recorder...</span>
             </div>
           </div>
         )}
@@ -197,10 +197,10 @@ export function AudioRecorderComponent({
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-muted rounded-full border">
               <div className={`w-2 h-2 rounded-full ${
                 recordedAudio
-                  ? "bg-green-500"
+                  ? "bg-chart-1"
                   : isRecording
-                    ? (isPaused ? "bg-yellow-500" : "bg-red-500 animate-pulse")
-                    : "bg-gray-400"
+                    ? (isPaused ? "bg-chart-4" : "bg-destructive animate-pulse")
+                    : "bg-muted-foreground"
               }`} />
               <span className="text-sm font-medium text-foreground">
                 {getRecordingStatus()}
@@ -295,32 +295,32 @@ export function AudioRecorderComponent({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
               {recordedAudio ? (
                 <>
-                  <div className="flex items-center gap-2 p-3 bg-green-50 rounded-lg border border-green-200">
-                    <div className="w-2 h-2 bg-green-500 rounded-full" />
-                    <span className="font-medium text-green-800">Ready for processing</span>
+                  <div className="flex items-center gap-2 p-3 bg-chart-1/10 rounded-lg border border-chart-1/20">
+                    <div className="w-2 h-2 bg-chart-1 rounded-full" />
+                    <span className="font-medium text-chart-1">Ready for processing</span>
                   </div>
-                  <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full" />
-                    <span className="font-medium text-blue-800">WAV format</span>
+                  <div className="flex items-center gap-2 p-3 bg-primary/10 rounded-lg border border-primary/20">
+                    <div className="w-2 h-2 bg-primary rounded-full" />
+                    <span className="font-medium text-primary">WAV format</span>
                   </div>
                 </>
               ) : (
                 <>
-                  <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full" />
-                    <span className="font-medium text-blue-800">44.1kHz quality</span>
+                  <div className="flex items-center gap-2 p-3 bg-primary/10 rounded-lg border border-primary/20">
+                    <div className="w-2 h-2 bg-primary rounded-full" />
+                    <span className="font-medium text-primary">44.1kHz quality</span>
                   </div>
-                  <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full" />
-                    <span className="font-medium text-blue-800">Pause/resume</span>
+                  <div className="flex items-center gap-2 p-3 bg-primary/10 rounded-lg border border-primary/20">
+                    <div className="w-2 h-2 bg-primary rounded-full" />
+                    <span className="font-medium text-primary">Pause/resume</span>
                   </div>
-                  <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full" />
-                    <span className="font-medium text-blue-800">Real-time timer</span>
+                  <div className="flex items-center gap-2 p-3 bg-primary/10 rounded-lg border border-primary/20">
+                    <div className="w-2 h-2 bg-primary rounded-full" />
+                    <span className="font-medium text-primary">Real-time timer</span>
                   </div>
-                  <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full" />
-                    <span className="font-medium text-blue-800">Speaker detection</span>
+                  <div className="flex items-center gap-2 p-3 bg-primary/10 rounded-lg border border-primary/20">
+                    <div className="w-2 h-2 bg-primary rounded-full" />
+                    <span className="font-medium text-primary">Speaker detection</span>
                   </div>
                 </>
               )}

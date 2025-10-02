@@ -56,12 +56,12 @@ export function TabbedTranscriptDisplay({ transcription, summary, isLoading, onN
 
   const getSpeakerColor = (speaker: string): string => {
     const colors = [
-      "bg-purple-100 text-purple-800",
-      "bg-blue-100 text-blue-800",
-      "bg-green-100 text-green-800",
-      "bg-orange-100 text-orange-800",
-      "bg-pink-100 text-pink-800",
-      "bg-indigo-100 text-indigo-800",
+      "bg-chart-3/10 text-chart-3",
+      "bg-primary/10 text-primary",
+      "bg-chart-1/10 text-chart-1",
+      "bg-chart-4/10 text-chart-4",
+      "bg-chart-2/10 text-chart-2",
+      "bg-chart-5/10 text-chart-5",
     ]
 
     let hash = 0
@@ -364,10 +364,10 @@ export function TabbedTranscriptDisplay({ transcription, summary, isLoading, onN
                     <div className="px-4 py-2 bg-muted rounded-lg border">
                       <div className={`flex items-center gap-2 text-sm ${
                         summary.sentiment === "positive"
-                          ? "text-green-600"
+                          ? "text-chart-1"
                           : summary.sentiment === "negative"
-                            ? "text-red-600"
-                            : "text-yellow-600"
+                            ? "text-destructive"
+                            : "text-chart-4"
                       }`}>
                         <span className="font-medium capitalize">{summary.sentiment} sentiment</span>
                       </div>
@@ -401,8 +401,8 @@ export function TabbedTranscriptDisplay({ transcription, summary, isLoading, onN
                       <div className="space-y-3">
                         {summary.actionItems.map((item, index) => (
                           <div key={index} className="flex items-start gap-3">
-                            <div className="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0 mt-0.5">
-                              <span className="text-white text-xs font-bold">•</span>
+                            <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center flex-shrink-0 mt-0.5">
+                              <span className="text-primary-foreground text-xs font-bold">•</span>
                             </div>
                             <p className="text-sm leading-relaxed text-foreground">{item}</p>
                           </div>
