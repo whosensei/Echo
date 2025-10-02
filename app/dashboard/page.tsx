@@ -1,135 +1,38 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, FileText, Mail, Mic, Plus, TrendingUp, RefreshCw, Loader2, Clock, Users } from "lucide-react";
+import { Calendar, FileText, Plus, TrendingUp, RefreshCw, Clock, Mail, Users } from "lucide-react";
 import Link from "next/link";
-import { useToast } from "@/components/ui/toaster";
-
-interface Meeting {
-  id: string;
-  title: string;
-  startTime: string | null;
-  endTime: string | null;
-  status: string;
-  createdAt: string;
-}
-
-interface CalendarEvent {
-  id: string;
-  summary: string;
-  start: string;
-  end: string;
-  attendees?: any[];
-  location?: string;
-  conferenceData?: any;
-}
-
-interface DashboardStats {
-  totalMeetings: number;
-  thisWeekMeetings: number;
-  emailsSent: number;
-  upcomingEvents: number;
-}
+import { useMeetings, useCalendarSync } from "@/hooks/use-queries";
+import { DashboardSkeleton } from "@/components/ui/loading-skeletons";
+import { useMemo } from "react";
 
 export default function DashboardPage() {
-  const { toast } = useToast();
-  const [stats, setStats] = useState<DashboardStats>({
-    totalMeetings: 0,
-    thisWeekMeetings: 0,
-    emailsSent: 0,
-    upcomingEvents: 0,
-  });
-  const [recentMeetings, setRecentMeetings] = useState<Meeting[]>([]);
-  const [upcomingCalendar, setUpcomingCalendar] = useState<CalendarEvent[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSyncing, setIsSyncing] = useState(false);
+  const { data: meetings, isLoading: isLoadingMeetings, error: meetingsError } = useMeetings(5);
+  const { data: calendarEvents, isLoading: isLoadingCalendar, refetch: refetchCalendar, isFetching: isSyncing } = useCalendarSync();
 
-  useEffect(() => {
-    fetchDashboardData();
-  }, []);
+  // Calculate stats from meetings data
+  const stats = useMemo(() => {
+    if (!meetings) return {
+      totalMeetings: 0,
+      thisWeekMeetings: 0,
+      upcomingEvents: calendarEvents?.length || 0,
+    };
 
-  const fetchDashboardData = async () => {
-    setIsLoading(true);
-    try {
-      // Fetch meetings
-      const meetingsRes = await fetch("/api/meetings?limit=5");
-      if (meetingsRes.ok) {
-        const meetingsData = await meetingsRes.json();
-        setRecentMeetings(meetingsData.meetings || []);
-        
-        // Calculate stats
-        const total = meetingsData.meetings?.length || 0;
-        const weekAgo = new Date();
-        weekAgo.setDate(weekAgo.getDate() - 7);
-        const thisWeek = meetingsData.meetings?.filter((m: Meeting) => 
-          new Date(m.createdAt) > weekAgo
-        ).length || 0;
-        
-        setStats(prev => ({ ...prev, totalMeetings: total, thisWeekMeetings: thisWeek }));
-      }
+    const weekAgo = new Date();
+    weekAgo.setDate(weekAgo.getDate() - 7);
+    const thisWeek = meetings.filter(m => new Date(m.createdAt) > weekAgo).length;
 
-      // Fetch upcoming calendar events
-      const calendarRes = await fetch("/api/calendar/sync");
-      if (calendarRes.ok) {
-        const calendarData = await calendarRes.json();
-        setUpcomingCalendar(calendarData.meetings || []);
-        setStats(prev => ({ ...prev, upcomingEvents: calendarData.meetings?.length || 0 }));
-      } else if (calendarRes.status === 401) {
-        // Calendar not connected - this is OK, just skip it
-        console.log("Google Calendar not connected");
-        setUpcomingCalendar([]);
-      }
-    } catch (error) {
-      console.error("Failed to fetch dashboard data:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleSyncCalendar = async () => {
-    setIsSyncing(true);
-    try {
-      const response = await fetch("/api/calendar/sync", {
-        method: "POST",
-      });
-
-      if (response.status === 401) {
-        const data = await response.json();
-        toast({
-          title: "Google Calendar not connected",
-          description: data.error || "Please connect your Google account in Settings.",
-          variant: "destructive",
-        });
-        setIsSyncing(false);
-        return;
-      }
-
-      if (!response.ok) {
-        throw new Error("Failed to sync calendar");
-      }
-
-      toast({
-        title: "Calendar synced!",
-        description: "Your meetings have been synced to the database.",
-      });
-
-      // Refresh data
-      await fetchDashboardData();
-    } catch (error) {
-      toast({
-        title: "Sync failed",
-        description: error instanceof Error ? error.message : "Failed to sync calendar",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSyncing(false);
-    }
-  };
+    return {
+      totalMeetings: meetings.length,
+      thisWeekMeetings: thisWeek,
+      upcomingEvents: calendarEvents?.length || 0,
+    };
+  }, [meetings, calendarEvents]);
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -141,6 +44,29 @@ export default function DashboardPage() {
     });
   };
 
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "completed":
+        return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200";
+      case "processing":
+        return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200";
+      case "pending":
+        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200";
+      default:
+        return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200";
+    }
+  };
+
+  if (isLoadingMeetings && isLoadingCalendar) {
+    return (
+      <ProtectedRoute>
+        <DashboardLayout>
+          <DashboardSkeleton />
+        </DashboardLayout>
+      </ProtectedRoute>
+    );
+  }
+
   return (
     <ProtectedRoute>
       <DashboardLayout>
@@ -149,7 +75,7 @@ export default function DashboardPage() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-semibold text-foreground">Dashboard</h1>
-              <p className="text-slate-600 mt-1">
+              <p className="text-muted-foreground mt-1">
                 Welcome back! Here's an overview of your meetings.
               </p>
             </div>
@@ -171,9 +97,7 @@ export default function DashboardPage() {
                 <FileText className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">
-                  {isLoading ? <Loader2 className="h-6 w-6 animate-spin" /> : stats.totalMeetings}
-                </div>
+                <div className="text-2xl font-bold">{stats.totalMeetings}</div>
                 <p className="text-xs text-muted-foreground">
                   All time recordings
                 </p>
@@ -188,9 +112,7 @@ export default function DashboardPage() {
                 <TrendingUp className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">
-                  {isLoading ? <Loader2 className="h-6 w-6 animate-spin" /> : stats.thisWeekMeetings}
-                </div>
+                <div className="text-2xl font-bold">{stats.thisWeekMeetings}</div>
                 <p className="text-xs text-muted-foreground">
                   Meetings recorded
                 </p>
@@ -205,11 +127,9 @@ export default function DashboardPage() {
                 <Mail className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">
-                  {isLoading ? <Loader2 className="h-6 w-6 animate-spin" /> : stats.emailsSent}
-                </div>
+                <div className="text-2xl font-bold">0</div>
                 <p className="text-xs text-muted-foreground">
-                  Transcripts & summaries
+                  Transcripts shared
                 </p>
               </CardContent>
             </Card>
@@ -217,183 +137,139 @@ export default function DashboardPage() {
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">
-                  Upcoming
+                  Upcoming Events
                 </CardTitle>
                 <Calendar className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">
-                  {isLoading ? <Loader2 className="h-6 w-6 animate-spin" /> : stats.upcomingEvents}
-                </div>
+                <div className="text-2xl font-bold">{stats.upcomingEvents}</div>
                 <p className="text-xs text-muted-foreground">
-                  Calendar events
+                  From your calendar
                 </p>
               </CardContent>
             </Card>
           </div>
 
-          {/* Recent activity and upcoming meetings */}
+          {/* Recent Meetings and Upcoming Calendar */}
           <div className="grid gap-6 md:grid-cols-2">
-            {/* Upcoming Meetings */}
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
-                <div>
-                  <CardTitle>Upcoming Meetings</CardTitle>
-                  <CardDescription>
-                    Your next 5 meetings from Google Calendar
-                  </CardDescription>
-                </div>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={handleSyncCalendar}
-                  disabled={isSyncing}
-                >
-                  {isSyncing ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <RefreshCw className="h-4 w-4" />
-                  )}
-                </Button>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {isLoading ? (
-                    <div className="flex items-center justify-center py-8">
-                      <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-                    </div>
-                  ) : upcomingCalendar.length === 0 ? (
-                    <div className="flex items-center justify-center py-8 text-muted-foreground">
-                      <div className="text-center">
-                        <Calendar className="h-12 w-12 mx-auto mb-2 text-muted-foreground" />
-                        <p className="text-sm">No upcoming meetings</p>
-                        <Link href="/settings">
-                          <Button variant="link" className="mt-2">
-                            Connect Google Calendar
-                          </Button>
-                        </Link>
-                      </div>
-                    </div>
-                  ) : (
-                    upcomingCalendar.map((event) => (
-                      <div key={event.id} className="flex items-start gap-3 p-3 rounded-lg border hover:bg-accent transition-colors">
-                        <div className="mt-0.5">
-                          <Calendar className="h-4 w-4 text-primary" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-foreground truncate">
-                            {event.summary}
-                          </p>
-                          <div className="flex items-center gap-2 mt-1">
-                            <Clock className="h-3 w-3 text-muted-foreground" />
-                            <p className="text-xs text-muted-foreground">
-                              {formatDate(event.start)}
-                            </p>
-                          </div>
-                          {event.attendees && event.attendees.length > 0 && (
-                            <div className="flex items-center gap-1 mt-1">
-                              <Users className="h-3 w-3 text-muted-foreground" />
-                              <p className="text-xs text-muted-foreground">
-                                {event.attendees.length} attendees
-                              </p>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Recent Recordings */}
+            {/* Recent Meetings */}
             <Card>
               <CardHeader>
-                <CardTitle>Recent Recordings</CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardTitle>Recent Meetings</CardTitle>
+                  <Link href="/meetings">
+                    <Button variant="ghost" size="sm">
+                      View all
+                    </Button>
+                  </Link>
+                </div>
                 <CardDescription>
-                  Your latest meeting transcripts
+                  Your latest recorded meetings
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  {isLoading ? (
-                    <div className="flex items-center justify-center py-8">
-                      <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-                    </div>
-                  ) : recentMeetings.length === 0 ? (
-                    <div className="flex items-center justify-center py-8 text-muted-foreground">
-                      <div className="text-center">
-                        <Mic className="h-12 w-12 mx-auto mb-2 text-muted-foreground" />
-                        <p className="text-sm">No recordings yet</p>
-                        <Link href="/">
-                          <Button variant="link" className="mt-2">
-                            Create your first recording
-                          </Button>
-                        </Link>
-                      </div>
-                    </div>
-                  ) : (
-                    recentMeetings.map((meeting) => (
-                      <Link key={meeting.id} href={`/meetings/${meeting.id}`}>
-                        <div className="flex items-start gap-3 p-3 rounded-lg border hover:bg-accent transition-colors cursor-pointer">
-                          <div className="mt-0.5">
-                            <FileText className="h-4 w-4 text-primary" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-foreground truncate">
-                              {meeting.title}
-                            </p>
-                            <div className="flex items-center gap-2 mt-1">
-                              <Badge variant="secondary" className="text-xs">
-                                {meeting.status}
-                              </Badge>
-                              {meeting.startTime && (
-                                <p className="text-xs text-muted-foreground">
-                                  {formatDate(meeting.startTime)}
-                                </p>
-                              )}
-                            </div>
-                          </div>
+                {meetingsError ? (
+                  <div className="text-center py-8">
+                    <p className="text-sm text-muted-foreground">
+                      Failed to load meetings
+                    </p>
+                  </div>
+                ) : !meetings || meetings.length === 0 ? (
+                  <div className="text-center py-8">
+                    <FileText className="mx-auto h-12 w-12 text-muted-foreground opacity-50" />
+                    <p className="mt-4 text-sm text-muted-foreground">
+                      No meetings yet
+                    </p>
+                    <Link href="/record">
+                      <Button className="mt-4" size="sm">
+                        Record your first meeting
+                      </Button>
+                    </Link>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {meetings.map((meeting) => (
+                      <Link
+                        key={meeting.id}
+                        href={`/meetings/${meeting.id}`}
+                        className="flex items-center justify-between p-4 rounded-lg border border-border hover:bg-accent transition-colors"
+                      >
+                        <div className="space-y-1 flex-1">
+                          <p className="text-sm font-medium leading-none">
+                            {meeting.title || "Untitled Meeting"}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {formatDate(meeting.createdAt)}
+                          </p>
                         </div>
+                        <Badge className={getStatusColor(meeting.status)}>
+                          {meeting.status}
+                        </Badge>
                       </Link>
-                    ))
-                  )}
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Upcoming Calendar Events */}
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle>Upcoming Meetings</CardTitle>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => refetchCalendar()}
+                    disabled={isSyncing}
+                  >
+                    <RefreshCw className={`h-4 w-4 ${isSyncing ? "animate-spin" : ""}`} />
+                  </Button>
                 </div>
+                <CardDescription>
+                  From your Google Calendar
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {!calendarEvents || calendarEvents.length === 0 ? (
+                  <div className="text-center py-8">
+                    <Calendar className="mx-auto h-12 w-12 text-muted-foreground opacity-50" />
+                    <p className="mt-4 text-sm text-muted-foreground">
+                      No upcoming events
+                    </p>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Connect your calendar in Settings
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {calendarEvents.map((event) => (
+                      <div
+                        key={event.id}
+                        className="p-4 rounded-lg border border-border hover:bg-accent transition-colors"
+                      >
+                        <p className="text-sm font-medium leading-none">
+                          {event.summary}
+                        </p>
+                        <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
+                          <span className="flex items-center gap-1">
+                            <Clock className="h-3 w-3" />
+                            {formatDate(event.start.dateTime)}
+                          </span>
+                          {event.attendees && event.attendees.length > 0 && (
+                            <span className="flex items-center gap-1">
+                              <Users className="h-3 w-3" />
+                              {event.attendees.length} attendees
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
-
-          {/* Quick Actions */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Quick Actions</CardTitle>
-              <CardDescription>
-                Common tasks and shortcuts
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid gap-4 md:grid-cols-3">
-                <Link href="/record">
-                  <Button variant="outline" className="w-full h-auto py-6 flex-col">
-                    <Mic className="h-8 w-8 mb-2" />
-                    <span>Record Meeting</span>
-                  </Button>
-                </Link>
-                <Link href="/calendar">
-                  <Button variant="outline" className="w-full h-auto py-6 flex-col">
-                    <Calendar className="h-8 w-8 mb-2" />
-                    <span>Sync Calendar</span>
-                  </Button>
-                </Link>
-                <Link href="/settings">
-                  <Button variant="outline" className="w-full h-auto py-6 flex-col">
-                    <Mail className="h-8 w-8 mb-2" />
-                    <span>Email Settings</span>
-                  </Button>
-                </Link>
-              </div>
-            </CardContent>
-          </Card>
         </div>
       </DashboardLayout>
     </ProtectedRoute>
