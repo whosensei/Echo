@@ -1,13 +1,43 @@
-# Audio Transcription & Meeting Summary App
+# 🎙️ Meeting Assistant - AI-Powered Meeting Management
 
-An intelligent audio recording application that provides AI-powered transcription with speaker diarization and generates comprehensive meeting summaries using Gladia and Google Gemini APIs.
+A modern, full-stack meeting assistant with AI transcription, automatic summaries, Gmail integration, Google Calendar sync, and comprehensive authentication.
 
-## Features
+## ✨ Features
 
-- **Lossless Audio Recording**: Records high-quality WAV audio using Web Audio API (no MediaRecorder)
-- **AI Transcription**: Powered by Gladia API with speaker diarization and named entity recognition
-- **Meeting Summaries**: Intelligent summaries generated using Google Gemini AI
-- **Beautiful UI**: Modern, responsive interface built with Next.js and Shadcn UI
+### 🔐 Authentication
+- **Email/Password Login** - Secure authentication with Better Auth
+- **Google OAuth** - Single sign-on with Google account  
+- **Session Management** - Persistent sessions with automatic refresh
+
+### 📧 Gmail Integration
+- Send meeting transcripts via email
+- Share AI-generated summaries
+- Email action points to participants
+- Track email delivery status
+
+### 📅 Google Calendar Integration  
+- View upcoming 5 meetings
+- Auto-sync calendar events
+- Link transcriptions to calendar meetings
+- Display meeting details and participants
+
+### 🎤 Meeting Transcription
+- **Lossless Audio Recording** - High-quality WAV audio using Web Audio API
+- **AI Transcription** - Powered by Gladia API with speaker diarization
+- Multiple language support
+- Named entity recognition
+
+### 🤖 AI Summaries
+- **Intelligent Summaries** - Generated using Google Gemini AI
+- Extract action points automatically
+- Identify key topics
+- Participant tracking
+
+### 🎨 Modern UI
+- Clean, minimal design with shadcn/ui
+- Responsive layout (mobile-first)
+- Professional dashboard
+- Smooth animations and transitions
 - **Real-time Processing**: Live recording controls with pause/resume functionality
 - **Transcript Management**: Sidebar showing all previous transcriptions
 - **Local Storage**: Audio files saved locally for privacy and reliability
