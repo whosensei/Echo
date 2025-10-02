@@ -9,8 +9,10 @@ import type { MeetingSummary } from "@/lib/gemini-service"
 import { LocalStorageService, type StoredTranscription } from "@/lib/local-storage"
 import { Toaster } from "@/components/ui/toaster"
 import { useToast } from "@/components/ui/toaster"
+import { useSession } from "@/lib/auth-client"
 
 export default function Home() {
+  const { data: session } = useSession();
   const [currentTranscription, setCurrentTranscription] = useState<GladiaTranscriptionResult | null>(null)
   const [currentSummary, setCurrentSummary] = useState<MeetingSummary | null>(null)
   const [isProcessing, setIsProcessing] = useState(false)
@@ -159,6 +161,31 @@ export default function Home() {
       LocalStorageService.saveNewTranscription(transcriptionId, finalFilename)
       LocalStorageService.updateTranscription(transcriptionId, { audioData: audioBase64 })
 
+      // If user is logged in, also save to database
+      if (session?.user) {
+        try {
+          const meetingResponse = await fetch("/api/meetings", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              title: `Recording ${finalFilename}`,
+              startTime: new Date().toISOString(),
+              audioFileUrl: uploadData.filename,
+              status: "processing",
+            }),
+          });
+
+          if (meetingResponse.ok) {
+            const { meeting } = await meetingResponse.json();
+            // Store meeting ID in local storage for later reference
+            LocalStorageService.updateTranscription(transcriptionId, { meetingId: meeting.id });
+          }
+        } catch (dbError) {
+          console.error("Failed to save to database:", dbError);
+          // Continue processing even if database save fails
+        }
+      }
+
       // Trigger sidebar refresh to show the new item
       setRefreshTrigger(prev => prev + 1)
 
@@ -262,6 +289,64 @@ export default function Home() {
 
           // Complete transcription with results
           LocalStorageService.completeTranscription(transcriptionId, result, summaryData)
+
+          // If user is logged in, save transcript and summary to database
+          if (session?.user) {
+            try {
+              const stored = LocalStorageService.getTranscription(transcriptionId);
+              if (stored?.meetingId) {
+                // Update meeting status
+                await fetch(`/api/meetings/${stored.meetingId}`, {
+                  method: "PUT",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    status: "completed",
+                    endTime: new Date().toISOString(),
+                  }),
+                });
+
+                // Save transcript to database
+                if (result?.result?.transcription) {
+                  await fetch("/api/transcriptions", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      meetingId: stored.meetingId,
+                      content: result.result.transcription.full_transcript,
+                      language: result.result.transcription.language,
+                      speakerCount: result.result.speakers?.length || 0,
+                      duration: result.result.transcription.audio_duration,
+                      confidence: Math.round((result.result.transcription.confidence || 0) * 100),
+                      metadata: {
+                        utterances: result.result.transcription.utterances,
+                        speakers: result.result.speakers,
+                        namedEntities: result.result.named_entities,
+                      },
+                    }),
+                  });
+                }
+
+                // Save summary to database
+                if (summaryData) {
+                  await fetch("/api/summaries", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      meetingId: stored.meetingId,
+                      summary: summaryData.overview,
+                      actionPoints: summaryData.actionItems,
+                      keyTopics: summaryData.topics,
+                      participants: summaryData.participants,
+                      sentiment: summaryData.sentiment,
+                    }),
+                  });
+                }
+              }
+            } catch (dbError) {
+              console.error("Failed to save to database:", dbError);
+              // Continue even if database save fails
+            }
+          }
 
           // Set current audio data for display
           setCurrentAudioData(audioBase64)

@@ -1,11 +1,17 @@
 "use client"
 
+import { useState } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Clock, User, MessageSquare, Plus } from "lucide-react"
+import { Clock, User, MessageSquare, Plus, Mail, Loader2 } from "lucide-react"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { useToast } from "@/components/ui/toaster"
+import { useSession } from "@/lib/auth-client"
 import type { GladiaTranscriptionResult } from "@/lib/gladia-service"
 import type { MeetingSummary } from "@/lib/gemini-service"
 
@@ -15,9 +21,16 @@ interface TabbedTranscriptDisplayProps {
   isLoading?: boolean
   onNewRecording?: () => void
   isSidebarCollapsed?: boolean
+  meetingId?: string | null
 }
 
-export function TabbedTranscriptDisplay({ transcription, summary, isLoading, onNewRecording, isSidebarCollapsed }: TabbedTranscriptDisplayProps) {
+export function TabbedTranscriptDisplay({ transcription, summary, isLoading, onNewRecording, isSidebarCollapsed, meetingId }: TabbedTranscriptDisplayProps) {
+  const { data: session } = useSession();
+  const { toast } = useToast();
+  const [showTranscriptEmailDialog, setShowTranscriptEmailDialog] = useState(false);
+  const [showSummaryEmailDialog, setShowSummaryEmailDialog] = useState(false);
+  const [emailRecipients, setEmailRecipients] = useState("");
+  const [isSendingEmail, setIsSendingEmail] = useState(false);
   // Navigation items
   const navItems = [
     { id: 'transcript', label: 'Transcript', icon: User },
@@ -87,6 +100,82 @@ export function TabbedTranscriptDisplay({ transcription, summary, isLoading, onN
 
     return groups
   }
+
+  const handleSendTranscript = async () => {
+    if (!emailRecipients.trim() || !meetingId) return;
+
+    setIsSendingEmail(true);
+    try {
+      const recipients = emailRecipients.split(',').map(e => e.trim()).filter(e => e);
+      
+      const response = await fetch("/api/gmail/send-transcript", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          meetingId,
+          recipients,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to send transcript email");
+      }
+
+      toast({
+        title: "Transcript sent!",
+        description: `Email sent to ${recipients.length} recipient(s)`,
+      });
+
+      setShowTranscriptEmailDialog(false);
+      setEmailRecipients("");
+    } catch (error) {
+      toast({
+        title: "Failed to send email",
+        description: error instanceof Error ? error.message : "An error occurred",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSendingEmail(false);
+    }
+  };
+
+  const handleSendSummary = async () => {
+    if (!emailRecipients.trim() || !meetingId) return;
+
+    setIsSendingEmail(true);
+    try {
+      const recipients = emailRecipients.split(',').map(e => e.trim()).filter(e => e);
+      
+      const response = await fetch("/api/gmail/send-summary", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          meetingId,
+          recipients,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to send summary email");
+      }
+
+      toast({
+        title: "Summary sent!",
+        description: `Email sent to ${recipients.length} recipient(s)`,
+      });
+
+      setShowSummaryEmailDialog(false);
+      setEmailRecipients("");
+    } catch (error) {
+      toast({
+        title: "Failed to send email",
+        description: error instanceof Error ? error.message : "An error occurred",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSendingEmail(false);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -169,10 +258,23 @@ export function TabbedTranscriptDisplay({ transcription, summary, isLoading, onN
           {/* Transcript Section */}
           {transcription && (
             <section id="transcript" className="space-y-6">
-              <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
-                <User className="h-6 w-6" />
-                Transcript
-              </h2>
+              <div className="flex items-center justify-between">
+                <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
+                  <User className="h-6 w-6" />
+                  Transcript
+                </h2>
+                {session?.user && meetingId && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowTranscriptEmailDialog(true)}
+                    className="flex items-center gap-2"
+                  >
+                    <Mail className="h-4 w-4" />
+                    Send via Email
+                  </Button>
+                )}
+              </div>
               <div className="space-y-4">
                 {groupUtterancesBySpeaker().map((segment, index) => (
                   <Card key={index}>
@@ -217,10 +319,23 @@ export function TabbedTranscriptDisplay({ transcription, summary, isLoading, onN
           {/* Summary Section */}
           {summary && (
             <section id="summary" className="space-y-6">
-              <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
-                <Clock className="h-6 w-6" />
-                Summary
-              </h2>
+              <div className="flex items-center justify-between">
+                <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
+                  <Clock className="h-6 w-6" />
+                  Summary
+                </h2>
+                {session?.user && meetingId && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowSummaryEmailDialog(true)}
+                    className="flex items-center gap-2"
+                  >
+                    <Mail className="h-4 w-4" />
+                    Send via Email
+                  </Button>
+                )}
+              </div>
 
               <div className="space-y-6">
                 {/* Header */}
@@ -320,6 +435,83 @@ export function TabbedTranscriptDisplay({ transcription, summary, isLoading, onN
           )}
         </div>
       </ScrollArea>
+
+      {/* Email Dialogs */}
+      <Dialog open={showTranscriptEmailDialog} onOpenChange={setShowTranscriptEmailDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Send Transcript via Email</DialogTitle>
+            <DialogDescription>
+              Enter recipient email addresses separated by commas
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="transcript-emails">Recipients</Label>
+              <Input
+                id="transcript-emails"
+                placeholder="email1@example.com, email2@example.com"
+                value={emailRecipients}
+                onChange={(e) => setEmailRecipients(e.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowTranscriptEmailDialog(false)}
+              disabled={isSendingEmail}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSendTranscript}
+              disabled={!emailRecipients.trim() || isSendingEmail}
+            >
+              {isSendingEmail && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Send
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showSummaryEmailDialog} onOpenChange={setShowSummaryEmailDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Send Summary via Email</DialogTitle>
+            <DialogDescription>
+              Enter recipient email addresses separated by commas
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="summary-emails">Recipients</Label>
+              <Input
+                id="summary-emails"
+                placeholder="email1@example.com, email2@example.com"
+                value={emailRecipients}
+                onChange={(e) => setEmailRecipients(e.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowSummaryEmailDialog(false)}
+              disabled={isSendingEmail}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSendSummary}
+              disabled={!emailRecipients.trim() || isSendingEmail}
+            >
+              {isSendingEmail && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Send
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

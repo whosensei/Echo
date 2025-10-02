@@ -17,6 +17,7 @@ export interface StoredTranscription {
   audioPath?: string;
   audioData?: string; // Base64 encoded audio data
   error?: string;
+  meetingId?: string; // Database meeting ID (if user is logged in)
 }
 
 const STORAGE_KEY = 'audio_transcriptions';
