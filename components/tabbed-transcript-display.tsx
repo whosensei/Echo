@@ -31,19 +31,14 @@ export function TabbedTranscriptDisplay({ transcription, summary, isLoading, onN
   const [showSummaryEmailDialog, setShowSummaryEmailDialog] = useState(false);
   const [emailRecipients, setEmailRecipients] = useState("");
   const [isSendingEmail, setIsSendingEmail] = useState(false);
+  const [activeTab, setActiveTab] = useState<'transcript' | 'fulltext' | 'summary'>('transcript');
+  
   // Navigation items
   const navItems = [
     { id: 'transcript', label: 'Transcript', icon: User },
     { id: 'fulltext', label: 'Full Text', icon: MessageSquare },
     { id: 'summary', label: 'Summary', icon: Clock },
-  ]
-
-  const scrollToSection = (sectionId: string) => {
-    const element = document.getElementById(sectionId)
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    }
-  }
+  ] as const
 
   const formatTime = (seconds: number): string => {
     if (typeof seconds !== 'number' || isNaN(seconds)) {
@@ -209,106 +204,103 @@ export function TabbedTranscriptDisplay({ transcription, summary, isLoading, onN
 
   return (
     <div className="h-full flex flex-col bg-background">
-      {/* Navigation Header */}
-      <div className="border-b border-border bg-card sticky top-0 z-10">
-        <div className="py-4 pl-4 pr-0 relative">
-          <div className="flex items-center justify-center">
-            {/* Nav items centered */}
-            <div className="flex gap-2">
+      {/* Navigation Header - Modern SaaS Style */}
+      <div className="border-b border-border/50 bg-card/50 backdrop-blur-sm">
+        <div className="max-w-7xl mx-auto px-6 lg:px-12 py-5">
+          <div className="flex items-center justify-between">
+            {/* Nav items - Pill style navigation with active state */}
+            <div className="flex gap-1 bg-muted/50 p-1 rounded-lg">
               {navItems.map((item) => {
                 const Icon = item.icon
+                const isActive = activeTab === item.id
                 return (
                   <Button
                     key={item.id}
                     variant="ghost"
                     size="sm"
-                    onClick={() => scrollToSection(item.id)}
-                    className="flex items-center gap-2 text-sm"
+                    onClick={() => setActiveTab(item.id)}
+                    className={`flex items-center gap-2 text-sm rounded-md transition-all ${
+                      isActive 
+                        ? 'bg-background shadow-sm font-semibold' 
+                        : 'hover:bg-background/50 font-medium'
+                    }`}
                   >
                     <Icon className="h-4 w-4" />
-                    {item.label}
+                    <span>{item.label}</span>
                   </Button>
                 )
               })}
             </div>
-            {/* New Recording Button - Absolutely positioned to right edge */}
-            {onNewRecording && isSidebarCollapsed && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    onClick={onNewRecording}
-                    size="sm"
-                    className="absolute right-5 top-1/2 -translate-y-1/2 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 h-8 w-8 p-0"
-                  >
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>New Recording</p>
-                </TooltipContent>
-              </Tooltip>
+            {/* New Recording Button - Prominent CTA */}
+            {onNewRecording && (
+              <Button
+                onClick={onNewRecording}
+                size="sm"
+                className="flex items-center gap-2 shadow-sm"
+              >
+                <Plus className="h-4 w-4" />
+                <span>New Recording</span>
+              </Button>
             )}
           </div>
         </div>
       </div>
 
-      {/* Content */}
+      {/* Content - Spacious and clean */}
       <ScrollArea className="flex-1">
-        <div className="space-y-8 p-6">
-          {/* Transcript Section */}
-          {transcription && (
+        <div className="max-w-7xl mx-auto px-6 lg:px-12 py-12">
+          {/* Transcript Section - Conversation Style */}
+          {activeTab === 'transcript' && transcription && (
             <section id="transcript" className="space-y-6">
-              <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
-                  <User className="h-6 w-6" />
-                  Transcript
-                </h2>
-                {session?.user && meetingId && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setShowTranscriptEmailDialog(true)}
-                    className="flex items-center gap-2"
-                  >
-                    <Mail className="h-4 w-4" />
-                    Send via Email
-                  </Button>
-                )}
+              {/* Section Header */}
+              <div className="space-y-1">
+                <h2 className="text-3xl font-bold text-foreground tracking-tight">Conversation</h2>
+                <p className="text-sm text-muted-foreground">Natural flow of the discussion</p>
               </div>
-              <div className="space-y-4">
-                {groupUtterancesBySpeaker().map((segment, index) => (
-                  <Card key={index}>
-                    <CardContent className="p-4">
-                      <div className="flex items-start gap-4">
-                        <div className="flex flex-col items-center gap-2 flex-shrink-0">
-                          <Badge className={`${getSpeakerColor(`Speaker ${segment.speaker}`)} font-medium`}>
-                            Speaker {segment.speaker}
-                          </Badge>
-                          <div className="text-xs text-muted-foreground">
+              
+              {/* Conversation Thread - Clean text format */}
+              <div className="space-y-3 py-4">
+                {groupUtterancesBySpeaker().map((segment, index) => {
+                  const speakerColor = getSpeakerColor(`Speaker ${segment.speaker}`)
+                  
+                  return (
+                    <div key={index} className="flex gap-4 items-start group hover:bg-muted/30 -mx-4 px-4 py-2 rounded-lg transition-colors">
+                      {/* Speaker Badge */}
+                      <Badge className={`${speakerColor} px-3 py-1 font-semibold rounded-full flex-shrink-0 mt-0.5`}>
+                        Speaker {segment.speaker}
+                      </Badge>
+                      
+                      {/* Content */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-xs text-muted-foreground font-mono">
                             {formatTime(segment.start)}
-                          </div>
+                          </span>
                         </div>
-                        <p className="text-foreground leading-relaxed flex-1">
+                        <p className="text-foreground leading-relaxed text-[15px]">
                           {segment.text}
                         </p>
                       </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                    </div>
+                  )
+                })}
               </div>
             </section>
           )}
 
-          {/* Full Text Section */}
-          {transcription?.result?.transcription?.full_transcript && (
-            <section id="fulltext" className="space-y-6">
-              <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
-                <MessageSquare className="h-6 w-6" />
-                Full Text
-              </h2>
-              <Card>
-                <CardContent className="p-6">
-                  <p className="text-foreground leading-relaxed whitespace-pre-wrap">
+          {/* Full Text Section - Clean and readable */}
+          {activeTab === 'fulltext' && transcription?.result?.transcription?.full_transcript && (
+            <section id="fulltext" className="space-y-8">
+              {/* Section Header */}
+              <div className="space-y-1">
+                <h2 className="text-3xl font-bold text-foreground tracking-tight">Full Transcript</h2>
+                <p className="text-sm text-muted-foreground">Complete conversation in continuous format</p>
+              </div>
+              
+              {/* Full Text Card */}
+              <Card className="border-border/50 shadow-sm">
+                <CardContent className="p-8">
+                  <p className="text-foreground leading-relaxed whitespace-pre-wrap text-base">
                     {transcription.result.transcription.full_transcript}
                   </p>
                 </CardContent>
@@ -316,78 +308,66 @@ export function TabbedTranscriptDisplay({ transcription, summary, isLoading, onN
             </section>
           )}
 
-          {/* Summary Section */}
-          {summary && (
-            <section id="summary" className="space-y-6">
-              <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
-                  <Clock className="h-6 w-6" />
-                  Summary
-                </h2>
-                {session?.user && meetingId && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setShowSummaryEmailDialog(true)}
-                    className="flex items-center gap-2"
-                  >
-                    <Mail className="h-4 w-4" />
-                    Send via Email
-                  </Button>
-                )}
+          {/* Summary Section - Executive style */}
+          {activeTab === 'summary' && summary && (
+            <section id="summary" className="space-y-8">
+              {/* Section Header */}
+              <div className="space-y-1">
+                <h2 className="text-3xl font-bold text-foreground tracking-tight">Meeting Summary</h2>
+                <p className="text-sm text-muted-foreground">AI-generated insights and key takeaways</p>
               </div>
 
-              <div className="space-y-6">
-                {/* Header */}
-                <Card>
-                  <CardContent className="p-6 space-y-4">
-                    <h3 className="text-xl font-bold text-foreground">{summary.title}</h3>
-                    <p className="text-muted-foreground leading-relaxed">{summary.overview}</p>
+              <div className="space-y-8">
+                {/* Overview Card - Hero style */}
+                <Card className="border-border/50 shadow-sm bg-gradient-to-br from-card to-card/50">
+                  <CardContent className="p-8 space-y-4">
+                    <h3 className="text-2xl font-bold text-foreground tracking-tight">{summary.title}</h3>
+                    <p className="text-muted-foreground leading-relaxed text-base">{summary.overview}</p>
                   </CardContent>
                 </Card>
 
-                {/* Stats */}
+                {/* Stats - Modern pills */}
                 <div className="flex flex-wrap gap-3">
-                  <div className="px-4 py-2 bg-muted rounded-lg border">
+                  <div className="px-5 py-3 bg-muted/50 rounded-xl border border-border/50 shadow-sm">
                     <div className="flex items-center gap-2 text-sm">
                       <Clock className="h-4 w-4 text-primary" />
                       <span className="font-medium">{summary.duration}</span>
                     </div>
                   </div>
-                  <div className="px-4 py-2 bg-muted rounded-lg border">
+                  <div className="px-5 py-3 bg-muted/50 rounded-xl border border-border/50 shadow-sm">
                     <div className="flex items-center gap-2 text-sm">
                       <User className="h-4 w-4 text-primary" />
                       <span className="font-medium">{summary.participants.length} participants</span>
                     </div>
                   </div>
                   {summary.sentiment && (
-                    <div className="px-4 py-2 bg-muted rounded-lg border">
-                      <div className={`flex items-center gap-2 text-sm ${
+                    <div className="px-5 py-3 bg-muted/50 rounded-xl border border-border/50 shadow-sm">
+                      <div className={`flex items-center gap-2 text-sm font-medium ${
                         summary.sentiment === "positive"
                           ? "text-chart-1"
                           : summary.sentiment === "negative"
                             ? "text-destructive"
                             : "text-chart-4"
                       }`}>
-                        <span className="font-medium capitalize">{summary.sentiment} sentiment</span>
+                        <span className="capitalize">{summary.sentiment} sentiment</span>
                       </div>
                     </div>
                   )}
                 </div>
 
-                {/* Content Grid */}
+                {/* Content Grid - Spacious cards */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   {/* Key Points */}
-                  <Card>
-                    <CardContent className="p-6">
-                      <h4 className="text-lg font-semibold text-foreground mb-4">Key Points</h4>
-                      <div className="space-y-3">
+                  <Card className="border-border/50 shadow-sm">
+                    <CardContent className="p-8">
+                      <h4 className="text-xl font-bold text-foreground mb-6 tracking-tight">Key Points</h4>
+                      <div className="space-y-4">
                         {summary.keyPoints.map((point, index) => (
-                          <div key={index} className="flex items-start gap-3">
-                            <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <div key={index} className="flex items-start gap-4">
+                            <div className="w-7 h-7 rounded-full bg-primary flex items-center justify-center flex-shrink-0 mt-0.5 shadow-sm">
                               <span className="text-primary-foreground text-xs font-bold">{index + 1}</span>
                             </div>
-                            <p className="text-sm leading-relaxed text-foreground">{point}</p>
+                            <p className="text-sm leading-relaxed text-foreground flex-1">{point}</p>
                           </div>
                         ))}
                       </div>
@@ -395,16 +375,16 @@ export function TabbedTranscriptDisplay({ transcription, summary, isLoading, onN
                   </Card>
 
                   {/* Action Items */}
-                  <Card>
-                    <CardContent className="p-6">
-                      <h4 className="text-lg font-semibold text-foreground mb-4">Action Items</h4>
-                      <div className="space-y-3">
+                  <Card className="border-border/50 shadow-sm">
+                    <CardContent className="p-8">
+                      <h4 className="text-xl font-bold text-foreground mb-6 tracking-tight">Action Items</h4>
+                      <div className="space-y-4">
                         {summary.actionItems.map((item, index) => (
-                          <div key={index} className="flex items-start gap-3">
-                            <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center flex-shrink-0 mt-0.5">
-                              <span className="text-primary-foreground text-xs font-bold">•</span>
+                          <div key={index} className="flex items-start gap-4">
+                            <div className="w-7 h-7 rounded-full bg-chart-1 flex items-center justify-center flex-shrink-0 mt-0.5 shadow-sm">
+                              <span className="text-white text-xs font-bold">✓</span>
                             </div>
-                            <p className="text-sm leading-relaxed text-foreground">{item}</p>
+                            <p className="text-sm leading-relaxed text-foreground flex-1">{item}</p>
                           </div>
                         ))}
                       </div>
@@ -412,18 +392,18 @@ export function TabbedTranscriptDisplay({ transcription, summary, isLoading, onN
                   </Card>
                 </div>
 
-                {/* Decisions */}
+                {/* Decisions - Full width */}
                 {summary.decisions.length > 0 && (
-                  <Card>
-                    <CardContent className="p-6">
-                      <h4 className="text-lg font-semibold text-foreground mb-4">Decisions Made</h4>
-                      <div className="space-y-3">
+                  <Card className="border-border/50 shadow-sm">
+                    <CardContent className="p-8">
+                      <h4 className="text-xl font-bold text-foreground mb-6 tracking-tight">Decisions Made</h4>
+                      <div className="space-y-4">
                         {summary.decisions.map((decision, index) => (
-                          <div key={index} className="flex items-start gap-3">
-                            <div className="w-6 h-6 rounded-full bg-orange-500 flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <div key={index} className="flex items-start gap-4">
+                            <div className="w-7 h-7 rounded-full bg-chart-4 flex items-center justify-center flex-shrink-0 mt-0.5 shadow-sm">
                               <span className="text-white text-xs font-bold">!</span>
                             </div>
-                            <p className="text-sm leading-relaxed text-foreground">{decision}</p>
+                            <p className="text-sm leading-relaxed text-foreground flex-1">{decision}</p>
                           </div>
                         ))}
                       </div>

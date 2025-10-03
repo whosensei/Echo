@@ -40,15 +40,39 @@ export function TranscriptionSidebar({
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const { toast } = useToast()
 
-  const loadTranscriptions = () => {
-    console.log("Loading transcriptions...")
+  const loadTranscriptions = async () => {
+    console.log("Loading transcriptions from backend...")
     setIsLoading(true)
     setError(null)
 
     try {
-      const storedTranscriptions = LocalStorageService.getTranscriptions()
-      console.log("Loaded transcriptions:", storedTranscriptions.length, storedTranscriptions)
-      setTranscriptions(storedTranscriptions)
+      // Fetch from backend API instead of LocalStorage
+      const response = await fetch("/api/meetings?limit=100")
+      
+      if (!response.ok) {
+        throw new Error("Failed to fetch meetings")
+      }
+
+      const data = await response.json()
+      
+      // Convert meetings to StoredTranscription format
+      const meetings = data.meetings || []
+      const convertedTranscriptions: StoredTranscription[] = meetings.map((meeting: any) => ({
+        id: meeting.id,
+        filename: meeting.title,
+        createdAt: meeting.createdAt || meeting.startTime,
+        status: meeting.status === "completed" ? "completed" : 
+                meeting.status === "processing" ? "processing" : 
+                meeting.status === "failed" ? "failed" : "pending",
+        audioData: meeting.audioFileUrl ? `/audio-recordings/${meeting.audioFileUrl}` : undefined,
+        transcriptionData: meeting.transcriptionData || null,
+        summaryData: meeting.summaryData || null,
+        error: meeting.status === "failed" ? "Transcription failed" : undefined,
+        meetingId: meeting.id,
+      }))
+      
+      console.log("Loaded transcriptions from backend:", convertedTranscriptions.length, convertedTranscriptions)
+      setTranscriptions(convertedTranscriptions)
       setError(null)
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Unknown error occurred"
@@ -59,16 +83,34 @@ export function TranscriptionSidebar({
     }
   }
 
-  const handleDeleteTranscription = (e: React.MouseEvent, id: string) => {
+  const handleDeleteTranscription = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation() // Prevent triggering selection
 
     if (confirm("Are you sure you want to delete this transcription?")) {
-      const success = LocalStorageService.deleteTranscription(id)
-      if (success) {
-        loadTranscriptions() // Refresh the list
+      try {
+        const response = await fetch(`/api/meetings/${id}`, {
+          method: "DELETE",
+        })
+
+        if (!response.ok) {
+          throw new Error("Failed to delete meeting")
+        }
+
+        await loadTranscriptions() // Refresh the list
         onRefresh?.() // Notify parent if needed
-      } else {
-        setError("Failed to delete transcription")
+
+        toast({
+          title: "Deleted successfully",
+          description: "The recording has been deleted.",
+        })
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : "Failed to delete transcription"
+        setError(errorMessage)
+        toast({
+          title: "Delete failed",
+          description: errorMessage,
+          variant: "destructive",
+        })
       }
     }
   }
@@ -79,20 +121,39 @@ export function TranscriptionSidebar({
     setEditingName(transcription.filename || `Recording`)
   }
 
-  const handleSaveEdit = (e: React.MouseEvent, id: string) => {
+  const handleSaveEdit = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation() // Prevent triggering selection
 
     if (editingName.trim()) {
-      const success = LocalStorageService.updateTranscription(id, {
-        filename: editingName.trim()
-      })
+      try {
+        const response = await fetch(`/api/meetings/${id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            title: editingName.trim(),
+          }),
+        })
 
-      if (success) {
+        if (!response.ok) {
+          throw new Error("Failed to update meeting")
+        }
+
         setEditingId(null)
         setEditingName("")
-        loadTranscriptions() // Refresh the list
-      } else {
-        setError("Failed to update transcription name")
+        await loadTranscriptions() // Refresh the list
+
+        toast({
+          title: "Updated successfully",
+          description: "The recording title has been updated.",
+        })
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : "Failed to update transcription name"
+        setError(errorMessage)
+        toast({
+          title: "Update failed",
+          description: errorMessage,
+          variant: "destructive",
+        })
       }
     }
   }
@@ -226,33 +287,52 @@ export function TranscriptionSidebar({
   console.log("TranscriptionSidebar rendering - collapsed:", isCollapsed, "transcriptions:", transcriptions.length)
 
   return (
-    <div className={`h-full flex flex-col bg-sidebar transition-all duration-300 ${isCollapsed ? 'w-12' : 'w-80'}`}>
+    <div className={`h-full flex flex-col bg-card transition-all duration-300 ${isCollapsed ? 'w-16' : 'w-80'}`}>
       {isCollapsed ? (
-        /* Collapsed state - only hamburger */
-        <div className="p-3 flex justify-center">
+        /* Collapsed state - only hamburger and back button */
+        <div className="w-full p-2 flex flex-col gap-3 items-center justify-start">
           <button
             onClick={onToggleCollapse}
-            className="p-2 rounded-md border border-sidebar-border hover:bg-sidebar-accent/10 transition-colors"
+            className="w-10 h-10 rounded-md border border-border hover:bg-accent transition-colors flex items-center justify-center"
           >
-            <Menu className="h-4 w-4 text-sidebar-foreground" />
+            <Menu className="h-4 w-4 text-foreground" />
           </button>
+          <a
+            href="/dashboard"
+            className="w-10 h-10 rounded-md border border-border hover:bg-accent transition-colors flex items-center justify-center"
+          >
+            <svg className="h-4 w-4 text-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+          </a>
         </div>
       ) : (
         /* Expanded state - full header */
         <>
-          <div className="p-4 border-b border-sidebar-border">
+          <div className="p-4 border-b border-border bg-card">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="flex items-center gap-2 font-semibold text-base text-sidebar-foreground">
+              <h2 className="flex items-center gap-2 font-semibold text-base text-foreground">
                 <FileText className="h-4 w-4 text-primary" />
                 Transcriptions
               </h2>
               <button
                 onClick={onToggleCollapse}
-                className="p-2 rounded-md border border-sidebar-border hover:bg-sidebar-accent/10 transition-colors"
+                className="p-2 rounded-md border border-border hover:bg-accent transition-colors"
               >
-                <Menu className="h-4 w-4 text-sidebar-foreground" />
+                <Menu className="h-4 w-4 text-foreground" />
               </button>
             </div>
+
+            {/* Back to Dashboard Button */}
+            <a
+              href="/dashboard"
+              className="w-full flex items-center justify-center gap-2 px-4 py-2 mb-3 rounded-lg border border-border hover:bg-accent transition-colors text-sm font-medium text-foreground"
+            >
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+              Back to Dashboard
+            </a>
 
             {/* New Recording Button */}
             <div className="px-0 pr-2">
@@ -306,8 +386,8 @@ export function TranscriptionSidebar({
                   <div
                     className={`relative rounded-lg border cursor-pointer transition-all hover:shadow-sm ${
                       selectedTranscriptionId === transcription.id
-                        ? "sidebar-item-glass-active shadow-sm"
-                        : "bg-card hover:bg-muted/50 border-border"
+                        ? "bg-primary/5 border-primary shadow-sm"
+                        : "bg-card hover:bg-accent/50 border-border"
                     }`}
                     onClick={() => onTranscriptionSelect(transcription)}
                   >

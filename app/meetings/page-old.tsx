@@ -106,17 +106,17 @@ export default function MeetingsPage() {
   };
 
   const getStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
+    switch (status) {
       case "completed":
-        return "bg-chart-1/10 text-chart-1 border-chart-1/20 border";
+        return "bg-chart-1";
       case "processing":
-        return "bg-chart-4/10 text-chart-4 border-chart-4/20 border";
+        return "bg-chart-4";
       case "failed":
-        return "bg-destructive/10 text-destructive border-destructive/20 border";
+        return "bg-destructive";
       case "pending":
-        return "bg-chart-2/10 text-chart-2 border-chart-2/20 border";
+        return "bg-primary";
       default:
-        return "bg-muted/10 text-muted-foreground border-border border";
+        return "bg-muted-foreground";
     }
   };
 

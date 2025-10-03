@@ -1,10 +1,9 @@
 import type { Metadata } from "next";
-import { JetBrains_Mono, Inter } from "next/font/google";
+import { JetBrains_Mono, Inter, Instrument_Serif } from "next/font/google";
 import "./globals.css";
 import { ToastProvider } from "@/components/ui/toaster";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ThemeProvider } from "@/components/theme-provider";
-import { QueryProvider } from "@/components/providers/QueryProvider";
 
 const jetbrainsMono = JetBrains_Mono({
   variable: "--font-jetbrains-mono",
@@ -15,6 +14,13 @@ const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],
   fallback: ["sans-serif"],
+});
+
+const instrumentSerif = Instrument_Serif({
+  variable: "--font-instrument-serif",
+  weight: ["400"],
+  subsets: ["latin"],
+  style: ["normal", "italic"],
 });
 
 export const metadata: Metadata = {
@@ -30,21 +36,19 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${inter.variable} ${jetbrainsMono.variable} antialiased`}
+        className={`${inter.variable} ${jetbrainsMono.variable} ${instrumentSerif.variable} antialiased`}
       >
         <ErrorBoundary>
-          <QueryProvider>
-            <ThemeProvider
-              attribute="class"
-              defaultTheme="system"
-              enableSystem
-              disableTransitionOnChange
-            >
-              <ToastProvider>
-                {children}
-              </ToastProvider>
-            </ThemeProvider>
-          </QueryProvider>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
+            <ToastProvider>
+              {children}
+            </ToastProvider>
+          </ThemeProvider>
         </ErrorBoundary>
       </body>
     </html>

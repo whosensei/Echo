@@ -278,55 +278,6 @@ export function AudioRecorderComponent({
             ))}
           </div>
         )}
-
-        {/* Info Card */}
-        <div className="card-minimal">
-          <div className="text-center space-y-4">
-            <h3 className="text-lg font-semibold text-foreground">
-              {recordedAudio ? "Recording Complete" : "Audio Recorder"}
-            </h3>
-            <p className="text-muted-foreground text-sm">
-              {recordedAudio
-                ? "Your audio is ready for transcription and analysis"
-                : "High-quality audio recording with speaker separation"
-              }
-            </p>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-              {recordedAudio ? (
-                <>
-                  <div className="flex items-center gap-2 p-3 bg-chart-1/10 rounded-lg border border-chart-1/20">
-                    <div className="w-2 h-2 bg-chart-1 rounded-full" />
-                    <span className="font-medium text-chart-1">Ready for processing</span>
-                  </div>
-                  <div className="flex items-center gap-2 p-3 bg-primary/10 rounded-lg border border-primary/20">
-                    <div className="w-2 h-2 bg-primary rounded-full" />
-                    <span className="font-medium text-primary">WAV format</span>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div className="flex items-center gap-2 p-3 bg-primary/10 rounded-lg border border-primary/20">
-                    <div className="w-2 h-2 bg-primary rounded-full" />
-                    <span className="font-medium text-primary">44.1kHz quality</span>
-                  </div>
-                  <div className="flex items-center gap-2 p-3 bg-primary/10 rounded-lg border border-primary/20">
-                    <div className="w-2 h-2 bg-primary rounded-full" />
-                    <span className="font-medium text-primary">Pause/resume</span>
-                  </div>
-                  <div className="flex items-center gap-2 p-3 bg-primary/10 rounded-lg border border-primary/20">
-                    <div className="w-2 h-2 bg-primary rounded-full" />
-                    <span className="font-medium text-primary">Real-time timer</span>
-                  </div>
-                  <div className="flex items-center gap-2 p-3 bg-primary/10 rounded-lg border border-primary/20">
-                    <div className="w-2 h-2 bg-primary rounded-full" />
-                    <span className="font-medium text-primary">Speaker detection</span>
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   )
