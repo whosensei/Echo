@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { sendTranscriptEmail } from "@/lib/gmail/client";
 import { db } from "@/lib/db";
-import { meeting, transcript } from "@/lib/db/schema";
+import { recording, transcript } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 import { headers } from "next/headers";
 
@@ -18,36 +18,36 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { meetingId, recipients } = body;
+    const { recordingId, recipients } = body;
 
-    if (!meetingId || !recipients || !Array.isArray(recipients)) {
+    if (!recordingId || !recipients || !Array.isArray(recipients)) {
       return NextResponse.json(
-        { error: "Meeting ID and recipients array are required" },
+        { error: "Recording ID and recipients array are required" },
         { status: 400 }
       );
     }
 
-    // Fetch the meeting
-    const [meetingData] = await db
+    // Fetch the recording
+    const [recordingData] = await db
       .select()
-      .from(meeting)
+      .from(recording)
       .where(
-        and(eq(meeting.id, meetingId), eq(meeting.userId, session.user.id))
+        and(eq(recording.id, recordingId), eq(recording.userId, session.user.id))
       );
 
-    if (!meetingData) {
-      return NextResponse.json({ error: "Meeting not found" }, { status: 404 });
+    if (!recordingData) {
+      return NextResponse.json({ error: "Recording not found" }, { status: 404 });
     }
 
     // Fetch the transcript
     const [transcriptData] = await db
       .select()
       .from(transcript)
-      .where(eq(transcript.meetingId, meetingId));
+      .where(eq(transcript.recordingId, recordingId));
 
     if (!transcriptData) {
       return NextResponse.json(
-        { error: "Transcript not found for this meeting" },
+        { error: "Transcript not found for this recording" },
         { status: 404 }
       );
     }
@@ -58,9 +58,9 @@ export async function POST(request: NextRequest) {
       try {
         await sendTranscriptEmail(
           session.user.id,
-          meetingId,
+          recordingId,
           recipient,
-          meetingData.title,
+          recordingData.title,
           transcriptData.content
         );
         results.push({ recipient, status: "sent" });

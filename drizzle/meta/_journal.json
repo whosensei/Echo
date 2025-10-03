@@ -15,6 +15,13 @@
       "when": 1759387742455,
       "tag": "0001_unusual_luminals",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1759495694191,
+      "tag": "0002_boring_thor",
+      "breakpoints": true
     }
   ]
 }

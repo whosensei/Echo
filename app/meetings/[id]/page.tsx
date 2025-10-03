@@ -7,6 +7,9 @@ import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { TabbedTranscriptDisplay } from "@/components/tabbed-transcript-display";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/toaster";
 import {
   ArrowLeft,
@@ -27,20 +30,29 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import type { GladiaTranscriptionResult } from "@/lib/gladia-service";
 import type { MeetingSummary } from "@/lib/gemini-service";
 import { exportMeetingToPDF } from "@/lib/pdf-export";
 
-interface Meeting {
+interface Recording {
   id: string;
   title: string;
   description: string | null;
-  startTime: string | null;
-  endTime: string | null;
+  recordedAt: string;
   status: string;
-  audioFileUrl: string | null;
+  audioFileUrl: string;
   createdAt: string;
   updatedAt: string;
+  meetingId?: string | null;
 }
 
 interface Transcript {
@@ -65,8 +77,8 @@ interface Summary {
   createdAt: string;
 }
 
-interface MeetingDetails {
-  meeting: Meeting;
+interface RecordingDetails {
+  recording: Recording;
   transcript: Transcript | null;
   summary: Summary | null;
 }
@@ -77,12 +89,16 @@ export default function MeetingDetailsPage() {
   const { toast } = useToast();
   const meetingId = params.id as string;
 
-  const [data, setData] = useState<MeetingDetails | null>(null);
+  const [data, setData] = useState<RecordingDetails | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
   const [transcriptionResult, setTranscriptionResult] = useState<GladiaTranscriptionResult | null>(null);
   const [summaryResult, setSummaryResult] = useState<MeetingSummary | null>(null);
   const [isSendingEmail, setIsSendingEmail] = useState(false);
+  const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false);
+  const [emailRecipients, setEmailRecipients] = useState("");
+  const [emailSubject, setEmailSubject] = useState("");
+  const [emailMessage, setEmailMessage] = useState("");
 
   useEffect(() => {
     fetchMeetingDetails();
@@ -90,32 +106,32 @@ export default function MeetingDetailsPage() {
 
   const fetchMeetingDetails = async () => {
     try {
-      const response = await fetch(`/api/meetings/${meetingId}`);
+      const response = await fetch(`/api/recordings/${meetingId}`);
 
       if (!response.ok) {
-        throw new Error("Failed to fetch meeting");
+        throw new Error("Failed to fetch recording");
       }
 
-      const meetingData = await response.json() as MeetingDetails;
-      setData(meetingData);
+      const recordingData = await response.json() as RecordingDetails;
+      setData(recordingData);
 
       // Transform transcript data to match GladiaTranscriptionResult format
-      if (meetingData.transcript) {
+      if (recordingData.transcript) {
         const transformedTranscript: GladiaTranscriptionResult = {
-          id: meetingData.transcript.id,
-          request_id: meetingData.transcript.id,
+          id: recordingData.transcript.id,
+          request_id: recordingData.transcript.id,
           status: "done",
           result: {
             transcription: {
-              full_transcript: meetingData.transcript.content,
-              utterances: meetingData.transcript.metadata?.utterances || [],
+              full_transcript: recordingData.transcript.content,
+              utterances: recordingData.transcript.metadata?.utterances || [],
             },
-            speakers: meetingData.transcript.metadata?.speakers || [],
+            speakers: recordingData.transcript.metadata?.speakers || [],
             metadata: {
-              ...meetingData.transcript.metadata,
-              audio_duration: meetingData.transcript.duration || 0,
+              ...recordingData.transcript.metadata,
+              audio_duration: recordingData.transcript.duration || 0,
               number_of_channels: 1,
-              billing_time: meetingData.transcript.duration || 0,
+              billing_time: recordingData.transcript.duration || 0,
             },
           },
         };
@@ -123,26 +139,26 @@ export default function MeetingDetailsPage() {
       }
 
       // Transform summary data to match MeetingSummary format
-      if (meetingData.summary) {
-        const metadata = meetingData.summary.metadata || {};
+      if (recordingData.summary) {
+        const metadata = recordingData.summary.metadata || {};
         const transformedSummary: MeetingSummary = {
-          title: metadata.title || meetingData.meeting.title || "Meeting Summary",
-          overview: meetingData.summary.summary || "",
-          keyPoints: metadata.keyPoints || meetingData.summary.keyTopics || [],
-          actionItems: metadata.actionItems || meetingData.summary.actionPoints || [],
+          title: metadata.title || recordingData.recording.title || "Recording Summary",
+          overview: recordingData.summary.summary || "",
+          keyPoints: metadata.keyPoints || recordingData.summary.keyTopics || [],
+          actionItems: metadata.actionItems || recordingData.summary.actionPoints || [],
           decisions: metadata.decisions || [],
-          participants: meetingData.summary.participants || [],
+          participants: recordingData.summary.participants || [],
           topics: metadata.topics || [],
-          duration: formatDuration(meetingData.transcript?.duration),
-          sentiment: (meetingData.summary.sentiment as "positive" | "neutral" | "negative") || null,
+          duration: formatDuration(recordingData.transcript?.duration),
+          sentiment: (recordingData.summary.sentiment as "positive" | "neutral" | "negative") || null,
         };
         setSummaryResult(transformedSummary);
       }
     } catch (error) {
-      console.error("Error fetching meeting:", error);
+      console.error("Error fetching recording:", error);
       toast({
-        title: "Error loading meeting",
-        description: error instanceof Error ? error.message : "Failed to load meeting details",
+        title: "Error loading recording",
+        description: error instanceof Error ? error.message : "Failed to load recording details",
         variant: "destructive",
       });
     } finally {
@@ -153,24 +169,24 @@ export default function MeetingDetailsPage() {
   const handleDelete = async () => {
     setIsDeleting(true);
     try {
-      const response = await fetch(`/api/meetings/${meetingId}`, {
+      const response = await fetch(`/api/recordings/${meetingId}`, {
         method: "DELETE",
       });
 
       if (!response.ok) {
-        throw new Error("Failed to delete meeting");
+        throw new Error("Failed to delete recording");
       }
 
       toast({
-        title: "Meeting deleted",
-        description: "The meeting has been permanently deleted.",
+        title: "Recording deleted",
+        description: "The recording has been permanently deleted.",
       });
 
       router.push("/dashboard");
     } catch (error) {
       toast({
         title: "Delete failed",
-        description: error instanceof Error ? error.message : "Failed to delete meeting",
+        description: error instanceof Error ? error.message : "Failed to delete recording",
         variant: "destructive",
       });
     } finally {
@@ -179,19 +195,54 @@ export default function MeetingDetailsPage() {
   };
 
   const handleSendEmail = async () => {
-    const recipients = prompt("Enter recipient email addresses (comma-separated):");
-    if (!recipients) return;
+    if (!emailRecipients.trim()) {
+      toast({
+        title: "Email required",
+        description: "Please enter at least one email address",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!data) return;
 
     setIsSendingEmail(true);
     try {
-      const recipientList = recipients.split(",").map((e) => e.trim()).filter((e) => e);
-      
-      const response = await fetch("/api/gmail/send-transcript", {
+      const recipientList = emailRecipients
+        .split(",")
+        .map((e) => e.trim())
+        .filter((e) => e);
+
+      // Generate PDF data
+      const pdfData = {
+        title: data.recording.title,
+        startTime: data.recording.recordedAt,
+        duration: formatDuration(data.transcript?.duration || null),
+        speakerCount: data.transcript?.speakerCount || null,
+        confidence: data.transcript?.confidence || null,
+        content: data.transcript?.content || "",
+        summary: data.summary?.summary,
+        actionPoints: data.summary?.actionPoints || undefined,
+        keyTopics: data.summary?.keyTopics || undefined,
+        participants: data.summary?.participants || undefined,
+        sentiment: data.summary?.sentiment || undefined,
+      };
+
+      // Generate PDF as base64
+      const pdfBase64 = exportMeetingToPDF(pdfData, "full", true);
+      const filename = `${data.recording.title.replace(/[^a-z0-9]/gi, "_")}_${new Date().toISOString().split("T")[0]}.pdf`;
+
+      // Send email with PDF
+      const response = await fetch("/api/gmail/send-pdf", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          meetingId,
+          recordingId: meetingId,
           recipients: recipientList,
+          subject: emailSubject || `Meeting Transcript: ${data.recording.title}`,
+          message: emailMessage || `Please find attached the transcript and summary for: ${data.recording.title}`,
+          pdfBase64,
+          filename,
         }),
       });
 
@@ -201,8 +252,14 @@ export default function MeetingDetailsPage() {
 
       toast({
         title: "Email sent!",
-        description: `Transcript sent to ${recipientList.length} recipient(s)`,
+        description: `PDF sent to ${recipientList.length} recipient(s)`,
       });
+
+      // Reset form and close dialog
+      setEmailRecipients("");
+      setEmailSubject("");
+      setEmailMessage("");
+      setIsEmailDialogOpen(false);
     } catch (error) {
       toast({
         title: "Failed to send email",
@@ -219,8 +276,8 @@ export default function MeetingDetailsPage() {
 
     try {
       const pdfData = {
-        title: data.meeting.title,
-        startTime: data.meeting.startTime,
+        title: data.recording.title,
+        startTime: data.recording.recordedAt,
         duration: formatDuration(data.transcript?.duration || null),
         speakerCount: data.transcript?.speakerCount || null,
         confidence: data.transcript?.confidence || null,
@@ -305,7 +362,7 @@ export default function MeetingDetailsPage() {
     );
   }
 
-  const { meeting } = data;
+  const { recording } = data;
 
   return (
     <ProtectedRoute>
@@ -320,9 +377,9 @@ export default function MeetingDetailsPage() {
                 </Button>
               </Link>
               <div>
-                <h1 className="text-3xl font-bold text-foreground tracking-tight">{meeting.title}</h1>
+                <h1 className="text-3xl font-bold text-foreground tracking-tight">{recording.title}</h1>
                 <p className="text-sm text-muted-foreground mt-1">
-                  {new Date(meeting.createdAt).toLocaleDateString("en-US", {
+                  {new Date(recording.recordedAt || recording.createdAt).toLocaleDateString("en-US", {
                     year: "numeric",
                     month: "long",
                     day: "numeric",
@@ -333,24 +390,91 @@ export default function MeetingDetailsPage() {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <Badge className={getStatusColor(meeting.status)}>
-                {meeting.status}
+              <Badge className={getStatusColor(recording.status)}>
+                {recording.status}
               </Badge>
               
               {/* Action Buttons */}
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleSendEmail}
-                disabled={isSendingEmail || !transcriptionResult}
-              >
-                {isSendingEmail ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                ) : (
-                  <Mail className="mr-2 h-4 w-4" />
-                )}
-                Send via Email
-              </Button>
+              <Dialog open={isEmailDialogOpen} onOpenChange={setIsEmailDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={!transcriptionResult}
+                  >
+                    <Mail className="mr-2 h-4 w-4" />
+                    Send via Email
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[525px]">
+                  <DialogHeader>
+                    <DialogTitle>Send Meeting PDF via Email</DialogTitle>
+                    <DialogDescription>
+                      Send the meeting transcript and summary as a PDF attachment
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="grid gap-4 py-4">
+                    <div className="grid gap-2">
+                      <Label htmlFor="recipients">
+                        Recipients <span className="text-destructive">*</span>
+                      </Label>
+                      <Input
+                        id="recipients"
+                        placeholder="email@example.com, another@example.com"
+                        value={emailRecipients}
+                        onChange={(e) => setEmailRecipients(e.target.value)}
+                        disabled={isSendingEmail}
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Separate multiple emails with commas
+                      </p>
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="subject">Subject (Optional)</Label>
+                      <Input
+                        id="subject"
+                        placeholder={`Meeting Transcript: ${recording.title}`}
+                        value={emailSubject}
+                        onChange={(e) => setEmailSubject(e.target.value)}
+                        disabled={isSendingEmail}
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="message">Message (Optional)</Label>
+                      <Textarea
+                        id="message"
+                        placeholder="Add a custom message to include in the email..."
+                        value={emailMessage}
+                        onChange={(e) => setEmailMessage(e.target.value)}
+                        disabled={isSendingEmail}
+                        rows={4}
+                      />
+                    </div>
+                  </div>
+                  <DialogFooter>
+                    <Button
+                      variant="outline"
+                      onClick={() => setIsEmailDialogOpen(false)}
+                      disabled={isSendingEmail}
+                    >
+                      Cancel
+                    </Button>
+                    <Button onClick={handleSendEmail} disabled={isSendingEmail}>
+                      {isSendingEmail ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Sending...
+                        </>
+                      ) : (
+                        <>
+                          <Mail className="mr-2 h-4 w-4" />
+                          Send Email
+                        </>
+                      )}
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
               
               <Button
                 variant="outline"

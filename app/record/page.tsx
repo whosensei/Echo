@@ -77,7 +77,7 @@ export default function RecordPage() {
     setCurrentTranscription(null)
     setCurrentSummary(null)
 
-    let meetingId: string | null = null
+    let recordingId: string | null = null
 
     try {
       toast.info("Uploading audio...", {
@@ -98,30 +98,30 @@ export default function RecordPage() {
 
       const uploadData = await uploadResponse.json()
 
-      // Create meeting in backend first
+      // Create recording in backend first
       if (session?.user) {
         try {
-          const meetingResponse = await fetch("/api/meetings", {
+          const recordingResponse = await fetch("/api/recordings", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               title: `Recording ${new Date().toLocaleString()}`,
-              startTime: new Date().toISOString(),
+              recordedAt: new Date().toISOString(),
               audioFileUrl: uploadData.filename,
               status: "processing",
             }),
           })
 
-          if (meetingResponse.ok) {
-            const { meeting } = await meetingResponse.json()
-            meetingId = meeting.id
-            if (meetingId) {
-              setSelectedTranscriptionId(meetingId)
+          if (recordingResponse.ok) {
+            const { recording } = await recordingResponse.json()
+            recordingId = recording.id
+            if (recordingId) {
+              setSelectedTranscriptionId(recordingId)
             }
           }
         } catch (dbError) {
           console.error("Failed to save to database:", dbError)
-          throw new Error("Failed to create meeting record")
+          throw new Error("Failed to create recording record")
         }
       }
 
@@ -168,8 +168,8 @@ export default function RecordPage() {
 
         if (result.status === "done") {
           setCurrentTranscription(result)
-          if (meetingId) {
-            setSelectedTranscriptionId(meetingId)
+          if (recordingId) {
+            setSelectedTranscriptionId(recordingId)
           }
 
           toast.info("Generating summary...", {
@@ -204,16 +204,15 @@ export default function RecordPage() {
             console.error("Summary generation failed:", summaryError)
           }
 
-          // Update meeting in backend with transcription and summary
-          if (session?.user && meetingId) {
+          // Update recording in backend with transcription and summary
+          if (session?.user && recordingId) {
             try {
-              // Update meeting status
-              await fetch(`/api/meetings/${meetingId}`, {
+              // Update recording status
+              await fetch(`/api/recordings/${recordingId}`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                   status: "completed",
-                  endTime: new Date().toISOString(),
                 }),
               })
 
@@ -223,7 +222,7 @@ export default function RecordPage() {
                   method: "POST",
                   headers: { "Content-Type": "application/json" },
                   body: JSON.stringify({
-                    meetingId: meetingId,
+                    recordingId: recordingId,
                     content: result.result.transcription.full_transcript,
                     language: result.result.transcription.language,
                     speakerCount: result.result.speakers?.length || 0,
@@ -244,7 +243,7 @@ export default function RecordPage() {
                   method: "POST",
                   headers: { "Content-Type": "application/json" },
                   body: JSON.stringify({
-                    meetingId: meetingId,
+                    recordingId: recordingId,
                     summary: summaryData.overview,
                     actionPoints: summaryData.actionItems,
                     keyTopics: summaryData.topics,
@@ -267,10 +266,10 @@ export default function RecordPage() {
 
           break
         } else if (result.status === "error") {
-          // Update meeting status to failed
-          if (meetingId && session?.user) {
+          // Update recording status to failed
+          if (recordingId && session?.user) {
             try {
-              await fetch(`/api/meetings/${meetingId}`, {
+              await fetch(`/api/recordings/${recordingId}`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -278,7 +277,7 @@ export default function RecordPage() {
                 }),
               })
             } catch (err) {
-              console.error("Failed to update meeting status:", err)
+              console.error("Failed to update recording status:", err)
             }
           }
           throw new Error(`Transcription failed: ${result.error}`)
@@ -288,10 +287,10 @@ export default function RecordPage() {
       }
 
       if (attempts >= maxAttempts) {
-        // Update meeting status to failed
-        if (meetingId && session?.user) {
+        // Update recording status to failed
+        if (recordingId && session?.user) {
           try {
-            await fetch(`/api/meetings/${meetingId}`, {
+            await fetch(`/api/recordings/${recordingId}`, {
               method: "PUT",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
@@ -299,7 +298,7 @@ export default function RecordPage() {
               }),
             })
           } catch (err) {
-            console.error("Failed to update meeting status:", err)
+            console.error("Failed to update recording status:", err)
           }
         }
         throw new Error("Transcription timeout")
@@ -307,10 +306,10 @@ export default function RecordPage() {
     } catch (error) {
       console.error("Processing error:", error)
 
-      // Update meeting status to failed if it was created
-      if (meetingId && session?.user) {
+      // Update recording status to failed if it was created
+      if (recordingId && session?.user) {
         try {
-          await fetch(`/api/meetings/${meetingId}`, {
+          await fetch(`/api/recordings/${recordingId}`, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -318,7 +317,7 @@ export default function RecordPage() {
             }),
           })
         } catch (err) {
-          console.error("Failed to update meeting status:", err)
+          console.error("Failed to update recording status:", err)
         }
       }
 
@@ -345,41 +344,58 @@ export default function RecordPage() {
       return
     }
 
-    // Fetch full meeting details from backend
+    // Fetch full recording details from backend
     try {
-      const response = await fetch(`/api/meetings/${storedTranscription.id}`)
+      const response = await fetch(`/api/recordings/${storedTranscription.id}`)
       if (!response.ok) {
-        throw new Error("Failed to fetch meeting details")
+        throw new Error("Failed to fetch recording details")
       }
 
-      const meetingData = await response.json()
-      const meeting = meetingData.meeting
+      const recordingData = await response.json()
+      const { recording, transcript, summary } = recordingData
 
       setSelectedTranscriptionId(storedTranscription.id)
       
       // Set transcription data if available
-      if (meeting.transcription) {
-        setCurrentTranscription(meeting.transcription.metadata || null)
+      if (transcript) {
+        // Transform transcript data to match GladiaTranscriptionResult format
+        const transformedTranscript: GladiaTranscriptionResult = {
+          id: transcript.id,
+          request_id: transcript.id,
+          status: "done",
+          result: {
+            transcription: {
+              full_transcript: transcript.content,
+              utterances: transcript.metadata?.utterances || [],
+            },
+            speakers: transcript.metadata?.speakers || [],
+            metadata: {
+              ...transcript.metadata,
+              audio_duration: transcript.duration || 0,
+              number_of_channels: 1,
+              billing_time: transcript.duration || 0,
+            },
+          },
+        };
+        setCurrentTranscription(transformedTranscript)
       } else {
         setCurrentTranscription(null)
       }
 
       // Set summary data if available
-      if (meeting.summary) {
-        const durationInSeconds = meeting.endTime && meeting.startTime 
-          ? Math.round((new Date(meeting.endTime).getTime() - new Date(meeting.startTime).getTime()) / 1000)
-          : 0
-        
+      if (summary) {
+        const metadata = summary.metadata || {}
+        const durationInSeconds = transcript?.duration || 0
         const summaryData: MeetingSummary = {
-          title: meeting.title || "Meeting Summary",
-          overview: meeting.summary.summary,
-          keyPoints: [], // Will be populated from topics if needed
-          actionItems: meeting.summary.actionPoints || [],
-          decisions: [], // Will be populated if available
-          topics: meeting.summary.keyTopics || [],
-          participants: meeting.summary.participants || [],
-          sentiment: meeting.summary.sentiment || "neutral",
+          title: metadata.title || recording.title || "Recording Summary",
+          overview: summary.summary || "",
+          keyPoints: metadata.keyPoints || summary.keyTopics || [],
+          actionItems: metadata.actionItems || summary.actionPoints || [],
+          decisions: metadata.decisions || [],
+          participants: summary.participants || [],
+          topics: metadata.topics || [],
           duration: `${Math.floor(durationInSeconds / 60)}:${String(durationInSeconds % 60).padStart(2, '0')}`,
+          sentiment: (summary.sentiment as "positive" | "neutral" | "negative") || null,
         }
         setCurrentSummary(summaryData)
       } else {
@@ -387,21 +403,21 @@ export default function RecordPage() {
       }
 
       // Set audio data if available
-      if (meeting.audioFileUrl) {
-        setCurrentAudioData(`/audio-recordings/${meeting.audioFileUrl}`)
+      if (recording.audioFileUrl) {
+        setCurrentAudioData(recording.audioFileUrl)
       } else {
         setCurrentAudioData(undefined)
       }
 
-      if (!meeting.transcription && !meeting.summary) {
+      if (!transcript && !summary) {
         toast.error("No transcription data", {
-          description: "This transcription has no data available."
+          description: "This recording has no data available."
         })
       }
     } catch (error) {
-      console.error("Error fetching meeting details:", error)
-      toast.error("Failed to load meeting", {
-        description: error instanceof Error ? error.message : "Could not load meeting details."
+      console.error("Error fetching recording details:", error)
+      toast.error("Failed to load recording", {
+        description: error instanceof Error ? error.message : "Could not load recording details."
       })
     }
   }

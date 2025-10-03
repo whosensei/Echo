@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     const {
-      meetingId,
+      recordingId,
       summary: summaryText,
       actionPoints,
       keyTopics,
@@ -27,9 +27,9 @@ export async function POST(request: NextRequest) {
     } = body;
 
     // Validate required fields
-    if (!meetingId || !summaryText) {
+    if (!recordingId || !summaryText) {
       return NextResponse.json(
-        { error: "Meeting ID and summary are required" },
+        { error: "Recording ID and summary are required" },
         { status: 400 }
       );
     }
@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
     const [newSummary] = await db
       .insert(summary)
       .values({
-        meetingId,
+        recordingId,
         summary: summaryText,
         actionPoints: actionPoints || null,
         keyTopics: keyTopics || null,

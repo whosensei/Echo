@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST /api/meetings - Create a new meeting
+// POST /api/meetings - Create a new meeting (from calendar)
 export async function POST(request: NextRequest) {
   try {
     const session = await auth.api.getSession({
@@ -62,8 +62,6 @@ export async function POST(request: NextRequest) {
       startTime,
       endTime,
       calendarEventId,
-      audioFileUrl,
-      status = "pending",
     } = body;
 
     // Validate required fields
@@ -84,8 +82,6 @@ export async function POST(request: NextRequest) {
         startTime: new Date(startTime),
         endTime: endTime ? new Date(endTime) : null,
         calendarEventId: calendarEventId || null,
-        audioFileUrl: audioFileUrl || null,
-        status,
       })
       .returning();
 

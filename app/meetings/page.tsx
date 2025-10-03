@@ -9,23 +9,24 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/components/ui/toaster";
-import { Search, Filter, Calendar, FileText, Loader2, Plus } from "lucide-react";
+import { Search, Filter, Calendar, FileText, Loader2, Plus, Mic } from "lucide-react";
 import Link from "next/link";
 
-interface Meeting {
+interface Recording {
   id: string;
   title: string;
   description: string | null;
-  startTime: string | null;
-  endTime: string | null;
+  recordedAt: string;
   status: string;
   createdAt: string;
+  audioFileUrl: string;
+  meetingId?: string | null;
 }
 
 export default function MeetingsPage() {
   const { toast } = useToast();
-  const [meetings, setMeetings] = useState<Meeting[]>([]);
-  const [filteredMeetings, setFilteredMeetings] = useState<Meeting[]>([]);
+  const [recordings, setRecordings] = useState<Recording[]>([]);
+  const [filteredRecordings, setFilteredRecordings] = useState<Recording[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -36,18 +37,18 @@ export default function MeetingsPage() {
   }, []);
 
   useEffect(() => {
-    filterAndSortMeetings();
-  }, [meetings, searchQuery, statusFilter, sortBy]);
+    filterAndSortRecordings();
+  }, [recordings, searchQuery, statusFilter, sortBy]);
 
   const fetchMeetings = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch("/api/meetings?limit=100");
+      const response = await fetch("/api/recordings?limit=100");
       if (!response.ok) {
-        throw new Error("Failed to fetch meetings");
+        throw new Error("Failed to fetch recordings");
       }
       const data = await response.json();
-      setMeetings(data.meetings || []);
+      setRecordings(data.recordings || []);
     } catch (error) {
       toast({
         title: "Error loading meetings",
@@ -59,21 +60,21 @@ export default function MeetingsPage() {
     }
   };
 
-  const filterAndSortMeetings = () => {
-    let filtered = [...meetings];
+  const filterAndSortRecordings = () => {
+    let filtered = [...recordings];
 
     // Apply search filter
     if (searchQuery) {
       filtered = filtered.filter(
-        (meeting) =>
-          meeting.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          (meeting.description && meeting.description.toLowerCase().includes(searchQuery.toLowerCase()))
+        (recording) =>
+          recording.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          (recording.description && recording.description.toLowerCase().includes(searchQuery.toLowerCase()))
       );
     }
 
     // Apply status filter
     if (statusFilter !== "all") {
-      filtered = filtered.filter((meeting) => meeting.status === statusFilter);
+      filtered = filtered.filter((recording) => recording.status === statusFilter);
     }
 
     // Apply sorting
@@ -90,7 +91,7 @@ export default function MeetingsPage() {
       }
     });
 
-    setFilteredMeetings(filtered);
+    setFilteredRecordings(filtered);
   };
 
   const formatDate = (dateString: string | null) => {
@@ -127,9 +128,9 @@ export default function MeetingsPage() {
           {/* Header */}
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-semibold text-foreground">All Meetings</h1>
+              <h1 className="text-3xl font-semibold text-foreground">All Recordings</h1>
               <p className="text-slate-600 mt-1">
-                View and manage all your meeting recordings
+                View and manage all your audio recordings and transcriptions
               </p>
             </div>
             <Link href="/">
@@ -151,7 +152,7 @@ export default function MeetingsPage() {
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                   <Input
-                    placeholder="Search meetings..."
+                    placeholder="Search recordings..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="pl-10"
@@ -187,37 +188,37 @@ export default function MeetingsPage() {
 
               {/* Results count */}
               <div className="mt-4 text-sm text-slate-600">
-                Showing {filteredMeetings.length} of {meetings.length} meetings
+                Showing {filteredRecordings.length} of {recordings.length} recordings
               </div>
             </CardContent>
           </Card>
 
-          {/* Meetings List */}
+          {/* Recordings List */}
           <div className="space-y-4">
             {isLoading ? (
               <Card>
                 <CardContent className="flex items-center justify-center py-12">
                   <div className="text-center">
                     <Loader2 className="h-12 w-12 animate-spin mx-auto text-slate-400" />
-                    <p className="mt-4 text-slate-600">Loading meetings...</p>
+                    <p className="mt-4 text-slate-600">Loading recordings...</p>
                   </div>
                 </CardContent>
               </Card>
-            ) : filteredMeetings.length === 0 ? (
+            ) : filteredRecordings.length === 0 ? (
               <Card>
                 <CardContent className="flex items-center justify-center py-12">
                   <div className="text-center">
-                    <FileText className="h-16 w-16 mx-auto text-slate-400 mb-4 opacity-50" />
+                    <Mic className="h-16 w-16 mx-auto text-slate-400 mb-4 opacity-50" />
                     <h3 className="text-lg font-semibold text-foreground mb-2">
-                      {searchQuery || statusFilter !== "all" ? "No meetings found" : "No meetings yet"}
+                      {searchQuery || statusFilter !== "all" ? "No recordings found" : "No recordings yet"}
                     </h3>
                     <p className="text-slate-600 mb-4">
                       {searchQuery || statusFilter !== "all"
                         ? "Try adjusting your filters"
-                        : "Start by recording your first meeting"}
+                        : "Start by recording your first audio"}
                     </p>
                     {!searchQuery && statusFilter === "all" && (
-                      <Link href="/">
+                      <Link href="/record">
                         <Button>
                           <Plus className="mr-2 h-4 w-4" />
                           Create Recording
@@ -228,24 +229,24 @@ export default function MeetingsPage() {
                 </CardContent>
               </Card>
             ) : (
-              filteredMeetings.map((meeting) => (
-                <Link key={meeting.id} href={`/meetings/${meeting.id}`}>
+              filteredRecordings.map((recording) => (
+                <Link key={recording.id} href={`/meetings/${recording.id}`}>
                   <Card className="hover:shadow-md transition-shadow cursor-pointer">
                     <CardContent className="p-6">
                       <div className="flex items-start justify-between">
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-3 mb-2">
                             <h3 className="text-lg font-semibold text-foreground truncate">
-                              {meeting.title}
+                              {recording.title}
                             </h3>
-                            <Badge className={getStatusColor(meeting.status)}>
-                              {meeting.status}
+                            <Badge className={getStatusColor(recording.status)}>
+                              {recording.status}
                             </Badge>
                           </div>
 
-                          {meeting.description && (
+                          {recording.description && (
                             <p className="text-sm text-slate-600 mb-3 line-clamp-2">
-                              {meeting.description}
+                              {recording.description}
                             </p>
                           )}
 
@@ -253,16 +254,16 @@ export default function MeetingsPage() {
                             <div className="flex items-center gap-1">
                               <Calendar className="h-4 w-4" />
                               <span>
-                                {meeting.startTime
-                                  ? formatDate(meeting.startTime)
-                                  : `Created ${formatDate(meeting.createdAt)}`}
+                                {recording.recordedAt
+                                  ? formatDate(recording.recordedAt)
+                                  : `Created ${formatDate(recording.createdAt)}`}
                               </span>
                             </div>
                           </div>
                         </div>
 
                         <div className="ml-4">
-                          <FileText className="h-8 w-8 text-slate-400" />
+                          <Mic className="h-8 w-8 text-slate-400" />
                         </div>
                       </div>
                     </CardContent>

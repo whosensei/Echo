@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { sendSummaryEmail } from "@/lib/gmail/client";
+import { sendPDFEmail } from "@/lib/gmail/client";
 import { db } from "@/lib/db";
-import { recording, summary } from "@/lib/db/schema";
+import { recording } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 import { headers } from "next/headers";
 
-// POST /api/gmail/send-summary - Send summary via email
+// POST /api/gmail/send-pdf - Send meeting PDF via email
 export async function POST(request: NextRequest) {
   try {
     const session = await auth.api.getSession({
@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { recordingId, recipients } = body;
+    const { recordingId, recipients, subject, message, pdfBase64, filename } = body;
 
     if (!recordingId || !recipients || !Array.isArray(recipients)) {
       return NextResponse.json(
@@ -27,7 +27,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Fetch the recording
+    if (!pdfBase64 || !filename) {
+      return NextResponse.json(
+        { error: "PDF base64 and filename are required" },
+        { status: 400 }
+      );
+    }
+
+    // Fetch the recording to verify ownership
     const [recordingData] = await db
       .select()
       .from(recording)
@@ -39,30 +46,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Recording not found" }, { status: 404 });
     }
 
-    // Fetch the summary
-    const [summaryData] = await db
-      .select()
-      .from(summary)
-      .where(eq(summary.recordingId, recordingId));
-
-    if (!summaryData) {
-      return NextResponse.json(
-        { error: "Summary not found for this recording" },
-        { status: 404 }
-      );
-    }
-
     // Send emails to all recipients
     const results = [];
     for (const recipient of recipients) {
       try {
-        await sendSummaryEmail(
+        await sendPDFEmail(
           session.user.id,
           recordingId,
           recipient,
-          recordingData.title,
-          summaryData.summary,
-          summaryData.actionPoints as any[] | undefined
+          subject || `Meeting Transcript: ${recordingData.title}`,
+          message || `Please find attached the transcript and summary for: ${recordingData.title}`,
+          pdfBase64,
+          filename
         );
         results.push({ recipient, status: "sent" });
       } catch (error) {
@@ -78,13 +73,13 @@ export async function POST(request: NextRequest) {
     const successCount = results.filter((r) => r.status === "sent").length;
 
     return NextResponse.json({
-      message: `Summary email sent to ${successCount} of ${recipients.length} recipients`,
+      message: `PDF email sent to ${successCount} of ${recipients.length} recipients`,
       results,
     });
   } catch (error) {
-    console.error("Error sending summary email:", error);
+    console.error("Error sending PDF email:", error);
     return NextResponse.json(
-      { error: "Failed to send summary email" },
+      { error: "Failed to send PDF email" },
       { status: 500 }
     );
   }

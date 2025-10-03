@@ -121,6 +121,13 @@ export async function getCalendarClient(userId: string) {
 
 /**
  * Get upcoming meetings from Google Calendar
+ * Broader logic: include timed events that are not cancelled.
+ * Keep attendee requirement optional: allow if any of these is true:
+ *  - has attendees
+ *  - has conferenceData / hangoutLink / location
+ *  - organizer.self is true (user created it)
+ * Still exclude all-day events (date-only) and cancelled events.
+ * Adds console diagnostics to help debug empty lists.
  */
 export async function getUpcomingMeetings(
   userId: string,
@@ -133,14 +140,53 @@ export async function getUpcomingMeetings(
     const response = await calendar.events.list({
       calendarId: "primary",
       timeMin: now.toISOString(),
-      maxResults,
+      maxResults: maxResults * 5, // fetch more to allow filtering leniency
       singleEvents: true,
       orderBy: "startTime",
+      // eventTypes param may not be supported in all accounts; remove to avoid empty results
+      // If needed later, we can reintroduce conditionally.
     });
 
     const events = response.data.items || [];
+    console.log("[Calendar] Raw events fetched:", events.length);
 
-    return events.map((event) => ({
+    let excludedAllDay = 0;
+    let excludedCancelled = 0;
+    let excludedNoSignal = 0; // no attendees + no location/conference + not self authored
+
+    const meetings = events.filter((event) => {
+      const isCancelled = event.status === "cancelled";
+      if (isCancelled) {
+        excludedCancelled++;
+        return false;
+      }
+
+      const hasSpecificTime = !!event.start?.dateTime;
+      if (!hasSpecificTime) {
+        excludedAllDay++;
+        return false;
+      }
+
+      const hasAttendees = (event.attendees?.length || 0) > 0;
+      const hasConference = !!event.conferenceData || !!event.hangoutLink;
+      const hasLocation = !!event.location;
+      const isSelf = !!event.organizer?.self;
+
+      const keep = hasAttendees || hasConference || hasLocation || isSelf;
+      if (!keep) excludedNoSignal++;
+      return keep;
+    });
+
+    console.log("[Calendar] After filtering - kept:", meetings.length, {
+      excludedAllDay,
+      excludedCancelled,
+      excludedNoSignal,
+    });
+
+    const limited = meetings.slice(0, maxResults);
+    console.log("[Calendar] Returning meetings:", limited.map(e => ({ id: e.id, summary: e.summary, when: e.start?.dateTime })));
+
+    return limited.map((event) => ({
       id: event.id!,
       summary: event.summary || "No Title",
       description: event.description || undefined,
@@ -355,7 +401,6 @@ export async function syncMeetingToDatabase(
             : undefined,
           endTime: event.end.dateTime ? new Date(event.end.dateTime) : undefined,
           calendarEventId: eventId,
-          status: "pending",
         })
         .returning();
 
@@ -369,10 +414,12 @@ export async function syncMeetingToDatabase(
 
 /**
  * Sync all upcoming meetings to database
+ * Only syncs actual meetings (with attendees), not personal events or all-day events
  */
 export async function syncAllUpcomingMeetings(userId: string): Promise<number> {
   try {
-    const events = await getUpcomingMeetings(userId, 10);
+    // Fetch more meetings to ensure we get enough after filtering
+    const events = await getUpcomingMeetings(userId, 20);
     let syncedCount = 0;
 
     for (const event of events) {
@@ -388,6 +435,49 @@ export async function syncAllUpcomingMeetings(userId: string): Promise<number> {
   } catch (error) {
     console.error("Error syncing all upcoming meetings:", error);
     throw error;
+  }
+}
+
+/**
+ * Auto-sync upcoming meetings to database (only new ones)
+ * This is optimized for background syncing without duplicating existing meetings
+ */
+export async function autoSyncNewMeetings(userId: string): Promise<number> {
+  try {
+    // Fetch upcoming meetings from Google Calendar
+    const events = await getUpcomingMeetings(userId, 20);
+    let syncedCount = 0;
+
+    // Get all existing calendar event IDs from database
+    const existingMeetings = await db
+      .select({ calendarEventId: meeting.calendarEventId })
+      .from(meeting)
+      .where(eq(meeting.userId, userId));
+    
+    const existingEventIds = new Set(
+      existingMeetings
+        .map(m => m.calendarEventId)
+        .filter((id): id is string => id !== null)
+    );
+
+    // Only sync events that are not already in the database
+    for (const event of events) {
+      try {
+        if (!existingEventIds.has(event.id)) {
+          await syncMeetingToDatabase(userId, event.id);
+          syncedCount++;
+        }
+      } catch (error) {
+        console.error(`Error auto-syncing event ${event.id}:`, error);
+        // Continue with other events even if one fails
+      }
+    }
+
+    return syncedCount;
+  } catch (error) {
+    console.error("Error auto-syncing new meetings:", error);
+    // Don't throw - we want background sync to fail silently
+    return 0;
   }
 }
 

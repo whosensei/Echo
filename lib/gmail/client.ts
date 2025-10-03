@@ -153,17 +153,17 @@ export async function sendEmail(userId: string, params: SendEmailParams): Promis
  */
 export async function sendTranscriptEmail(
   userId: string,
-  meetingId: string,
+  recordingId: string,
   recipientEmail: string,
-  meetingTitle: string,
+  recordingTitle: string,
   transcriptContent: string
 ): Promise<void> {
   try {
-    const subject = `Transcript: ${meetingTitle}`;
+    const subject = `Transcript: ${recordingTitle}`;
     const body = `
 Hello,
 
-Please find attached the transcript for the meeting: ${meetingTitle}
+Please find attached the transcript for the recording: ${recordingTitle}
 
 ---
 ${transcriptContent}
@@ -176,7 +176,7 @@ Meeting Assistant
     // Log email attempt
     await db.insert(emailLog).values({
       userId,
-      meetingId,
+      recordingId,
       recipientEmail,
       subject,
       type: "transcript",
@@ -193,7 +193,7 @@ Meeting Assistant
     await db
       .update(emailLog)
       .set({ status: "sent", sentAt: new Date() })
-      .where(eq(emailLog.meetingId, meetingId));
+      .where(eq(emailLog.recordingId, recordingId));
   } catch (error) {
     // Update log as failed
     await db
@@ -202,7 +202,7 @@ Meeting Assistant
         status: "failed",
         errorMessage: error instanceof Error ? error.message : "Unknown error",
       })
-      .where(eq(emailLog.meetingId, meetingId));
+      .where(eq(emailLog.recordingId, recordingId));
     throw error;
   }
 }
@@ -212,14 +212,14 @@ Meeting Assistant
  */
 export async function sendSummaryEmail(
   userId: string,
-  meetingId: string,
+  recordingId: string,
   recipientEmail: string,
-  meetingTitle: string,
+  recordingTitle: string,
   summary: string,
   actionPoints?: any[]
 ): Promise<void> {
   try {
-    const subject = `Meeting Summary: ${meetingTitle}`;
+    const subject = `Meeting Summary: ${recordingTitle}`;
 
     let actionPointsText = "";
     if (actionPoints && actionPoints.length > 0) {
@@ -229,7 +229,7 @@ export async function sendSummaryEmail(
     const body = `
 Hello,
 
-Here is the summary for the meeting: ${meetingTitle}
+Here is the summary for the recording: ${recordingTitle}
 
 Summary:
 ${summary}
@@ -242,7 +242,7 @@ Meeting Assistant
     // Log email attempt
     await db.insert(emailLog).values({
       userId,
-      meetingId,
+      recordingId,
       recipientEmail,
       subject,
       type: "summary",
@@ -259,7 +259,7 @@ Meeting Assistant
     await db
       .update(emailLog)
       .set({ status: "sent", sentAt: new Date() })
-      .where(eq(emailLog.meetingId, meetingId));
+      .where(eq(emailLog.recordingId, recordingId));
   } catch (error) {
     // Update log as failed
     await db
@@ -268,7 +268,61 @@ Meeting Assistant
         status: "failed",
         errorMessage: error instanceof Error ? error.message : "Unknown error",
       })
-      .where(eq(emailLog.meetingId, meetingId));
+      .where(eq(emailLog.recordingId, recordingId));
+    throw error;
+  }
+}
+
+/**
+ * Send PDF via email
+ */
+export async function sendPDFEmail(
+  userId: string,
+  recordingId: string,
+  recipientEmail: string,
+  subject: string,
+  message: string,
+  pdfBase64: string,
+  filename: string
+): Promise<void> {
+  try {
+    // Log email attempt
+    await db.insert(emailLog).values({
+      userId,
+      recordingId,
+      recipientEmail,
+      subject,
+      type: "pdf",
+      status: "pending",
+    });
+
+    await sendEmail(userId, {
+      to: recipientEmail,
+      subject,
+      body: message,
+      attachments: [
+        {
+          filename,
+          content: pdfBase64,
+          mimeType: "application/pdf",
+        },
+      ],
+    });
+
+    // Update log as sent
+    await db
+      .update(emailLog)
+      .set({ status: "sent", sentAt: new Date() })
+      .where(eq(emailLog.recordingId, recordingId));
+  } catch (error) {
+    // Update log as failed
+    await db
+      .update(emailLog)
+      .set({
+        status: "failed",
+        errorMessage: error instanceof Error ? error.message : "Unknown error",
+      })
+      .where(eq(emailLog.recordingId, recordingId));
     throw error;
   }
 }

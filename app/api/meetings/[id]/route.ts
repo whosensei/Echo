@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { meeting, transcript, summary } from "@/lib/db/schema";
+import { meeting, recording, transcript, summary } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 import { headers } from "next/headers";
 
-// GET /api/meetings/[id] - Get a specific meeting with its transcript and summary
+// GET /api/meetings/[id] - Get a specific meeting with its recordings
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
@@ -33,22 +33,36 @@ export async function GET(
       return NextResponse.json({ error: "Meeting not found" }, { status: 404 });
     }
 
-    // Fetch related transcript
-    const [transcriptData] = await db
+    // Fetch related recordings
+    const recordings = await db
       .select()
-      .from(transcript)
-      .where(eq(transcript.meetingId, meetingId));
+      .from(recording)
+      .where(eq(recording.meetingId, meetingId));
 
-    // Fetch related summary
-    const [summaryData] = await db
-      .select()
-      .from(summary)
-      .where(eq(summary.meetingId, meetingId));
+    // For each recording, fetch transcript and summary
+    const recordingsWithDetails = await Promise.all(
+      recordings.map(async (rec) => {
+        const [transcriptData] = await db
+          .select()
+          .from(transcript)
+          .where(eq(transcript.recordingId, rec.id));
+
+        const [summaryData] = await db
+          .select()
+          .from(summary)
+          .where(eq(summary.recordingId, rec.id));
+
+        return {
+          ...rec,
+          transcript: transcriptData || null,
+          summary: summaryData || null,
+        };
+      })
+    );
 
     return NextResponse.json({
       meeting: meetingData,
-      transcript: transcriptData || null,
-      summary: summaryData || null,
+      recordings: recordingsWithDetails,
     });
   } catch (error) {
     console.error("Error fetching meeting:", error);
@@ -82,8 +96,6 @@ export async function PUT(
       startTime,
       endTime,
       calendarEventId,
-      audioFileUrl,
-      status,
     } = body;
 
     // Verify the meeting belongs to the user
@@ -109,8 +121,6 @@ export async function PUT(
           endTime: endTime ? new Date(endTime) : null,
         }),
         ...(calendarEventId !== undefined && { calendarEventId }),
-        ...(audioFileUrl !== undefined && { audioFileUrl }),
-        ...(status && { status }),
         updatedAt: new Date(),
       })
       .where(eq(meeting.id, meetingId))
@@ -157,7 +167,7 @@ export async function DELETE(
       return NextResponse.json({ error: "Meeting not found" }, { status: 404 });
     }
 
-    // Delete the meeting (cascades to transcript and summary)
+    // Delete the meeting (recordings will have meetingId set to null due to "set null" cascade)
     await db.delete(meeting).where(eq(meeting.id, meetingId));
 
     return NextResponse.json({

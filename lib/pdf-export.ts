@@ -14,7 +14,11 @@ interface MeetingPDFData {
   sentiment?: string | null;
 }
 
-export function exportMeetingToPDF(data: MeetingPDFData, type: "transcript" | "summary" | "full") {
+export function exportMeetingToPDF(
+  data: MeetingPDFData, 
+  type: "transcript" | "summary" | "full",
+  returnBase64: boolean = false
+): string {
   const doc = new jsPDF();
   let yPosition = 20;
   const pageWidth = doc.internal.pageSize.width;
@@ -159,8 +163,13 @@ export function exportMeetingToPDF(data: MeetingPDFData, type: "transcript" | "s
   const timestamp = new Date().toISOString().split("T")[0];
   const filename = `${data.title.replace(/[^a-z0-9]/gi, "_")}_${type}_${timestamp}.pdf`;
 
-  // Save the PDF
-  doc.save(filename);
-
-  return filename;
+  // Return base64 or save and return filename
+  if (returnBase64) {
+    const pdfBase64 = doc.output("dataurlstring");
+    // Remove the data:application/pdf;filename=generated.pdf;base64, prefix
+    return pdfBase64.split(",")[1];
+  } else {
+    doc.save(filename);
+    return filename;
+  }
 }

@@ -46,29 +46,29 @@ export function TranscriptionSidebar({
     setError(null)
 
     try {
-      // Fetch from backend API instead of LocalStorage
-      const response = await fetch("/api/meetings?limit=100")
+      // Fetch recordings from backend API
+      const response = await fetch("/api/recordings?limit=100")
       
       if (!response.ok) {
-        throw new Error("Failed to fetch meetings")
+        throw new Error("Failed to fetch recordings")
       }
 
       const data = await response.json()
       
-      // Convert meetings to StoredTranscription format
-      const meetings = data.meetings || []
-      const convertedTranscriptions: StoredTranscription[] = meetings.map((meeting: any) => ({
-        id: meeting.id,
-        filename: meeting.title,
-        createdAt: meeting.createdAt || meeting.startTime,
-        status: meeting.status === "completed" ? "completed" : 
-                meeting.status === "processing" ? "processing" : 
-                meeting.status === "failed" ? "failed" : "pending",
-        audioData: meeting.audioFileUrl ? `/audio-recordings/${meeting.audioFileUrl}` : undefined,
-        transcriptionData: meeting.transcriptionData || null,
-        summaryData: meeting.summaryData || null,
-        error: meeting.status === "failed" ? "Transcription failed" : undefined,
-        meetingId: meeting.id,
+      // Convert recordings to StoredTranscription format
+      const recordings = data.recordings || []
+      const convertedTranscriptions: StoredTranscription[] = recordings.map((recording: any) => ({
+        id: recording.id,
+        filename: recording.title,
+        createdAt: recording.createdAt || recording.recordedAt,
+        status: recording.status === "completed" ? "completed" : 
+                recording.status === "processing" ? "processing" : 
+                recording.status === "failed" ? "failed" : "pending",
+        audioData: recording.audioFileUrl ? `/audio-recordings/${recording.audioFileUrl}` : undefined,
+        transcriptionData: recording.transcriptionData || null,
+        summaryData: recording.summaryData || null,
+        error: recording.status === "failed" ? "Transcription failed" : undefined,
+        recordingId: recording.id,
       }))
       
       console.log("Loaded transcriptions from backend:", convertedTranscriptions.length, convertedTranscriptions)
@@ -88,12 +88,12 @@ export function TranscriptionSidebar({
 
     if (confirm("Are you sure you want to delete this transcription?")) {
       try {
-        const response = await fetch(`/api/meetings/${id}`, {
+        const response = await fetch(`/api/recordings/${id}`, {
           method: "DELETE",
         })
 
         if (!response.ok) {
-          throw new Error("Failed to delete meeting")
+          throw new Error("Failed to delete recording")
         }
 
         await loadTranscriptions() // Refresh the list
@@ -126,7 +126,7 @@ export function TranscriptionSidebar({
 
     if (editingName.trim()) {
       try {
-        const response = await fetch(`/api/meetings/${id}`, {
+        const response = await fetch(`/api/recordings/${id}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -135,7 +135,7 @@ export function TranscriptionSidebar({
         })
 
         if (!response.ok) {
-          throw new Error("Failed to update meeting")
+          throw new Error("Failed to update recording")
         }
 
         setEditingId(null)

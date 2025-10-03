@@ -55,7 +55,7 @@ export const verification = pgTable("verification", {
   updatedAt: timestamp("updatedAt").defaultNow(),
 });
 
-// Meetings table - stores meeting information
+// Meetings table - stores meeting information from calendar
 export const meeting = pgTable("meeting", {
   id: uuid("id").primaryKey().defaultRandom(),
   userId: text("userId")
@@ -66,8 +66,23 @@ export const meeting = pgTable("meeting", {
   startTime: timestamp("startTime"),
   endTime: timestamp("endTime"),
   calendarEventId: text("calendarEventId"), // Google Calendar event ID
-  audioFileUrl: text("audioFileUrl"), // Path to audio file
+  createdAt: timestamp("createdAt").notNull().defaultNow(),
+  updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+});
+
+// Recordings table - stores audio recordings and transcriptions
+export const recording = pgTable("recording", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: text("userId")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  meetingId: uuid("meetingId")
+    .references(() => meeting.id, { onDelete: "set null" }), // Optional: link to calendar meeting
+  title: text("title").notNull(),
+  description: text("description"),
+  audioFileUrl: text("audioFileUrl").notNull(), // Path to audio file
   status: text("status").notNull().default("pending"), // pending, processing, completed, failed
+  recordedAt: timestamp("recordedAt").notNull().defaultNow(),
   createdAt: timestamp("createdAt").notNull().defaultNow(),
   updatedAt: timestamp("updatedAt").notNull().defaultNow(),
 });
@@ -75,9 +90,9 @@ export const meeting = pgTable("meeting", {
 // Transcripts table - stores meeting transcriptions
 export const transcript = pgTable("transcript", {
   id: uuid("id").primaryKey().defaultRandom(),
-  meetingId: uuid("meetingId")
+  recordingId: uuid("recordingId")
     .notNull()
-    .references(() => meeting.id, { onDelete: "cascade" }),
+    .references(() => recording.id, { onDelete: "cascade" }),
   content: text("content").notNull(),
   language: text("language"),
   speakerCount: integer("speakerCount"),
@@ -90,9 +105,9 @@ export const transcript = pgTable("transcript", {
 // Summaries table - stores AI-generated summaries
 export const summary = pgTable("summary", {
   id: uuid("id").primaryKey().defaultRandom(),
-  meetingId: uuid("meetingId")
+  recordingId: uuid("recordingId")
     .notNull()
-    .references(() => meeting.id, { onDelete: "cascade" }),
+    .references(() => recording.id, { onDelete: "cascade" }),
   summary: text("summary").notNull(),
   actionPoints: jsonb("actionPoints"), // Array of action items
   keyTopics: jsonb("keyTopics"), // Array of key topics discussed
@@ -107,6 +122,8 @@ export const emailLog = pgTable("email_log", {
   id: uuid("id").primaryKey().defaultRandom(),
   meetingId: uuid("meetingId")
     .references(() => meeting.id, { onDelete: "cascade" }),
+  recordingId: uuid("recordingId")
+    .references(() => recording.id, { onDelete: "cascade" }),
   userId: text("userId")
     .notNull()
     .references(() => user.id, { onDelete: "cascade" }),
@@ -170,6 +187,7 @@ export const userRelations = relations(user, ({ many, one }) => ({
   sessions: many(session),
   accounts: many(account),
   meetings: many(meeting),
+  recordings: many(recording),
   emailLogs: many(emailLog),
   settings: one(userSettings),
   apiKeys: many(apiKey),
@@ -195,22 +213,35 @@ export const meetingRelations = relations(meeting, ({ one, many }) => ({
     fields: [meeting.userId],
     references: [user.id],
   }),
+  recordings: many(recording),
+  emailLogs: many(emailLog),
+}));
+
+export const recordingRelations = relations(recording, ({ one, many }) => ({
+  user: one(user, {
+    fields: [recording.userId],
+    references: [user.id],
+  }),
+  meeting: one(meeting, {
+    fields: [recording.meetingId],
+    references: [meeting.id],
+  }),
   transcript: one(transcript),
   summary: one(summary),
   emailLogs: many(emailLog),
 }));
 
 export const transcriptRelations = relations(transcript, ({ one }) => ({
-  meeting: one(meeting, {
-    fields: [transcript.meetingId],
-    references: [meeting.id],
+  recording: one(recording, {
+    fields: [transcript.recordingId],
+    references: [recording.id],
   }),
 }));
 
 export const summaryRelations = relations(summary, ({ one }) => ({
-  meeting: one(meeting, {
-    fields: [summary.meetingId],
-    references: [meeting.id],
+  recording: one(recording, {
+    fields: [summary.recordingId],
+    references: [recording.id],
   }),
 }));
 
@@ -218,6 +249,10 @@ export const emailLogRelations = relations(emailLog, ({ one }) => ({
   meeting: one(meeting, {
     fields: [emailLog.meetingId],
     references: [meeting.id],
+  }),
+  recording: one(recording, {
+    fields: [emailLog.recordingId],
+    references: [recording.id],
   }),
   user: one(user, {
     fields: [emailLog.userId],
@@ -258,6 +293,9 @@ export type NewAccount = typeof account.$inferInsert;
 
 export type Meeting = typeof meeting.$inferSelect;
 export type NewMeeting = typeof meeting.$inferInsert;
+
+export type Recording = typeof recording.$inferSelect;
+export type NewRecording = typeof recording.$inferInsert;
 
 export type Transcript = typeof transcript.$inferSelect;
 export type NewTranscript = typeof transcript.$inferInsert;

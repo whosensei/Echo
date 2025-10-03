@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     const {
-      meetingId,
+      recordingId,
       content,
       language,
       speakerCount,
@@ -55,9 +55,9 @@ export async function POST(request: NextRequest) {
     } = body;
 
     // Validate required fields
-    if (!meetingId || !content) {
+    if (!recordingId || !content) {
       return NextResponse.json(
-        { error: "Meeting ID and content are required" },
+        { error: "Recording ID and content are required" },
         { status: 400 }
       );
     }
@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
     const [newTranscript] = await db
       .insert(transcript)
       .values({
-        meetingId,
+        recordingId,
         content,
         language: language || null,
         speakerCount: speakerCount || null,
