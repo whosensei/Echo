@@ -11,7 +11,6 @@ import {
   Settings,
   FileText,
   LogOut,
-  BarChart3,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -35,7 +34,6 @@ const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { name: "Calendar", href: "/calendar", icon: Calendar },
   { name: "Meetings", href: "/meetings", icon: FileText },
-  { name: "Analytics", href: "/analytics", icon: BarChart3 },
   { name: "Record", href: "/record", icon: Mic },
   { name: "Settings", href: "/settings", icon: Settings },
 ];
