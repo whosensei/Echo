@@ -84,20 +84,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             )}
           </div>
 
-          {/* Collapsed - Expand Button */}
-          {isSidebarCollapsed && (
-            <div className="flex justify-center py-2 border-b border-border">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-                className="h-8 w-8"
-              >
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
-          )}
-
           {/* Navigation */}
           <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
             {/* Record Button - Primary Action */}
@@ -187,24 +173,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuLabel>My Account</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                {/* Record Button - Highlighted */}
-                <DropdownMenuItem asChild>
-                  <Link href={recordButton.href} className="bg-primary/10 text-primary font-semibold">
-                    <recordButton.icon className="mr-2 h-4 w-4" />
-                    {recordButton.name}
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                {/* Regular Navigation */}
-                {navigation.map((item) => (
-                  <DropdownMenuItem key={item.name} asChild>
-                    <Link href={item.href}>
-                      <item.icon className="mr-2 h-4 w-4" />
-                      {item.name}
-                    </Link>
-                  </DropdownMenuItem>
-                ))}
-                <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleSignOut}>
                   <LogOut className="mr-2 h-4 w-4" />
                   Sign out
@@ -240,24 +208,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuLabel>My Account</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                {/* Record Button - Highlighted */}
-                <DropdownMenuItem asChild>
-                  <Link href={recordButton.href} className="bg-primary/10 text-primary font-semibold">
-                    <recordButton.icon className="mr-2 h-4 w-4" />
-                    {recordButton.name}
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                {/* Regular Navigation */}
-                {navigation.map((item) => (
-                  <DropdownMenuItem key={item.name} asChild>
-                    <Link href={item.href}>
-                      <item.icon className="mr-2 h-4 w-4" />
-                      {item.name}
-                    </Link>
-                  </DropdownMenuItem>
-                ))}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleSignOut}>
                   <LogOut className="mr-2 h-4 w-4" />

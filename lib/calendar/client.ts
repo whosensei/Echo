@@ -73,10 +73,66 @@ export async function getCalendarClient(userId: string) {
     .where(eq(account.userId, userId))
     .limit(1);
 
-  if (!userAccount.length || !userAccount[0].accessToken) {
-    throw new Error("Google account not connected or no access token found");
+  if (!userAccount.length) {
+    throw new Error("Google account not connected. Please sign in with Google.");
   }
 
+  const accountData = userAccount[0];
+
+  if (!accountData.refreshToken) {
+    throw new Error("No refresh token available. Please reconnect your Google account in Settings.");
+  }
+
+  let accessToken = accountData.accessToken;
+  let expiresAt = accountData.accessTokenExpiresAt;
+
+  // Check if token is expired or about to expire (5 min buffer)
+  const isExpired = !accessToken || (expiresAt && new Date(expiresAt).getTime() < Date.now() + 5 * 60 * 1000);
+
+  if (isExpired) {
+    try {
+      console.log("Access token expired or missing, refreshing...");
+      
+      // Refresh the access token
+      const response = await fetch("https://oauth2.googleapis.com/token", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          client_id: process.env.GOOGLE_CLIENT_ID,
+          client_secret: process.env.GOOGLE_CLIENT_SECRET,
+          refresh_token: accountData.refreshToken,
+          grant_type: "refresh_token",
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        console.error("Token refresh failed:", error);
+        throw new Error("Failed to refresh access token. Please reconnect your Google account in Settings.");
+      }
+
+      const tokens = await response.json();
+      
+      // Update database with new token
+      await db
+        .update(account)
+        .set({
+          accessToken: tokens.access_token,
+          accessTokenExpiresAt: new Date(Date.now() + tokens.expires_in * 1000),
+          updatedAt: new Date(),
+        })
+        .where(eq(account.id, accountData.id));
+
+      // Use the new token
+      accessToken = tokens.access_token;
+      console.log("Access token refreshed successfully");
+    } catch (error) {
+      console.error("Error refreshing token:", error);
+      throw new Error("Session expired. Please reconnect your Google account in Settings.");
+    }
+  }
+
+  // Initialize OAuth2 client with valid token
   const oauth2Client = new google.auth.OAuth2(
     process.env.GOOGLE_CLIENT_ID,
     process.env.GOOGLE_CLIENT_SECRET,
@@ -84,35 +140,8 @@ export async function getCalendarClient(userId: string) {
   );
 
   oauth2Client.setCredentials({
-    access_token: userAccount[0].accessToken,
-    refresh_token: userAccount[0].refreshToken,
-    expiry_date: userAccount[0].accessTokenExpiresAt?.getTime(),
-  });
-
-  // Handle token refresh
-  oauth2Client.on("tokens", async (tokens) => {
-    if (tokens.refresh_token) {
-      await db
-        .update(account)
-        .set({
-          refreshToken: tokens.refresh_token,
-          accessToken: tokens.access_token,
-          accessTokenExpiresAt: tokens.expiry_date
-            ? new Date(tokens.expiry_date)
-            : undefined,
-        })
-        .where(eq(account.userId, userId));
-    } else if (tokens.access_token) {
-      await db
-        .update(account)
-        .set({
-          accessToken: tokens.access_token,
-          accessTokenExpiresAt: tokens.expiry_date
-            ? new Date(tokens.expiry_date)
-            : undefined,
-        })
-        .where(eq(account.userId, userId));
-    }
+    access_token: accessToken,
+    refresh_token: accountData.refreshToken,
   });
 
   const calendar = google.calendar({ version: "v3", auth: oauth2Client });

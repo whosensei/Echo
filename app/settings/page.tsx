@@ -12,43 +12,62 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { useSession } from "@/lib/auth-client";
 import { useToast } from "@/components/ui/toaster";
-import { User, Mail, Calendar, Key, CheckCircle2, XCircle, Loader2 } from "lucide-react";
+import { User, Mail, Calendar, Key, CheckCircle2, XCircle, Loader2, AlertTriangle } from "lucide-react";
 import { EmailTemplates } from "@/components/EmailTemplates";
+
+interface IntegrationStatus {
+  isConnected: boolean;
+  hasGmailAccess: boolean;
+  hasCalendarAccess: boolean;
+  tokenMightBeExpired: boolean;
+  email: string;
+  scopes: string[];
+}
 
 export default function SettingsPage() {
   const { data: session } = useSession();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
-  const [gmailConnected, setGmailConnected] = useState(false);
-  const [calendarConnected, setCalendarConnected] = useState(false);
+  const [isDisconnecting, setIsDisconnecting] = useState(false);
+  const [integrationStatus, setIntegrationStatus] = useState<IntegrationStatus | null>(null);
 
   useEffect(() => {
     checkIntegrationStatus();
   }, []);
 
   const checkIntegrationStatus = async () => {
-    // In a real app, you'd check if the user has valid OAuth tokens
-    // For now, we'll assume they're connected if they have a session
-    if (session?.user) {
-      setGmailConnected(true);
-      setCalendarConnected(true);
+    setIsLoading(true);
+    try {
+      const response = await fetch("/api/integrations/status");
+      if (response.ok) {
+        const data = await response.json();
+        setIntegrationStatus(data);
+      }
+    } catch (error) {
+      console.error("Failed to check integration status:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handleDisconnectIntegration = async (type: "gmail" | "calendar") => {
-    setIsLoading(true);
+  const handleDisconnectGoogle = async () => {
+    setIsDisconnecting(true);
     try {
-      // In a real app, you'd revoke the OAuth token here
+      const response = await fetch("/api/integrations/disconnect", {
+        method: "POST",
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to disconnect");
+      }
+
       toast({
-        title: `${type === "gmail" ? "Gmail" : "Calendar"} disconnected`,
+        title: "Google account disconnected",
         description: "You can reconnect anytime from settings.",
       });
-      
-      if (type === "gmail") {
-        setGmailConnected(false);
-      } else {
-        setCalendarConnected(false);
-      }
+
+      // Refresh status
+      await checkIntegrationStatus();
     } catch (error) {
       toast({
         title: "Failed to disconnect",
@@ -56,11 +75,11 @@ export default function SettingsPage() {
         variant: "destructive",
       });
     } finally {
-      setIsLoading(false);
+      setIsDisconnecting(false);
     }
   };
 
-  const handleReconnectIntegration = async (type: "gmail" | "calendar") => {
+  const handleReconnectGoogle = async () => {
     // Trigger Google OAuth flow
     window.location.href = "/api/auth/sign-in/social/google";
   };
@@ -155,125 +174,157 @@ export default function SettingsPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  {/* Gmail Integration */}
-                  <div className="flex items-start justify-between p-4 border rounded-lg">
-                    <div className="flex items-start gap-4">
-                      <div className="p-2 bg-primary/10 rounded-lg">
-                        <Mail className="h-5 w-5 text-primary" />
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <h3 className="text-sm font-semibold">Gmail</h3>
-                          {gmailConnected ? (
-                            <Badge variant="default" className="bg-chart-1 text-primary-foreground">
-                              <CheckCircle2 className="h-3 w-3 mr-1" />
-                              Connected
-                            </Badge>
+                  {isLoading ? (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                    </div>
+                  ) : (
+                    <>
+                      {/* Gmail Integration */}
+                      <div className="flex items-start justify-between p-4 border rounded-lg">
+                        <div className="flex items-start gap-4 flex-1">
+                          <div className="p-2 bg-primary/10 rounded-lg">
+                            <Mail className="h-5 w-5 text-primary" />
+                          </div>
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <h3 className="text-sm font-semibold">Gmail</h3>
+                              {integrationStatus?.isConnected && integrationStatus?.hasGmailAccess ? (
+                                <Badge variant="outline" className="bg-chart-1/10 text-chart-1 border-chart-1/20">
+                                  <CheckCircle2 className="h-3 w-3 mr-1" />
+                                  Connected
+                                </Badge>
+                              ) : integrationStatus?.isConnected && !integrationStatus?.hasGmailAccess ? (
+                                <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
+                                  <AlertTriangle className="h-3 w-3 mr-1" />
+                                  Limited Access
+                                </Badge>
+                              ) : (
+                                <Badge variant="outline" className="bg-muted text-muted-foreground">
+                                  <XCircle className="h-3 w-3 mr-1" />
+                                  Not Connected
+                                </Badge>
+                              )}
+                            </div>
+                            <p className="text-sm text-muted-foreground mt-1">
+                              Send transcripts and summaries via email
+                            </p>
+                            {integrationStatus?.isConnected && session?.user?.email && (
+                              <p className="text-xs text-muted-foreground mt-1">
+                                Connected as: {session.user.email}
+                              </p>
+                            )}
+                            {integrationStatus?.isConnected && !integrationStatus?.hasGmailAccess && (
+                              <p className="text-xs text-yellow-700 mt-1">
+                                ⚠️ Missing "gmail.send" permission. Please reconnect.
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        <div>
+                          {integrationStatus?.isConnected ? (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={handleDisconnectGoogle}
+                              disabled={isDisconnecting}
+                            >
+                              {isDisconnecting ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                "Disconnect"
+                              )}
+                            </Button>
                           ) : (
-                            <Badge variant="secondary">
-                              <XCircle className="h-3 w-3 mr-1" />
-                              Not Connected
-                            </Badge>
+                            <Button
+                              size="sm"
+                              onClick={handleReconnectGoogle}
+                            >
+                              Connect
+                            </Button>
                           )}
                         </div>
-                        <p className="text-sm text-slate-600 mt-1">
-                          Send transcripts and summaries via email
-                        </p>
-                        {gmailConnected && session?.user?.email && (
-                          <p className="text-xs text-slate-500 mt-1">
-                            Connected as: {session.user.email}
-                          </p>
-                        )}
                       </div>
-                    </div>
-                    <div>
-                      {gmailConnected ? (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleDisconnectIntegration("gmail")}
-                          disabled={isLoading}
-                        >
-                          {isLoading ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            "Disconnect"
-                          )}
-                        </Button>
-                      ) : (
-                        <Button
-                          size="sm"
-                          onClick={() => handleReconnectIntegration("gmail")}
-                        >
-                          Connect
-                        </Button>
-                      )}
-                    </div>
-                  </div>
 
-                  {/* Calendar Integration */}
-                  <div className="flex items-start justify-between p-4 border rounded-lg">
-                    <div className="flex items-start gap-4">
-                      <div className="p-2 bg-chart-3/10 rounded-lg">
-                        <Calendar className="h-5 w-5 text-chart-3" />
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <h3 className="text-sm font-semibold">Google Calendar</h3>
-                          {calendarConnected ? (
-                            <Badge variant="default" className="bg-chart-1 text-primary-foreground">
-                              <CheckCircle2 className="h-3 w-3 mr-1" />
-                              Connected
-                            </Badge>
+                      {/* Calendar Integration */}
+                      <div className="flex items-start justify-between p-4 border rounded-lg">
+                        <div className="flex items-start gap-4 flex-1">
+                          <div className="p-2 bg-chart-3/10 rounded-lg">
+                            <Calendar className="h-5 w-5 text-chart-3" />
+                          </div>
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <h3 className="text-sm font-semibold">Google Calendar</h3>
+                              {integrationStatus?.isConnected && integrationStatus?.hasCalendarAccess ? (
+                                <Badge variant="outline" className="bg-chart-1/10 text-chart-1 border-chart-1/20">
+                                  <CheckCircle2 className="h-3 w-3 mr-1" />
+                                  Connected
+                                </Badge>
+                              ) : integrationStatus?.isConnected && !integrationStatus?.hasCalendarAccess ? (
+                                <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
+                                  <AlertTriangle className="h-3 w-3 mr-1" />
+                                  Limited Access
+                                </Badge>
+                              ) : (
+                                <Badge variant="outline" className="bg-muted text-muted-foreground">
+                                  <XCircle className="h-3 w-3 mr-1" />
+                                  Not Connected
+                                </Badge>
+                              )}
+                            </div>
+                            <p className="text-sm text-muted-foreground mt-1">
+                              Sync upcoming meetings and events
+                            </p>
+                            {integrationStatus?.isConnected && session?.user?.email && (
+                              <p className="text-xs text-muted-foreground mt-1">
+                                Connected as: {session.user.email}
+                              </p>
+                            )}
+                            {integrationStatus?.isConnected && !integrationStatus?.hasCalendarAccess && (
+                              <p className="text-xs text-yellow-700 mt-1">
+                                ⚠️ Missing "calendar.readonly" permission. Please reconnect.
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        <div>
+                          {integrationStatus?.isConnected ? (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={handleDisconnectGoogle}
+                              disabled={isDisconnecting}
+                            >
+                              {isDisconnecting ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                "Disconnect"
+                              )}
+                            </Button>
                           ) : (
-                            <Badge variant="secondary">
-                              <XCircle className="h-3 w-3 mr-1" />
-                              Not Connected
-                            </Badge>
+                            <Button
+                              size="sm"
+                              onClick={handleReconnectGoogle}
+                            >
+                              Connect
+                            </Button>
                           )}
                         </div>
-                        <p className="text-sm text-slate-600 mt-1">
-                          Sync upcoming meetings and events
-                        </p>
-                        {calendarConnected && session?.user?.email && (
-                          <p className="text-xs text-slate-500 mt-1">
-                            Connected as: {session.user.email}
-                          </p>
-                        )}
                       </div>
-                    </div>
-                    <div>
-                      {calendarConnected ? (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleDisconnectIntegration("calendar")}
-                          disabled={isLoading}
-                        >
-                          {isLoading ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            "Disconnect"
-                          )}
-                        </Button>
-                      ) : (
-                        <Button
-                          size="sm"
-                          onClick={() => handleReconnectIntegration("calendar")}
-                        >
-                          Connect
-                        </Button>
-                      )}
-                    </div>
-                  </div>
+                    </>
+                  )}
 
                   <Separator />
 
-                  <div className="bg-accent border border-accent-foreground/20 rounded-lg p-4">
+                  <div className="bg-accent/50 border border-accent rounded-lg p-4">
                     <p className="text-sm text-accent-foreground">
-                      <strong>Note:</strong> Gmail and Calendar integrations require Google OAuth
-                      authentication. Make sure you grant the necessary permissions during the
-                      connection process.
+                      <strong>Note:</strong> Gmail and Calendar integrations use a single Google OAuth
+                      connection. Disconnecting will remove access to both services.
+                      {integrationStatus?.tokenMightBeExpired && integrationStatus?.isConnected && (
+                        <span className="block mt-2 text-yellow-700">
+                          ⚠️ Your access token may have expired. If you're experiencing issues, try reconnecting.
+                        </span>
+                      )}
                     </p>
                   </div>
                 </CardContent>
