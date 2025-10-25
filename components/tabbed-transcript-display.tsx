@@ -259,29 +259,24 @@ export function TabbedTranscriptDisplay({ transcription, summary, isLoading, onN
                 <p className="text-sm text-muted-foreground">Natural flow of the discussion</p>
               </div>
               
-              {/* Conversation Thread - Clean text format */}
-              <div className="space-y-4 py-4">
+              {/* Conversation Thread - Inline badge style like the image */}
+              <div className="space-y-6 py-4">
                 {groupUtterancesBySpeaker().map((segment, index) => {
                   const speakerColor = getSpeakerColor(`Speaker ${segment.speaker}`)
                   
                   return (
-                    <div key={index} className="flex gap-6 items-start group hover:bg-muted/20 -mx-6 px-6 py-4 rounded-lg transition-colors">
-                      {/* Left side - Speaker info */}
-                      <div className="flex flex-col items-start gap-2 min-w-[180px] flex-shrink-0">
-                        <Badge className={`${speakerColor} px-3 py-1.5 font-semibold rounded-full text-sm`}>
-                          Speaker {segment.speaker}
+                    <div key={index} className="space-y-1.5">
+                      <div className="flex items-center gap-3">
+                        <Badge className={`${speakerColor} px-2.5 py-0.5 font-medium text-xs uppercase tracking-wide flex-shrink-0`}>
+                          SPEAKER: {segment.speaker}
                         </Badge>
                         <span className="text-xs text-muted-foreground font-mono">
                           {formatTime(segment.start)}
                         </span>
                       </div>
-                      
-                      {/* Right side - Content */}
-                      <div className="flex-1 min-w-0 pt-1">
-                        <p className="text-foreground leading-relaxed text-[15px]">
-                          {segment.text}
-                        </p>
-                      </div>
+                      <p className="text-foreground leading-relaxed text-[15px] pl-0">
+                        {segment.text}
+                      </p>
                     </div>
                   )
                 })}
