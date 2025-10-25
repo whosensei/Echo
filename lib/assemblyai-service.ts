@@ -132,7 +132,7 @@ export interface AssemblyAITranscriptionResult {
 }
 
 // ============================================================================
-// Adapter Interfaces (for backward compatibility with Gladia types)
+// Transcription Result Interfaces
 // ============================================================================
 
 export interface Speaker {
@@ -158,7 +158,7 @@ export interface NamedEntity {
   end_time: number;
 }
 
-export interface GladiaTranscriptionResult {
+export interface TranscriptionResult {
   id: string;
   request_id: string;
   status: 'done' | 'error' | 'processing' | 'queued';
@@ -341,10 +341,9 @@ export class AssemblyAIService {
   }
 
   /**
-   * Convert AssemblyAI result to Gladia-compatible format
-   * This ensures backward compatibility with existing UI components
+   * Convert AssemblyAI result to standardized format
    */
-  convertToGladiaFormat(assemblyResult: AssemblyAITranscriptionResult): GladiaTranscriptionResult {
+  convertToStandardFormat(assemblyResult: AssemblyAITranscriptionResult): TranscriptionResult {
     // Extract unique speakers from utterances
     const speakers: Speaker[] = [];
     const speakerMap = new Map<string, { first: number; last: number }>();

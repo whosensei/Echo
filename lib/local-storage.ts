@@ -2,23 +2,21 @@
  * Local storage utilities for transcription data
  */
 
-import { GladiaTranscriptionResult } from './assemblyai-service';
+import { TranscriptionResult } from './assemblyai-service';
 import { MeetingSummary } from './gemini-service';
 
 export interface StoredTranscription {
   id: string;
   filename: string;
-  createdAt: string;
-  updatedAt: string;
+  timestamp: string;
+  duration?: number;
   status: 'processing' | 'completed' | 'failed';
-  transcriptionData?: GladiaTranscriptionResult;
+  transcriptionData?: TranscriptionResult;
   summaryData?: MeetingSummary;
-  audioPath?: string; // Legacy local file path (deprecated)
-  audioData?: string; // Base64 encoded audio data
-  s3Url?: string; // S3 public URL
-  s3FileKey?: string; // S3 file key for downloading
   error?: string;
-  meetingId?: string; // Database meeting ID (if user is logged in)
+  createdAt?: string;
+  updatedAt?: string;
+  audioPath?: string;
 }
 
 const STORAGE_KEY = 'audio_transcriptions';
@@ -68,6 +66,7 @@ export class LocalStorageService {
     const newTranscription: StoredTranscription = {
       id,
       filename,
+      timestamp: new Date().toISOString(),
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       status: 'processing',
@@ -112,7 +111,7 @@ export class LocalStorageService {
    */
   static completeTranscription(
     id: string,
-    transcriptionData: GladiaTranscriptionResult,
+    transcriptionData: TranscriptionResult,
     summaryData?: MeetingSummary
   ): StoredTranscription | null {
     return this.updateTranscription(id, {

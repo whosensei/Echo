@@ -4,11 +4,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Clock, User, MessageSquare, Brain } from 'lucide-react';
-import { GladiaTranscriptionResult, TranscriptionSegment } from '@/lib/assemblyai-service';
+import { TranscriptionResult, TranscriptionSegment } from '@/lib/assemblyai-service';
 import { MeetingSummary } from '@/lib/gemini-service';
 
 interface TranscriptDisplayProps {
-  transcription: GladiaTranscriptionResult | null;
+  transcription: TranscriptionResult | null;
   summary: MeetingSummary | null;
   isLoading?: boolean;
 }

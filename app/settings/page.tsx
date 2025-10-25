@@ -13,7 +13,6 @@ import { Separator } from "@/components/ui/separator";
 import { useSession } from "@/lib/auth-client";
 import { useToast } from "@/components/ui/toaster";
 import { User, Mail, Calendar, Key, CheckCircle2, XCircle, Loader2, AlertTriangle } from "lucide-react";
-import { EmailTemplates } from "@/components/EmailTemplates";
 
 interface IntegrationStatus {
   isConnected: boolean;
@@ -98,11 +97,10 @@ export default function SettingsPage() {
 
           {/* Settings Tabs */}
           <Tabs defaultValue="profile" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-4 lg:w-[600px]">
+            <TabsList className="grid w-full grid-cols-3 lg:w-[450px]">
               <TabsTrigger value="profile">Profile</TabsTrigger>
               <TabsTrigger value="integrations">Integrations</TabsTrigger>
               <TabsTrigger value="api-keys">API Keys</TabsTrigger>
-              <TabsTrigger value="templates">Email Templates</TabsTrigger>
             </TabsList>
 
             {/* Profile Tab */}
@@ -341,30 +339,30 @@ export default function SettingsPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  {/* Gladia API Key */}
+                  {/* AssemblyAI API Key */}
                   <div className="space-y-3">
                     <div className="flex items-center gap-2">
                       <Key className="h-4 w-4 text-slate-600" />
-                      <Label htmlFor="gladia-key">Gladia API Key</Label>
+                      <Label htmlFor="assemblyai-key">AssemblyAI API Key</Label>
                       <Badge variant="secondary" className="text-xs">
                         Transcription
                       </Badge>
                     </div>
                     <Input
-                      id="gladia-key"
+                      id="assemblyai-key"
                       type="password"
-                      placeholder="Enter your Gladia API key"
+                      placeholder="Enter your AssemblyAI API key"
                       defaultValue="••••••••••••••••"
                     />
                     <p className="text-xs text-muted-foreground">
-                      Used for audio transcription and speaker diarization. Get your key from{" "}
+                      Used for audio transcription, speaker diarization, entity detection, and AI summaries. Get your key from{" "}
                       <a
-                        href="https://gladia.io"
+                        href="https://www.assemblyai.com"
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-primary hover:underline"
                       >
-                        gladia.io
+                        assemblyai.com
                       </a>
                     </p>
                   </div>
@@ -375,9 +373,9 @@ export default function SettingsPage() {
                   <div className="space-y-3">
                     <div className="flex items-center gap-2">
                       <Key className="h-4 w-4 text-slate-600" />
-                      <Label htmlFor="gemini-key">Google Gemini API Key</Label>
+                      <Label htmlFor="gemini-key">Google Gemini API Key (Optional)</Label>
                       <Badge variant="secondary" className="text-xs">
-                        AI Summary
+                        Additional AI
                       </Badge>
                     </div>
                     <Input
@@ -411,11 +409,6 @@ export default function SettingsPage() {
                   </div>
                 </CardContent>
               </Card>
-            </TabsContent>
-
-            {/* Email Templates Tab */}
-            <TabsContent value="templates" className="space-y-6">
-              <EmailTemplates />
             </TabsContent>
           </Tabs>
         </div>

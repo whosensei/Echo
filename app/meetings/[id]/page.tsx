@@ -39,7 +39,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import type { GladiaTranscriptionResult } from "@/lib/assemblyai-service";
+import type { TranscriptionResult } from "@/lib/assemblyai-service";
 import type { MeetingSummary } from "@/lib/gemini-service";
 import { exportMeetingToPDF } from "@/lib/pdf-export";
 
@@ -92,7 +92,7 @@ export default function MeetingDetailsPage() {
   const [data, setData] = useState<RecordingDetails | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [transcriptionResult, setTranscriptionResult] = useState<GladiaTranscriptionResult | null>(null);
+  const [transcriptionResult, setTranscriptionResult] = useState<TranscriptionResult | null>(null);
   const [summaryResult, setSummaryResult] = useState<MeetingSummary | null>(null);
   const [isSendingEmail, setIsSendingEmail] = useState(false);
   const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false);
@@ -115,9 +115,9 @@ export default function MeetingDetailsPage() {
       const recordingData = await response.json() as RecordingDetails;
       setData(recordingData);
 
-      // Transform transcript data to match GladiaTranscriptionResult format
+      // Transform transcript data to match TranscriptionResult format
       if (recordingData.transcript) {
-        const transformedTranscript: GladiaTranscriptionResult = {
+        const transformedTranscript: TranscriptionResult = {
           id: recordingData.transcript.id,
           request_id: recordingData.transcript.id,
           status: "done",

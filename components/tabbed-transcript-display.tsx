@@ -12,11 +12,11 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useToast } from "@/components/ui/toaster"
 import { useSession } from "@/lib/auth-client"
-import type { GladiaTranscriptionResult } from "@/lib/assemblyai-service"
+import type { TranscriptionResult } from "@/lib/assemblyai-service"
 import type { MeetingSummary } from "@/lib/gemini-service"
 
 interface TabbedTranscriptDisplayProps {
-  transcription: GladiaTranscriptionResult | null
+  transcription: TranscriptionResult | null
   summary?: MeetingSummary | null  // Made optional since we're using AssemblyAI summary
   isLoading?: boolean
   onNewRecording?: () => void
@@ -260,24 +260,24 @@ export function TabbedTranscriptDisplay({ transcription, summary, isLoading, onN
               </div>
               
               {/* Conversation Thread - Clean text format */}
-              <div className="space-y-3 py-4">
+              <div className="space-y-4 py-4">
                 {groupUtterancesBySpeaker().map((segment, index) => {
                   const speakerColor = getSpeakerColor(`Speaker ${segment.speaker}`)
                   
                   return (
-                    <div key={index} className="flex gap-4 items-start group hover:bg-muted/30 -mx-4 px-4 py-2 rounded-lg transition-colors">
-                      {/* Speaker Badge */}
-                      <Badge className={`${speakerColor} px-3 py-1 font-semibold rounded-full flex-shrink-0 mt-0.5`}>
-                        Speaker {segment.speaker}
-                      </Badge>
+                    <div key={index} className="flex gap-6 items-start group hover:bg-muted/20 -mx-6 px-6 py-4 rounded-lg transition-colors">
+                      {/* Left side - Speaker info */}
+                      <div className="flex flex-col items-start gap-2 min-w-[180px] flex-shrink-0">
+                        <Badge className={`${speakerColor} px-3 py-1.5 font-semibold rounded-full text-sm`}>
+                          Speaker {segment.speaker}
+                        </Badge>
+                        <span className="text-xs text-muted-foreground font-mono">
+                          {formatTime(segment.start)}
+                        </span>
+                      </div>
                       
-                      {/* Content */}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="text-xs text-muted-foreground font-mono">
-                            {formatTime(segment.start)}
-                          </span>
-                        </div>
+                      {/* Right side - Content */}
+                      <div className="flex-1 min-w-0 pt-1">
                         <p className="text-foreground leading-relaxed text-[15px]">
                           {segment.text}
                         </p>

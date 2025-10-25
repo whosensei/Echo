@@ -10,12 +10,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { toast } from "sonner"
 import { LocalStorageService, StoredTranscription } from "@/lib/local-storage"
 import { useSession } from "@/lib/auth-client"
-import type { GladiaTranscriptionResult } from "@/lib/assemblyai-service"
+import type { TranscriptionResult } from "@/lib/assemblyai-service"
 import type { MeetingSummary } from "@/lib/gemini-service"
 
 export default function RecordPage() {
   const { data: session } = useSession()
-  const [currentTranscription, setCurrentTranscription] = useState<GladiaTranscriptionResult | null>(null)
+  const [currentTranscription, setCurrentTranscription] = useState<TranscriptionResult | null>(null)
   const [currentSummary, setCurrentSummary] = useState<MeetingSummary | null>(null)
   const [isProcessing, setIsProcessing] = useState(false)
   const [selectedTranscriptionId, setSelectedTranscriptionId] = useState<string | undefined>()
@@ -24,7 +24,7 @@ export default function RecordPage() {
   const [currentAudioData, setCurrentAudioData] = useState<string | undefined>()
   const [activeInputTab, setActiveInputTab] = useState<"record" | "upload">("record")
 
-  const createSpeakerLabeledTranscript = (transcriptionResult: GladiaTranscriptionResult) => {
+  const createSpeakerLabeledTranscript = (transcriptionResult: TranscriptionResult) => {
     if (!transcriptionResult?.result?.transcription?.utterances) {
       return {
         labeledTranscript: transcriptionResult?.result?.transcription?.full_transcript || "",
@@ -130,7 +130,7 @@ export default function RecordPage() {
       setRefreshTrigger(prev => prev + 1)
 
       toast.info("Starting transcription...", {
-        description: "Processing your audio with Gladia AI."
+        description: "Processing your audio with AssemblyAI."
       })
 
       const transcribeResponse = await fetch("/api/transcribe", {
@@ -371,8 +371,8 @@ export default function RecordPage() {
       
       // Set transcription data if available
       if (transcript) {
-        // Transform transcript data to match GladiaTranscriptionResult format
-        const transformedTranscript: GladiaTranscriptionResult = {
+        // Transform transcript data to match TranscriptionResult format
+        const transformedTranscript: TranscriptionResult = {
           id: transcript.id,
           request_id: transcript.id,
           status: "done",

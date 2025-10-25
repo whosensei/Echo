@@ -117,12 +117,12 @@ export async function GET(request: NextRequest) {
     console.log('Get transcription successful');
     console.log('Status:', result.status);
 
-    // Convert to Gladia-compatible format for backward compatibility
-    const gladiaFormat = assemblyAIService.convertToGladiaFormat(result);
+    // Convert to standardized format
+    const standardFormat = assemblyAIService.convertToStandardFormat(result);
 
     return NextResponse.json({
       success: true,
-      result: gladiaFormat,
+      result: standardFormat,
       rawResult: result, // Include raw AssemblyAI result for debugging
     });
 

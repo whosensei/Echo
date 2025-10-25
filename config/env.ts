@@ -4,11 +4,6 @@ export const config = {
     apiKey: process.env.ASSEMBLYAI_API_KEY || '',
     baseUrl: process.env.ASSEMBLYAI_BASE_URL || 'https://api.assemblyai.com/v2',
   },
-  // Legacy Gladia config - kept for backward compatibility during migration
-  gladia: {
-    apiKey: process.env.GLADIA_API_KEY || '',
-    baseUrl: process.env.GLADIA_BASE_URL || 'https://api.gladia.io/v2',
-  },
   gemini: {
     apiKey: process.env.GEMINI_API_KEY || '',
   },
