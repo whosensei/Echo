@@ -141,7 +141,7 @@ export default function SettingsPage() {
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="border-destructive/20">
                 <CardHeader>
                   <CardTitle className="text-destructive">Danger Zone</CardTitle>
                   <CardDescription>
@@ -149,10 +149,10 @@ export default function SettingsPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="flex items-center justify-between p-4 border border-destructive/20 rounded-lg bg-destructive/10">
+                  <div className="flex items-center justify-between p-4 border border-destructive/30 rounded-lg bg-destructive/5">
                     <div>
                       <p className="text-sm font-medium text-destructive">Delete Account</p>
-                      <p className="text-xs text-destructive/80">
+                      <p className="text-xs text-muted-foreground">
                         Permanently delete your account and all data
                       </p>
                     </div>

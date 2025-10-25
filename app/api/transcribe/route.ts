@@ -1,41 +1,39 @@
 /**
  * API Route: Transcribe Audio
- * Handles audio transcription using Gladia API
+ * Handles audio transcription using Gladia API with S3 storage
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { readFile } from 'fs/promises';
-import path from 'path';
+import { S3Service } from '@/lib/s3-service';
 import { GladiaService } from '@/lib/gladia-service';
-import { config } from '@/config/env';
 
 export async function POST(request: NextRequest) {
   try {
-    const { filename } = await request.json();
+    const { fileKey, s3Url } = await request.json();
     
-    if (!filename) {
+    if (!fileKey && !s3Url) {
       return NextResponse.json(
-        { error: 'Filename is required' },
+        { error: 'File key or S3 URL is required' },
         { status: 400 }
       );
     }
 
-    // Read the audio file from local storage
-    const filePath = path.join(config.app.audioStoragePath, filename);
-    const audioBuffer = await readFile(filePath);
-    const audioBlob = new Blob([new Uint8Array(audioBuffer)], { type: 'audio/wav' });
-
-    // Initialize Gladia service
+    // Initialize services
+    const s3Service = new S3Service();
     const gladiaService = new GladiaService();
+
+    // Download the audio file from S3
+    console.log('Downloading audio from S3...');
+    const audioBuffer = await s3Service.downloadFile(fileKey);
+    const audioBlob = new Blob([new Uint8Array(audioBuffer)], { type: 'audio/wav' });
 
     // Upload audio to Gladia
     console.log('Uploading audio to Gladia...');
-    const uploadResponse = await gladiaService.uploadAudio(audioBlob, filename);
+    const uploadResponse = await gladiaService.uploadAudio(audioBlob, fileKey);
     console.log('Upload response:', JSON.stringify(uploadResponse, null, 2));
     
     // Initiate transcription with diarization and entity recognition
     console.log('Initiating transcription...');
-    // Try minimal request first to avoid parameter issues
     const transcriptionRequest = {
       audio_url: uploadResponse.audio_url,
       diarization: true,

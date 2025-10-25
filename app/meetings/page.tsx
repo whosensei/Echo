@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/components/ui/toaster";
-import { Search, Filter, Calendar, FileText, Loader2, Plus, Mic } from "lucide-react";
+import { Search, Filter, Calendar, FileText, Loader2, Plus, Mic, FileAudio } from "lucide-react";
 import Link from "next/link";
 
 interface Recording {
@@ -208,7 +208,7 @@ export default function MeetingsPage() {
               <Card>
                 <CardContent className="flex items-center justify-center py-12">
                   <div className="text-center">
-                    <Mic className="h-16 w-16 mx-auto text-slate-400 mb-4 opacity-50" />
+                    <FileAudio className="h-12 w-12 mx-auto text-slate-400 mb-4 opacity-50" />
                     <h3 className="text-lg font-semibold text-foreground mb-2">
                       {searchQuery || statusFilter !== "all" ? "No recordings found" : "No recordings yet"}
                     </h3>
@@ -232,11 +232,11 @@ export default function MeetingsPage() {
               filteredRecordings.map((recording) => (
                 <Link key={recording.id} href={`/meetings/${recording.id}`}>
                   <Card className="hover:shadow-md transition-shadow cursor-pointer">
-                    <CardContent className="p-6">
+                    <CardContent className="p-4">
                       <div className="flex items-start justify-between">
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-3 mb-2">
-                            <h3 className="text-lg font-semibold text-foreground truncate">
+                            <h3 className="text-base font-semibold text-foreground truncate">
                               {recording.title}
                             </h3>
                             <Badge className={getStatusColor(recording.status)}>
@@ -245,7 +245,7 @@ export default function MeetingsPage() {
                           </div>
 
                           {recording.description && (
-                            <p className="text-sm text-slate-600 mb-3 line-clamp-2">
+                            <p className="text-sm text-slate-600 mb-2 line-clamp-2">
                               {recording.description}
                             </p>
                           )}
@@ -263,7 +263,7 @@ export default function MeetingsPage() {
                         </div>
 
                         <div className="ml-4">
-                          <Mic className="h-8 w-8 text-slate-400" />
+                          <FileAudio className="h-5 w-5 text-slate-400" />
                         </div>
                       </div>
                     </CardContent>

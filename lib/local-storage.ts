@@ -14,8 +14,10 @@ export interface StoredTranscription {
   status: 'processing' | 'completed' | 'failed';
   transcriptionData?: GladiaTranscriptionResult;
   summaryData?: MeetingSummary;
-  audioPath?: string;
+  audioPath?: string; // Legacy local file path (deprecated)
   audioData?: string; // Base64 encoded audio data
+  s3Url?: string; // S3 public URL
+  s3FileKey?: string; // S3 file key for downloading
   error?: string;
   meetingId?: string; // Database meeting ID (if user is logged in)
 }

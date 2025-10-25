@@ -98,6 +98,8 @@ export default function RecordPage() {
 
       const uploadData = await uploadResponse.json()
 
+      const { fileKey, s3Url, filename: uploadedFilename } = uploadData
+
       // Create recording in backend first
       if (session?.user) {
         try {
@@ -107,7 +109,7 @@ export default function RecordPage() {
             body: JSON.stringify({
               title: `Recording ${new Date().toLocaleString()}`,
               recordedAt: new Date().toISOString(),
-              audioFileUrl: uploadData.filename,
+              audioFileUrl: s3Url || uploadData.filename,
               status: "processing",
             }),
           })
@@ -134,7 +136,7 @@ export default function RecordPage() {
       const transcribeResponse = await fetch("/api/transcribe", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ filename: uploadData.filename }),
+        body: JSON.stringify({ fileKey, s3Url }),
       })
 
       if (!transcribeResponse.ok) {
