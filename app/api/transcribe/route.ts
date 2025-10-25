@@ -1,11 +1,13 @@
 /**
  * API Route: Transcribe Audio
- * Handles audio transcription using Gladia API with S3 storage
+ * Handles audio transcription using AssemblyAI API with S3 storage
+ * Features enabled: Speaker Diarization, Entity Detection, Sentiment Analysis,
+ * Auto Chapters (Topic Detection), and Summarization
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { S3Service } from '@/lib/s3-service';
-import { GladiaService } from '@/lib/gladia-service';
+import { AssemblyAIService } from '@/lib/assemblyai-service';
 
 export async function POST(request: NextRequest) {
   try {
@@ -20,45 +22,61 @@ export async function POST(request: NextRequest) {
 
     // Initialize services
     const s3Service = new S3Service();
-    const gladiaService = new GladiaService();
+    const assemblyAIService = new AssemblyAIService();
 
     // Download the audio file from S3
     console.log('Downloading audio from S3...');
     const audioBuffer = await s3Service.downloadFile(fileKey);
     const audioBlob = new Blob([new Uint8Array(audioBuffer)], { type: 'audio/wav' });
 
-    // Upload audio to Gladia
-    console.log('Uploading audio to Gladia...');
-    const uploadResponse = await gladiaService.uploadAudio(audioBlob, fileKey);
+    // Upload audio to AssemblyAI
+    console.log('Uploading audio to AssemblyAI...');
+    const uploadResponse = await assemblyAIService.uploadAudio(audioBlob);
     console.log('Upload response:', JSON.stringify(uploadResponse, null, 2));
     
-    // Initiate transcription with diarization and entity recognition
-    console.log('Initiating transcription...');
+    // Initiate transcription with ALL features enabled in one request
+    console.log('Initiating transcription with all features...');
     const transcriptionRequest = {
-      audio_url: uploadResponse.audio_url,
-      diarization: true,
-      named_entity_recognition: true,
+      audio_url: uploadResponse.upload_url,
+      summarization: true,                // Summarization
+      iab_categories: true,               // IAB Categories (Topic Classification)
+      sentiment_analysis: true,           // Sentiment Analysis
+      speaker_labels: true,               // Speaker Diarization
+      format_text: true,                  // Format text (proper casing, etc.)
+      punctuate: true,                    // Add punctuation
+      speech_model: 'universal' as const, // Universal speech model
+      language_detection: true,           // Auto-detect language
+      entity_detection: true,             // Entity Detection
+      // auto_chapters: true,             // Disabled: Cannot be used with summarization
+      summary_model: 'informative' as const,
+      summary_type: 'bullets' as const,
+      speech_understanding: {
+        request: {
+          speaker_identification: {
+            speaker_type: 'name' as const,
+            known_values: [],             // Add known speaker names if available
+          },
+        },
+      },
     };
     
     console.log('Sending transcription request:', JSON.stringify(transcriptionRequest, null, 2));
     
-    const initResponse = await gladiaService.initiateTranscription(transcriptionRequest);
+    const initResponse = await assemblyAIService.initiateTranscription(transcriptionRequest);
 
-    console.log("initiate transcription successful")
-    console.log("Full init response:", JSON.stringify(initResponse, null, 2));
+    console.log('Transcription initiated successfully');
+    console.log('Full init response:', JSON.stringify(initResponse, null, 2));
     
-    // Use the correct ID field from the response
-    const transcriptionId = initResponse.id || initResponse.request_id;
+    const transcriptionId = initResponse.id;
     
     if (!transcriptionId) {
-      throw new Error('No transcription ID found in Gladia response');
+      throw new Error('No transcription ID found in AssemblyAI response');
     }
     
     return NextResponse.json({
       success: true,
       requestId: transcriptionId,
       status: initResponse.status,
-      audioMetadata: uploadResponse.audio_metadata,
       fullResponse: initResponse, // Include full response for debugging
     });
 
@@ -90,17 +108,22 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Initialize Gladia service
-    const gladiaService = new GladiaService();
+    // Initialize AssemblyAI service
+    const assemblyAIService = new AssemblyAIService();
 
     // Get transcription result
-    const result = await gladiaService.getTranscriptionResult(requestId);
+    const result = await assemblyAIService.getTranscriptionResult(requestId);
     
-    console.log("get transcription successful")
+    console.log('Get transcription successful');
+    console.log('Status:', result.status);
+
+    // Convert to Gladia-compatible format for backward compatibility
+    const gladiaFormat = assemblyAIService.convertToGladiaFormat(result);
 
     return NextResponse.json({
       success: true,
-      result,
+      result: gladiaFormat,
+      rawResult: result, // Include raw AssemblyAI result for debugging
     });
 
   } catch (error) {

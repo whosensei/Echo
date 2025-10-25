@@ -39,7 +39,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import type { GladiaTranscriptionResult } from "@/lib/gladia-service";
+import type { GladiaTranscriptionResult } from "@/lib/assemblyai-service";
 import type { MeetingSummary } from "@/lib/gemini-service";
 import { exportMeetingToPDF } from "@/lib/pdf-export";
 
@@ -127,11 +127,18 @@ export default function MeetingDetailsPage() {
               utterances: recordingData.transcript.metadata?.utterances || [],
             },
             speakers: recordingData.transcript.metadata?.speakers || [],
+            // Preserve all AssemblyAI-specific fields
+            summary: recordingData.transcript.metadata?.summary,
+            iab_categories: recordingData.transcript.metadata?.iab_categories,
+            named_entities: recordingData.transcript.metadata?.named_entities,
+            sentiment_analysis: recordingData.transcript.metadata?.sentiment_analysis,
+            chapters: recordingData.transcript.metadata?.chapters,
             metadata: {
               ...recordingData.transcript.metadata,
               audio_duration: recordingData.transcript.duration || 0,
               number_of_channels: 1,
               billing_time: recordingData.transcript.duration || 0,
+              number_of_distinct_speakers: recordingData.transcript.metadata?.number_of_distinct_speakers || 0,
             },
           },
         };

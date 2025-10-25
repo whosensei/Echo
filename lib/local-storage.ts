@@ -1,9 +1,8 @@
 /**
- * Local Storage Service for Transcriptions
- * Manages saving and retrieving transcriptions from browser localStorage
+ * Local storage utilities for transcription data
  */
 
-import { GladiaTranscriptionResult } from './gladia-service';
+import { GladiaTranscriptionResult } from './assemblyai-service';
 import { MeetingSummary } from './gemini-service';
 
 export interface StoredTranscription {

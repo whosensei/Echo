@@ -10,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { toast } from "sonner"
 import { LocalStorageService, StoredTranscription } from "@/lib/local-storage"
 import { useSession } from "@/lib/auth-client"
-import type { GladiaTranscriptionResult } from "@/lib/gladia-service"
+import type { GladiaTranscriptionResult } from "@/lib/assemblyai-service"
 import type { MeetingSummary } from "@/lib/gemini-service"
 
 export default function RecordPage() {
@@ -231,9 +231,20 @@ export default function RecordPage() {
                     duration: result.result.transcription.audio_duration,
                     confidence: Math.round((result.result.transcription.confidence || 0) * 100),
                     metadata: {
+                      // Transcription details
                       utterances: result.result.transcription.utterances,
                       speakers: result.result.speakers,
-                      namedEntities: result.result.named_entities,
+                      
+                      // AssemblyAI-specific fields for Summary tab
+                      summary: result.result.summary,
+                      iab_categories: result.result.iab_categories,
+                      named_entities: result.result.named_entities,
+                      sentiment_analysis: result.result.sentiment_analysis,
+                      chapters: result.result.chapters,
+                      
+                      // Metadata
+                      number_of_distinct_speakers: result.result.metadata?.number_of_distinct_speakers,
+                      audio_duration: result.result.metadata?.audio_duration,
                     },
                   }),
                 })
@@ -371,11 +382,18 @@ export default function RecordPage() {
               utterances: transcript.metadata?.utterances || [],
             },
             speakers: transcript.metadata?.speakers || [],
+            // Preserve all AssemblyAI-specific fields
+            summary: transcript.metadata?.summary,
+            iab_categories: transcript.metadata?.iab_categories,
+            named_entities: transcript.metadata?.named_entities,
+            sentiment_analysis: transcript.metadata?.sentiment_analysis,
+            chapters: transcript.metadata?.chapters,
             metadata: {
               ...transcript.metadata,
               audio_duration: transcript.duration || 0,
               number_of_channels: 1,
               billing_time: transcript.duration || 0,
+              number_of_distinct_speakers: transcript.metadata?.number_of_distinct_speakers || 0,
             },
           },
         };

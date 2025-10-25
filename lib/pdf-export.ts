@@ -12,6 +12,12 @@ interface MeetingPDFData {
   keyTopics?: any[];
   participants?: any[];
   sentiment?: string | null;
+  // New AssemblyAI fields
+  aiSummary?: string;
+  iabCategories?: Array<{ category: string; relevance: number }>;
+  entities?: Array<{ text: string; type: string }>;
+  sentimentAnalysis?: Array<{ text: string; sentiment: string; confidence: number }>;
+  speakers?: Array<{ speaker: string; text: string }>;
 }
 
 export function exportMeetingToPDF(
@@ -85,64 +91,174 @@ export function exportMeetingToPDF(
   doc.line(margin, yPosition, pageWidth - margin, yPosition);
   yPosition += 15;
 
-  // Add content based on type
-  if (type === "transcript" || type === "full") {
+  const addTranscriptSection = () => {
+    if (!data.content) return;
     addText("TRANSCRIPT", 16, true);
     yPosition += 5;
     addText(data.content, 11);
     yPosition += 10;
+  };
+
+  // Add content based on type
+  if (type === "transcript") {
+    addTranscriptSection();
   }
 
-  if ((type === "summary" || type === "full") && data.summary) {
-    if (type === "full") {
-      doc.addPage();
-      yPosition = 20;
+  if (type === "summary" || type === "full") {
+    if (data.summary) {
+      addText("MEETING SUMMARY", 16, true);
+      yPosition += 5;
+      addText(data.summary, 11);
+      yPosition += 10;
+
+      // Action Points
+      if (data.actionPoints && data.actionPoints.length > 0) {
+        addText("ACTION POINTS", 14, true);
+        yPosition += 5;
+        data.actionPoints.forEach((point: any, index: number) => {
+          const pointText = typeof point === "string" ? point : point.text || JSON.stringify(point);
+          addText(`${index + 1}. ${pointText}`, 11);
+        });
+        yPosition += 10;
+      }
+
+      // Key Topics
+      if (data.keyTopics && data.keyTopics.length > 0) {
+        addText("KEY TOPICS", 14, true);
+        yPosition += 5;
+        const topics = data.keyTopics
+          .map((topic: any) => (typeof topic === "string" ? topic : topic.name || JSON.stringify(topic)))
+          .join(", ");
+        addText(topics, 11);
+        yPosition += 10;
+      }
+
+      // Participants
+      if (data.participants && data.participants.length > 0) {
+        addText("PARTICIPANTS", 14, true);
+        yPosition += 5;
+        const participants = data.participants
+          .map((p: any) => (typeof p === "string" ? p : p.name || JSON.stringify(p)))
+          .join(", ");
+        addText(participants, 11);
+        yPosition += 10;
+      }
+
+      // Sentiment
+      if (data.sentiment) {
+        addText("OVERALL SENTIMENT", 14, true);
+        yPosition += 5;
+        addText(data.sentiment.toUpperCase(), 11, true);
+      }
     }
 
-    addText("MEETING SUMMARY", 16, true);
-    yPosition += 5;
-    addText(data.summary, 11);
-    yPosition += 10;
-
-    // Action Points
-    if (data.actionPoints && data.actionPoints.length > 0) {
-      addText("ACTION POINTS", 14, true);
+    // AI Summary (AssemblyAI)
+    if (data.aiSummary) {
+      if (yPosition > 200) {
+        doc.addPage();
+        yPosition = 20;
+      }
+      addText("AI-GENERATED SUMMARY", 14, true);
       yPosition += 5;
-      data.actionPoints.forEach((point: any, index: number) => {
-        const pointText = typeof point === "string" ? point : point.text || JSON.stringify(point);
-        addText(`${index + 1}. ${pointText}`, 11);
+      addText(data.aiSummary, 11);
+      yPosition += 10;
+    }
+
+    // IAB Categories (Topics)
+    if (data.iabCategories && data.iabCategories.length > 0) {
+      if (yPosition > 220) {
+        doc.addPage();
+        yPosition = 20;
+      }
+      addText("TOPICS DISCUSSED (IAB CATEGORIES)", 14, true);
+      yPosition += 5;
+      data.iabCategories.forEach((item) => {
+        const categoryName = item.category.split('>').pop() || item.category;
+        const relevance = (item.relevance * 100).toFixed(0);
+        addText(`• ${categoryName} (${relevance}% relevance)`, 11);
       });
       yPosition += 10;
     }
 
-    // Key Topics
-    if (data.keyTopics && data.keyTopics.length > 0) {
-      addText("KEY TOPICS", 14, true);
+    // Entity Highlights
+    if (data.entities && data.entities.length > 0) {
+      if (yPosition > 200) {
+        doc.addPage();
+        yPosition = 20;
+      }
+      addText("KEY ENTITIES MENTIONED", 14, true);
       yPosition += 5;
-      const topics = data.keyTopics
-        .map((topic: any) => (typeof topic === "string" ? topic : topic.name || JSON.stringify(topic)))
-        .join(", ");
-      addText(topics, 11);
+
+      // Group entities by type
+      const entityTypes = data.entities.reduce((acc: any, entity) => {
+        if (!acc[entity.type]) acc[entity.type] = [];
+        acc[entity.type].push(entity.text);
+        return acc;
+      }, {});
+
+      Object.entries(entityTypes).forEach(([type, entities]: [string, any]) => {
+        const typeLabel = type.replace(/_/g, ' ').toUpperCase();
+        addText(`${typeLabel}:`, 12, true);
+        const entityList = Array.from(new Set(entities)).join(', ');
+        addText(entityList, 10);
+        yPosition += 3;
+      });
       yPosition += 10;
     }
 
-    // Participants
-    if (data.participants && data.participants.length > 0) {
-      addText("PARTICIPANTS", 14, true);
+    // Sentiment Analysis Details
+    if (data.sentimentAnalysis && data.sentimentAnalysis.length > 0) {
+      if (yPosition > 180) {
+        doc.addPage();
+        yPosition = 20;
+      }
+      addText("SENTIMENT ANALYSIS", 14, true);
       yPosition += 5;
-      const participants = data.participants
-        .map((p: any) => (typeof p === "string" ? p : p.name || JSON.stringify(p)))
-        .join(", ");
-      addText(participants, 11);
+
+      // Calculate sentiment distribution
+      const sentimentCounts = data.sentimentAnalysis.reduce((acc: any, item) => {
+        acc[item.sentiment] = (acc[item.sentiment] || 0) + 1;
+        return acc;
+      }, {});
+
+      const total = data.sentimentAnalysis.length;
+      Object.entries(sentimentCounts).forEach(([sentiment, count]: [string, any]) => {
+        const percentage = ((count / total) * 100).toFixed(1);
+        addText(`${sentiment}: ${count} (${percentage}%)`, 11);
+      });
       yPosition += 10;
     }
 
-    // Sentiment
-    if (data.sentiment) {
-      addText("OVERALL SENTIMENT", 14, true);
+    // Speaker Breakdown
+    if (data.speakers && data.speakers.length > 0) {
+      if (yPosition > 180) {
+        doc.addPage();
+        yPosition = 20;
+      }
+      addText("SPEAKER BREAKDOWN", 14, true);
       yPosition += 5;
-      addText(data.sentiment.toUpperCase(), 11, true);
+
+      // Calculate speaking time per speaker
+      const speakerStats = data.speakers.reduce((acc: any, item) => {
+        if (!acc[item.speaker]) {
+          acc[item.speaker] = { count: 0, words: 0 };
+        }
+        acc[item.speaker].count += 1;
+        acc[item.speaker].words += item.text.split(' ').length;
+        return acc;
+      }, {});
+
+      Object.entries(speakerStats).forEach(([speaker, stats]: [string, any]) => {
+        addText(`Speaker ${speaker}: ${stats.count} utterances, ~${stats.words} words`, 11);
+      });
+      yPosition += 10;
     }
+  }
+
+  if (type === "full") {
+    doc.addPage();
+    yPosition = 20;
+    addTranscriptSection();
   }
 
   // Add footer on each page

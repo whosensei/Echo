@@ -5,19 +5,19 @@ import { Card, CardContent } from "@/components/ui/card"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Clock, User, MessageSquare, Plus, Mail, Loader2 } from "lucide-react"
+import { Clock, User, MessageSquare, Plus, Loader2 } from "lucide-react"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useToast } from "@/components/ui/toaster"
 import { useSession } from "@/lib/auth-client"
-import type { GladiaTranscriptionResult } from "@/lib/gladia-service"
+import type { GladiaTranscriptionResult } from "@/lib/assemblyai-service"
 import type { MeetingSummary } from "@/lib/gemini-service"
 
 interface TabbedTranscriptDisplayProps {
   transcription: GladiaTranscriptionResult | null
-  summary: MeetingSummary | null
+  summary?: MeetingSummary | null  // Made optional since we're using AssemblyAI summary
   isLoading?: boolean
   onNewRecording?: () => void
   isSidebarCollapsed?: boolean
@@ -37,15 +37,16 @@ export function TabbedTranscriptDisplay({ transcription, summary, isLoading, onN
   const navItems = [
     { id: 'transcript', label: 'Transcript', icon: User },
     { id: 'fulltext', label: 'Full Text', icon: MessageSquare },
-    { id: 'summary', label: 'Summary', icon: Clock },
+  { id: 'summary', label: 'Summary', icon: Clock },
   ] as const
 
-  const formatTime = (seconds: number): string => {
-    if (typeof seconds !== 'number' || isNaN(seconds)) {
+  const formatTime = (milliseconds: number): string => {
+    if (typeof milliseconds !== 'number' || isNaN(milliseconds)) {
       return "00:00"
     }
-    const mins = Math.floor(seconds / 60)
-    const secs = Math.floor(seconds % 60)
+    const totalSeconds = Math.floor(milliseconds / 1000)
+    const mins = Math.floor(totalSeconds / 60)
+    const secs = totalSeconds % 60
     return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`
   }
 
@@ -80,15 +81,15 @@ export function TabbedTranscriptDisplay({ transcription, summary, isLoading, onN
 
       if (lastGroup && lastGroup.speaker === utterance.speaker) {
         // Merge with the previous group
-        lastGroup.text += " " + utterance.text
-        lastGroup.end = utterance.end
+        lastGroup.text += " " + utterance.transcription
+        lastGroup.end = utterance.time_end
       } else {
         // Create a new group
         groups.push({
           speaker: utterance.speaker,
-          text: utterance.text,
-          start: utterance.start,
-          end: utterance.end,
+          text: utterance.transcription,
+          start: utterance.time_begin,
+          end: utterance.time_end,
         })
       }
     })
@@ -309,110 +310,203 @@ export function TabbedTranscriptDisplay({ transcription, summary, isLoading, onN
           )}
 
           {/* Summary Section - Executive style */}
-          {activeTab === 'summary' && summary && (
+          {activeTab === 'summary' && transcription && (
             <section id="summary" className="space-y-8">
               {/* Section Header */}
               <div className="space-y-1">
-                <h2 className="text-3xl font-bold text-foreground tracking-tight">Meeting Summary</h2>
-                <p className="text-sm text-muted-foreground">AI-generated insights and key takeaways</p>
+                <h2 className="text-3xl font-bold text-foreground tracking-tight">AI-Powered Insights</h2>
+                <p className="text-sm text-muted-foreground">Summary, topics, and key entities from your conversation</p>
               </div>
 
               <div className="space-y-8">
-                {/* Overview Card - Hero style */}
-                <Card className="border-border/50 shadow-sm bg-gradient-to-br from-card to-card/50">
-                  <CardContent className="p-8 space-y-4">
-                    <h3 className="text-2xl font-bold text-foreground tracking-tight">{summary.title}</h3>
-                    <p className="text-muted-foreground leading-relaxed text-base">{summary.overview}</p>
-                  </CardContent>
-                </Card>
-
-                {/* Stats - Modern pills */}
-                <div className="flex flex-wrap gap-3">
-                  <div className="px-5 py-3 bg-muted/50 rounded-xl border border-border/50 shadow-sm">
-                    <div className="flex items-center gap-2 text-sm">
-                      <Clock className="h-4 w-4 text-primary" />
-                      <span className="font-medium">{summary.duration}</span>
-                    </div>
-                  </div>
-                  <div className="px-5 py-3 bg-muted/50 rounded-xl border border-border/50 shadow-sm">
-                    <div className="flex items-center gap-2 text-sm">
-                      <User className="h-4 w-4 text-primary" />
-                      <span className="font-medium">{summary.participants.length} participants</span>
-                    </div>
-                  </div>
-                  {summary.sentiment && (
-                    <div className="px-5 py-3 bg-muted/50 rounded-xl border border-border/50 shadow-sm">
-                      <div className={`flex items-center gap-2 text-sm font-medium ${
-                        summary.sentiment === "positive"
-                          ? "text-chart-1"
-                          : summary.sentiment === "negative"
-                            ? "text-destructive"
-                            : "text-chart-4"
-                      }`}>
-                        <span className="capitalize">{summary.sentiment} sentiment</span>
+                {/* AI Summary Card */}
+                {transcription.result.summary && (
+                  <Card className="border-border/50 shadow-sm bg-gradient-to-br from-card to-card/50">
+                    <CardContent className="p-8 space-y-4">
+                      <div className="flex items-center gap-2 mb-4">
+                        <MessageSquare className="h-5 w-5 text-primary" />
+                        <h3 className="text-2xl font-bold text-foreground tracking-tight">Summary</h3>
                       </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Content Grid - Spacious cards */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  {/* Key Points */}
-                  <Card className="border-border/50 shadow-sm">
-                    <CardContent className="p-8">
-                      <h4 className="text-xl font-bold text-foreground mb-6 tracking-tight">Key Points</h4>
-                      <div className="space-y-4">
-                        {summary.keyPoints.map((point, index) => (
-                          <div key={index} className="flex items-start gap-4">
-                            <div className="w-7 h-7 rounded-full bg-primary flex items-center justify-center flex-shrink-0 mt-0.5 shadow-sm">
-                              <span className="text-primary-foreground text-xs font-bold">{index + 1}</span>
-                            </div>
-                            <p className="text-sm leading-relaxed text-foreground flex-1">{point}</p>
-                          </div>
-                        ))}
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  {/* Action Items */}
-                  <Card className="border-border/50 shadow-sm">
-                    <CardContent className="p-8">
-                      <h4 className="text-xl font-bold text-foreground mb-6 tracking-tight">Action Items</h4>
-                      <div className="space-y-4">
-                        {summary.actionItems.map((item, index) => (
-                          <div key={index} className="flex items-start gap-4">
-                            <div className="w-7 h-7 rounded-full bg-chart-1 flex items-center justify-center flex-shrink-0 mt-0.5 shadow-sm">
-                              <span className="text-white text-xs font-bold">✓</span>
-                            </div>
-                            <p className="text-sm leading-relaxed text-foreground flex-1">{item}</p>
-                          </div>
-                        ))}
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-
-                {/* Decisions - Full width */}
-                {summary.decisions.length > 0 && (
-                  <Card className="border-border/50 shadow-sm">
-                    <CardContent className="p-8">
-                      <h4 className="text-xl font-bold text-foreground mb-6 tracking-tight">Decisions Made</h4>
-                      <div className="space-y-4">
-                        {summary.decisions.map((decision, index) => (
-                          <div key={index} className="flex items-start gap-4">
-                            <div className="w-7 h-7 rounded-full bg-chart-4 flex items-center justify-center flex-shrink-0 mt-0.5 shadow-sm">
-                              <span className="text-white text-xs font-bold">!</span>
-                            </div>
-                            <p className="text-sm leading-relaxed text-foreground flex-1">{decision}</p>
-                          </div>
+                      <div className="prose prose-sm max-w-none">
+                        {transcription.result.summary.split('\n').map((line, index) => (
+                          <p key={index} className="text-muted-foreground leading-relaxed text-base mb-2">
+                            {line}
+                          </p>
                         ))}
                       </div>
                     </CardContent>
                   </Card>
                 )}
+
+                {/* Stats Pills */}
+                <div className="flex flex-wrap gap-3">
+                  <div className="px-5 py-3 bg-muted/50 rounded-xl border border-border/50 shadow-sm">
+                    <div className="flex items-center gap-2 text-sm">
+                      <Clock className="h-4 w-4 text-primary" />
+                      <span className="font-medium">
+                        {transcription.result.metadata.audio_duration 
+                          ? `${Math.floor(transcription.result.metadata.audio_duration / 60000)}:${Math.floor((transcription.result.metadata.audio_duration % 60000) / 1000).toString().padStart(2, '0')}`
+                          : 'N/A'}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="px-5 py-3 bg-muted/50 rounded-xl border border-border/50 shadow-sm">
+                    <div className="flex items-center gap-2 text-sm">
+                      <User className="h-4 w-4 text-primary" />
+                      <span className="font-medium">
+                        {transcription.result.metadata.number_of_distinct_speakers} speakers
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Content Grid - IAB Categories and Entities */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* IAB Categories (Topics) */}
+                  {transcription.result.iab_categories?.summary && 
+                   Object.keys(transcription.result.iab_categories.summary).length > 0 && (
+                    <Card className="border-border/50 shadow-sm">
+                      <CardContent className="p-8">
+                        <h4 className="text-xl font-bold text-foreground mb-6 tracking-tight flex items-center gap-2">
+                          <MessageSquare className="h-5 w-5 text-primary" />
+                          Topics Discussed
+                        </h4>
+                        <div className="space-y-3">
+                          {Object.entries(transcription.result.iab_categories.summary)
+                            .sort((a, b) => (b[1] as number) - (a[1] as number))
+                            .slice(0, 8)
+                            .map(([category, relevance], index) => (
+                              <div key={index} className="flex items-center justify-between gap-3">
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-medium text-foreground truncate">
+                                    {category.split('>').pop()}
+                                  </p>
+                                  <p className="text-xs text-muted-foreground truncate">
+                                    {category.split('>').slice(0, -1).join(' > ')}
+                                  </p>
+                                </div>
+                                <Badge variant="secondary" className="flex-shrink-0">
+                                  {((relevance as number) * 100).toFixed(0)}%
+                                </Badge>
+                              </div>
+                            ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {/* Entity Highlights */}
+                  {transcription.result.named_entities && transcription.result.named_entities.length > 0 && (
+                    <Card className="border-border/50 shadow-sm">
+                      <CardContent className="p-8">
+                        <h4 className="text-xl font-bold text-foreground mb-6 tracking-tight flex items-center gap-2">
+                          <User className="h-5 w-5 text-primary" />
+                          Key Entities
+                        </h4>
+                        <div className="space-y-6">
+                          {/* People */}
+                          {transcription.result.named_entities.filter(e => 
+                            e.type === 'person_name' || e.type === 'person_age'
+                          ).length > 0 && (
+                            <div className="space-y-2">
+                              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">People</p>
+                              <div className="flex flex-wrap gap-2">
+                                {transcription.result.named_entities
+                                  .filter(e => e.type === 'person_name' || e.type === 'person_age')
+                                  .slice(0, 6)
+                                  .map((entity, idx) => (
+                                    <Badge key={idx} variant="outline" className="bg-blue-500/10 text-blue-600 border-blue-200">
+                                      {entity.entity}
+                                    </Badge>
+                                  ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Organizations */}
+                          {transcription.result.named_entities.filter(e => 
+                            e.type === 'organization'
+                          ).length > 0 && (
+                            <div className="space-y-2">
+                              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Organizations</p>
+                              <div className="flex flex-wrap gap-2">
+                                {transcription.result.named_entities
+                                  .filter(e => e.type === 'organization')
+                                  .slice(0, 6)
+                                  .map((entity, idx) => (
+                                    <Badge key={idx} variant="outline" className="bg-purple-500/10 text-purple-600 border-purple-200">
+                                      {entity.entity}
+                                    </Badge>
+                                  ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Locations */}
+                          {transcription.result.named_entities.filter(e => 
+                            e.type === 'location'
+                          ).length > 0 && (
+                            <div className="space-y-2">
+                              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Locations</p>
+                              <div className="flex flex-wrap gap-2">
+                                {transcription.result.named_entities
+                                  .filter(e => e.type === 'location')
+                                  .slice(0, 6)
+                                  .map((entity, idx) => (
+                                    <Badge key={idx} variant="outline" className="bg-green-500/10 text-green-600 border-green-200">
+                                      {entity.entity}
+                                    </Badge>
+                                  ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Dates */}
+                          {transcription.result.named_entities.filter(e => 
+                            e.type === 'date' || e.type === 'date_interval'
+                          ).length > 0 && (
+                            <div className="space-y-2">
+                              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Dates</p>
+                              <div className="flex flex-wrap gap-2">
+                                {transcription.result.named_entities
+                                  .filter(e => e.type === 'date' || e.type === 'date_interval')
+                                  .slice(0, 6)
+                                  .map((entity, idx) => (
+                                    <Badge key={idx} variant="outline" className="bg-orange-500/10 text-orange-600 border-orange-200">
+                                      {entity.entity}
+                                    </Badge>
+                                  ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Other entities */}
+                          {transcription.result.named_entities.filter(e => 
+                            !['person_name', 'person_age', 'organization', 'location', 'date', 'date_interval'].includes(e.type)
+                          ).length > 0 && (
+                            <div className="space-y-2">
+                              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Other</p>
+                              <div className="flex flex-wrap gap-2">
+                                {transcription.result.named_entities
+                                  .filter(e => !['person_name', 'person_age', 'organization', 'location', 'date', 'date_interval'].includes(e.type))
+                                  .slice(0, 6)
+                                  .map((entity, idx) => (
+                                    <Badge key={idx} variant="outline" className="bg-gray-500/10 text-gray-600 border-gray-200">
+                                      {entity.entity}
+                                    </Badge>
+                                  ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+                </div>
               </div>
             </section>
           )}
+
         </div>
       </ScrollArea>
 

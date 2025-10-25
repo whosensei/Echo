@@ -161,7 +161,7 @@ export const apiKey = pgTable("api_key", {
     .references(() => user.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
   key: text("key").notNull(), // Encrypted API key
-  provider: text("provider").notNull(), // gladia, openai, etc.
+  provider: text("provider").notNull(), // assemblyai, openai, gemini, etc.
   isActive: boolean("isActive").notNull().default(true),
   createdAt: timestamp("createdAt").notNull().defaultNow(),
   updatedAt: timestamp("updatedAt").notNull().defaultNow(),

@@ -25,7 +25,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import type { GladiaTranscriptionResult } from "@/lib/gladia-service";
+import type { GladiaTranscriptionResult } from "@/lib/assemblyai-service";
 import type { MeetingSummary } from "@/lib/gemini-service";
 
 interface Meeting {
