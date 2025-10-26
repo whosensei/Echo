@@ -13,6 +13,7 @@ import {
   LogOut,
   ChevronLeft,
   ChevronRight,
+  MessageSquare,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -36,6 +37,7 @@ const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { name: "Calendar", href: "/calendar", icon: Calendar },
   { name: "Meetings", href: "/meetings", icon: FileText },
+  { name: "AI Chat", href: "/chat", icon: MessageSquare },
   { name: "Settings", href: "/settings", icon: Settings },
 ];
 

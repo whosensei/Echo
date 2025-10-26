@@ -17,6 +17,7 @@ import {
   Trash2,
   Mail,
   Download,
+  MessageSquare,
 } from "lucide-react";
 import Link from "next/link";
 import {
@@ -400,6 +401,17 @@ export default function MeetingDetailsPage() {
               <Badge className={getStatusColor(recording.status)}>
                 {recording.status}
               </Badge>
+              
+              {/* Chat with Transcript Button */}
+              <Button
+                variant="default"
+                size="sm"
+                disabled={!transcriptionResult}
+                onClick={() => router.push(`/chat?recordingId=${recording.id}`)}
+              >
+                <MessageSquare className="mr-2 h-4 w-4" />
+                Chat with Transcript
+              </Button>
               
               {/* Action Buttons */}
               <Dialog open={isEmailDialogOpen} onOpenChange={setIsEmailDialogOpen}>

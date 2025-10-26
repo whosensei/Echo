@@ -9,7 +9,15 @@ A modern, full-stack meeting assistant with AI transcription, automatic summarie
 - **Google OAuth** - Single sign-on with Google account  
 - **Session Management** - Persistent sessions with automatic refresh
 
-### 📧 Gmail Integration
+### � AI Chat Assistant
+- **Multi-Model Support** - Choose from GPT-4o, Claude 3.5, Gemini 1.5, and more
+- **Transcript Context** - Attach meeting transcripts to provide context
+- **Streaming Responses** - Real-time token-by-token AI responses
+- **Chat History** - Persistent conversation sessions
+- **Model Switching** - Change AI models on the fly
+- **Markdown Support** - Rich text formatting with code highlighting
+
+### �📧 Gmail Integration
 - Send meeting transcripts via email
 - Share AI-generated summaries
 - Email action points to participants
@@ -69,6 +77,12 @@ ASSEMBLYAI_BASE_URL=https://api.assemblyai.com/v2
 
 # Google Gemini API Configuration (optional - for additional summaries)
 GEMINI_API_KEY=your_gemini_api_key_here
+
+# OpenAI API Configuration (optional - for AI chat)
+OPENAI_API_KEY=your_openai_api_key_here
+
+# Anthropic API Configuration (optional - for AI chat)
+ANTHROPIC_API_KEY=your_anthropic_api_key_here
 
 # AWS S3 Configuration
 AWS_S3_BUCKET_NAME=your_bucket_name

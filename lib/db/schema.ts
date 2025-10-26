@@ -167,6 +167,42 @@ export const apiKey = pgTable("api_key", {
   updatedAt: timestamp("updatedAt").notNull().defaultNow(),
 });
 
+// Chat Sessions table - stores chat conversation threads
+export const chatSession = pgTable("chat_session", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: text("userId")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  title: text("title").notNull(),
+  model: text("model").notNull().default("gpt-4o"), // AI model being used
+  systemPrompt: text("systemPrompt"), // Custom system prompt
+  createdAt: timestamp("createdAt").notNull().defaultNow(),
+  updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+});
+
+// Chat Messages table - stores individual messages in chat sessions
+export const chatMessage = pgTable("chat_message", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  sessionId: uuid("sessionId")
+    .notNull()
+    .references(() => chatSession.id, { onDelete: "cascade" }),
+  role: text("role").notNull(), // 'user' | 'assistant' | 'system'
+  content: text("content").notNull(),
+  metadata: jsonb("metadata"), // tokens, model info, etc.
+  createdAt: timestamp("createdAt").notNull().defaultNow(),
+});
+
+// Chat Attachments table - links transcripts/recordings to chat sessions
+export const chatAttachment = pgTable("chat_attachment", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  sessionId: uuid("sessionId")
+    .notNull()
+    .references(() => chatSession.id, { onDelete: "cascade" }),
+  recordingId: uuid("recordingId")
+    .references(() => recording.id, { onDelete: "cascade" }),
+  attachedAt: timestamp("attachedAt").notNull().defaultNow(),
+});
+
 // Relations
 export const userRelations = relations(user, ({ many, one }) => ({
   sessions: many(session),
@@ -176,6 +212,7 @@ export const userRelations = relations(user, ({ many, one }) => ({
   emailLogs: many(emailLog),
   settings: one(userSettings),
   apiKeys: many(apiKey),
+  chatSessions: many(chatSession),
 }));
 
 export const sessionRelations = relations(session, ({ one }) => ({
@@ -213,6 +250,7 @@ export const recordingRelations = relations(recording, ({ one, many }) => ({
   transcript: one(transcript),
   summary: one(summary),
   emailLogs: many(emailLog),
+  chatAttachments: many(chatAttachment),
 }));
 
 export const transcriptRelations = relations(transcript, ({ one }) => ({
@@ -258,6 +296,33 @@ export const apiKeyRelations = relations(apiKey, ({ one }) => ({
   }),
 }));
 
+export const chatSessionRelations = relations(chatSession, ({ one, many }) => ({
+  user: one(user, {
+    fields: [chatSession.userId],
+    references: [user.id],
+  }),
+  messages: many(chatMessage),
+  attachments: many(chatAttachment),
+}));
+
+export const chatMessageRelations = relations(chatMessage, ({ one }) => ({
+  session: one(chatSession, {
+    fields: [chatMessage.sessionId],
+    references: [chatSession.id],
+  }),
+}));
+
+export const chatAttachmentRelations = relations(chatAttachment, ({ one }) => ({
+  session: one(chatSession, {
+    fields: [chatAttachment.sessionId],
+    references: [chatSession.id],
+  }),
+  recording: one(recording, {
+    fields: [chatAttachment.recordingId],
+    references: [recording.id],
+  }),
+}));
+
 // Type exports for TypeScript
 export type User = typeof user.$inferSelect;
 export type NewUser = typeof user.$inferInsert;
@@ -288,3 +353,12 @@ export type NewUserSettings = typeof userSettings.$inferInsert;
 
 export type ApiKey = typeof apiKey.$inferSelect;
 export type NewApiKey = typeof apiKey.$inferInsert;
+
+export type ChatSession = typeof chatSession.$inferSelect;
+export type NewChatSession = typeof chatSession.$inferInsert;
+
+export type ChatMessage = typeof chatMessage.$inferSelect;
+export type NewChatMessage = typeof chatMessage.$inferInsert;
+
+export type ChatAttachment = typeof chatAttachment.$inferSelect;
+export type NewChatAttachment = typeof chatAttachment.$inferInsert;
