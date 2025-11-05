@@ -212,52 +212,60 @@ export function AudioRecorderComponent({
           <div className="flex justify-center items-center">
             {recordedAudio ? (
               /* Recording completed - show main action button */
-              <div className="flex items-center gap-6">
-                <button
+              <div className="flex items-center gap-4">
+                <Button
                   onClick={handleUploadAndTranscribe}
-                  className="btn-minimal flex items-center gap-3 px-8 py-4 text-lg"
+                  size="lg"
+                  className="gap-2"
                 >
                   <Upload className="h-5 w-5" />
                   Transcribe
-                </button>
+                </Button>
 
-                <button
+                <Button
                   onClick={handleDiscardRecording}
-                  className="btn-outline flex items-center gap-3 px-8 py-4 text-lg"
+                  variant="outline"
+                  size="lg"
+                  className="gap-2"
                 >
                   <Trash2 className="h-5 w-5" />
                   Discard
-                </button>
+                </Button>
               </div>
             ) : !isRecording ? (
               /* Ready to start recording - show circular mic button */
-              <button
+              <Button
                 onClick={startRecording}
                 disabled={!isInitialized}
-                className={`btn-record-glass ${!isInitialized ? 'opacity-50 cursor-not-allowed' : ''}`}
+                size="lg"
+                className="h-20 w-20 rounded-full p-0"
               >
-                <Mic className="h-8 w-8 btn-record-icon" />
-              </button>
+                <Mic className="h-8 w-8" />
+              </Button>
             ) : (
               /* Currently recording - show control buttons */
-              <div className="flex items-center gap-6">
-                <button
+              <div className="flex items-center gap-4">
+                <Button
                   onClick={pauseRecording}
-                  className={`btn-record ${isPaused ? 'paused' : ''}`}
+                  size="lg"
+                  variant={isPaused ? "secondary" : "default"}
+                  className="h-20 w-20 rounded-full p-0"
                 >
                   {isPaused ? (
-                    <Play className="h-8 w-8 btn-record-icon" />
+                    <Play className="h-8 w-8" />
                   ) : (
-                    <Pause className="h-8 w-8 btn-record-icon" />
+                    <Pause className="h-8 w-8" />
                   )}
-                </button>
+                </Button>
 
-                <button
+                <Button
                   onClick={stopRecording}
-                  className="btn-record recording"
+                  variant="destructive"
+                  size="lg"
+                  className="h-20 w-20 rounded-full p-0"
                 >
-                  <Square className="h-8 w-8 btn-record-icon" />
-                </button>
+                  <Square className="h-8 w-8" />
+                </Button>
               </div>
             )}
           </div>

@@ -354,7 +354,7 @@ export default function ChatPage() {
                   ) : messages.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-full text-center">
                       <Sparkles className="h-16 w-16 text-muted-foreground mb-4" />
-                      <h3 className="text-lg font-semibold mb-2">Start a conversation</h3>
+                      <h3 className="text-lg font-medium mb-2">Start a conversation</h3>
                       <p className="text-muted-foreground max-w-md">
                         Ask questions about your meetings, request summaries, or have a conversation with AI.
                       </p>
@@ -388,7 +388,7 @@ export default function ChatPage() {
               <Card className="flex-1 flex items-center justify-center">
                 <div className="text-center max-w-md">
                   <MessageSquare className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-xl font-semibold mb-2">No chat selected</h3>
+                  <h3 className="text-xl font-medium mb-2">No chat selected</h3>
                   <p className="text-muted-foreground mb-6">
                     Create a new chat or select an existing one from the sidebar to start.
                   </p>

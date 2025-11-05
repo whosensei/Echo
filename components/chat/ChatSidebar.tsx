@@ -50,6 +50,7 @@ export function ChatSidebar({
 }: ChatSidebarProps) {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [sessionToDelete, setSessionToDelete] = useState<string | null>(null);
+  const showInitialLoadingState = Boolean(isLoading && sessions.length === 0);
 
   const handleDeleteClick = (sessionId: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -75,8 +76,8 @@ export function ChatSidebar({
       </div>
 
       <ScrollArea className="flex-1">
-        <div className="p-2 space-y-2">
-          {isLoading ? (
+  <div className="relative p-2 space-y-2">
+          {showInitialLoadingState ? (
             <div className="flex items-center justify-center p-8">
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
             </div>
@@ -90,7 +91,7 @@ export function ChatSidebar({
             sessions.map((session) => (
               <Card
                 key={session.id}
-                className={`p-3 cursor-pointer transition-colors hover:bg-accent group ${
+                className={`p-3 cursor-pointer transition-colors hover:bg-accent group shadow-none ${
                   selectedSessionId === session.id ? 'bg-accent border-primary' : ''
                 }`}
                 onClick={() => onSessionSelect(session.id)}
@@ -112,7 +113,7 @@ export function ChatSidebar({
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                    className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/10"
                     onClick={(e) => handleDeleteClick(session.id, e)}
                   >
                     <Trash2 className="h-4 w-4 text-destructive" />
@@ -120,6 +121,14 @@ export function ChatSidebar({
                 </div>
               </Card>
             ))
+          )}
+          {isLoading && sessions.length > 0 && (
+            <div className="pointer-events-none absolute inset-x-0 top-4 flex justify-center">
+              <span className="inline-flex items-center gap-2 rounded-full bg-background/90 px-3 py-1 text-xs text-muted-foreground shadow-sm">
+                <Loader2 className="h-3 w-3 animate-spin" />
+                Updating chats…
+              </span>
+            </div>
           )}
         </div>
       </ScrollArea>
@@ -134,7 +143,7 @@ export function ChatSidebar({
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirmDelete} className="bg-destructive text-destructive-foreground">
+            <AlertDialogAction onClick={handleConfirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>

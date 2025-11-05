@@ -5,7 +5,7 @@ import { DashboardLayout } from "@/components/layout/DashboardLayout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Calendar as CalendarIcon, Clock, MapPin, Users, Mic, FileText, ChevronLeft, ChevronRight, Play } from "lucide-react"
+import { Calendar as CalendarIcon, Clock, MapPin, Users, Mic, ChevronLeft, ChevronRight, Play, Sparkles } from "lucide-react"
 import { format, isSameDay } from "date-fns"
 import Link from "next/link"
 
@@ -178,23 +178,31 @@ export default function CalendarPage() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight text-foreground">Calendar</h1>
-            <p className="text-muted-foreground">View your meetings and recordings by date</p>
+      <div className="space-y-4 pb-8">
+        {/* Header with gradient - same size as dashboard */}
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border border-border/50 p-8">
+          <div className="absolute inset-0 bg-grid-white/5 [mask-image:linear-gradient(0deg,white,rgba(255,255,255,0.5))]" />
+          <div className="relative">
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <CalendarIcon className="h-6 w-6 text-primary" />
+                <h1 className="text-4xl font-medium tracking-tight text-foreground">Calendar</h1>
+              </div>
+              <p className="text-muted-foreground text-lg max-w-2xl">
+                View your meetings and recordings organized by date with AI-powered insights.
+              </p>
+            </div>
           </div>
         </div>
 
         {/* Split View: Calendar + Detail Panel */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:h-[calc(100vh-20rem)]">
           {/* Left: Calendar */}
-          <div className="lg:col-span-2">
-            <Card>
-              <CardHeader>
+          <div className="lg:col-span-2 flex flex-col">
+            <Card className="flex-1 flex flex-col h-full">
+              <CardHeader className="pb-3 flex-shrink-0">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-2xl font-semibold">
+                  <CardTitle className="text-xl font-medium">
                     {format(currentMonth, "MMMM yyyy")}
                   </CardTitle>
                   <div className="flex gap-2">
@@ -225,18 +233,18 @@ export default function CalendarPage() {
                   </div>
                 </div>
               </CardHeader>
-              <CardContent>
+              <CardContent className="pb-4 flex-1 overflow-auto">
                 {loading ? (
                   <div className="flex items-center justify-center py-12">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-7 gap-px bg-border rounded-lg overflow-hidden">
+                  <div className="grid grid-cols-7 gap-px bg-border rounded-lg overflow-hidden h-full">
                     {/* Day Headers */}
                     {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
                       <div
                         key={day}
-                        className="bg-muted p-3 text-center text-sm font-semibold text-muted-foreground"
+                        className="bg-muted p-2 text-center text-xs font-semibold text-muted-foreground"
                       >
                         {day}
                       </div>
@@ -244,7 +252,7 @@ export default function CalendarPage() {
 
                     {/* Empty cells before first day */}
                     {emptyDays.map((_, index) => (
-                      <div key={`empty-${index}`} className="bg-card min-h-[100px]"></div>
+                      <div key={`empty-${index}`} className="bg-card min-h-[70px]"></div>
                     ))}
 
                     {/* Calendar days */}
@@ -259,16 +267,16 @@ export default function CalendarPage() {
                         <button
                           key={day}
                           onClick={() => handleDateClick(day)}
-                          className={`bg-card min-h-[100px] p-2 hover:bg-accent transition-colors text-left relative ${
+                          className={`bg-card min-h-[70px] p-1.5 hover:bg-accent transition-colors text-left relative ${
                             today ? "ring-2 ring-primary ring-inset" : ""
                           } ${
                             selected ? "bg-accent" : ""
                           }`}
                         >
                           <div
-                            className={`text-sm font-semibold mb-1 ${
+                            className={`text-xs font-semibold mb-0.5 ${
                               today
-                                ? "flex items-center justify-center w-7 h-7 rounded-full bg-primary text-primary-foreground"
+                                ? "flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground"
                                 : "text-foreground"
                             }`}
                           >
@@ -276,16 +284,16 @@ export default function CalendarPage() {
                           </div>
                           
                           {/* Activity indicators */}
-                          <div className="space-y-1">
+                          <div className="space-y-0.5">
                             {dayEvents.length > 0 && (
-                              <div className="flex items-center gap-1 text-xs text-chart-2">
-                                <CalendarIcon className="w-3 h-3" />
+                              <div className="flex items-center gap-0.5 text-[10px] text-chart-2">
+                                <CalendarIcon className="w-2.5 h-2.5" />
                                 <span>{dayEvents.length}</span>
                               </div>
                             )}
                             {dayRecordings.length > 0 && (
-                              <div className="flex items-center gap-1 text-xs text-chart-1">
-                                <Mic className="w-3 h-3" />
+                              <div className="flex items-center gap-0.5 text-[10px] text-chart-1">
+                                <Mic className="w-2.5 h-2.5" />
                                 <span>{dayRecordings.length}</span>
                               </div>
                             )}
@@ -305,24 +313,38 @@ export default function CalendarPage() {
           </div>
 
           {/* Right: Detail Panel for Selected Date */}
-          <div className="lg:col-span-1">
-            <Card className="sticky top-6">
-              <CardHeader>
-                <CardTitle className="text-lg">
+          <div className="lg:col-span-1 flex flex-col">
+            <Card className="flex-1 flex flex-col h-full">
+              <CardHeader className="pb-3 flex-shrink-0">
+                <CardTitle className="text-base font-medium">
                   {format(selectedDate, "EEEE, MMM d")}
                 </CardTitle>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-xs text-muted-foreground">
                   {selectedDayEvents.length + selectedDayRecordings.length === 0
                     ? "No activities"
                     : `${selectedDayEvents.length + selectedDayRecordings.length} item${selectedDayEvents.length + selectedDayRecordings.length !== 1 ? "s" : ""}`}
                 </p>
               </CardHeader>
-              <CardContent className="max-h-[calc(100vh-12rem)] overflow-y-auto">
+              <CardContent className="flex-1 overflow-y-auto pb-4">
+                {selectedDayEvents.length === 0 && selectedDayRecordings.length === 0 ? (
+                  /* Empty State - Centered */
+                  <div className="flex items-center justify-center h-full">
+                    <div className="text-center">
+                      <CalendarIcon className="w-16 h-16 text-muted-foreground mx-auto mb-4 opacity-50" />
+                      <p className="text-sm font-medium text-muted-foreground">
+                        No meetings or recordings on this day
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Select a different date to view activities
+                      </p>
+                    </div>
+                  </div>
+                ) : (
                 <div className="space-y-4">
                   {/* Calendar Events */}
                   {selectedDayEvents.length > 0 && (
                     <div>
-                      <h4 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+                      <h4 className="text-sm font-medium text-foreground mb-3 flex items-center gap-2">
                         <CalendarIcon className="w-4 h-4 text-chart-2" />
                         Meetings ({selectedDayEvents.length})
                       </h4>
@@ -365,7 +387,7 @@ export default function CalendarPage() {
                   {/* Recordings */}
                   {selectedDayRecordings.length > 0 && (
                     <div>
-                      <h4 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+                      <h4 className="text-sm font-medium text-foreground mb-3 flex items-center gap-2">
                         <Mic className="w-4 h-4 text-chart-1" />
                         Recordings ({selectedDayRecordings.length})
                       </h4>
@@ -408,18 +430,8 @@ export default function CalendarPage() {
                   )}
 
                   {/* Empty State */}
-                  {selectedDayEvents.length === 0 && selectedDayRecordings.length === 0 && (
-                    <div className="text-center py-8">
-                      <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-3 opacity-50" />
-                      <p className="text-sm text-muted-foreground">
-                        No meetings or recordings on this day
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Select a different date to view activities
-                      </p>
-                    </div>
-                  )}
                 </div>
+                )}
               </CardContent>
             </Card>
           </div>

@@ -14,7 +14,7 @@ const InputGroup = React.forwardRef<
     <div
       ref={ref}
       className={cn(
-        "relative flex w-full flex-col gap-2 rounded-xl border bg-background/50 backdrop-blur-sm p-2.5 shadow-sm transition-colors focus-within:border-ring focus-within:ring-2 focus-within:ring-ring/20",
+        "relative flex w-full flex-col gap-2 rounded-xl border bg-background/50 backdrop-blur-sm p-2.5 shadow-sm transition-colors",
         className
       )}
       {...props}

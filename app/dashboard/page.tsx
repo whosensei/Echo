@@ -12,7 +12,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { 
   Calendar, 
-  FileText, 
   Mail, 
   Mic, 
   Plus, 
@@ -20,13 +19,12 @@ import {
   RefreshCw, 
   Loader2,
   ArrowUpRight,
-  Activity,
   Zap,
-  BarChart3,
   PlayCircle,
   CheckCircle2,
   ChevronRight,
-  Clock
+  Clock,
+  LayoutDashboard
 } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/components/ui/toaster";
@@ -241,87 +239,95 @@ export default function DashboardPage() {
     <ProtectedRoute>
       <DashboardLayout>
         <div className="space-y-8 pb-8">
-          {/* Page header */}
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-4xl font-bold tracking-tight text-foreground">Dashboard</h1>
-              <p className="text-muted-foreground mt-2 text-lg">
-                Welcome back! Here's an overview of your meetings and recordings.
-              </p>
+          {/* Page header with gradient */}
+          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border border-border/50 p-8">
+            <div className="absolute inset-0 bg-grid-white/5 [mask-image:linear-gradient(0deg,white,rgba(255,255,255,0.5))]" />
+            <div className="relative">
+              <div className="flex items-center justify-between">
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <LayoutDashboard className="h-6 w-6 text-primary" />
+                    <h1 className="text-4xl font-medium tracking-tight text-foreground">Dashboard</h1>
+                  </div>
+                  <p className="text-muted-foreground text-lg max-w-2xl">
+                    Welcome back! Your AI-powered meeting insights at a glance.
+                  </p>
+                </div>
+                <Link href="/record">
+                  <Button size="lg" className="shadow-lg">
+                    <Plus className="mr-2 h-5 w-5" />
+                    New Recording
+                  </Button>
+                </Link>
+              </div>
             </div>
-            <Link href="/record">
-              <Button size="lg" className="shadow-lg">
-                <Plus className="mr-2 h-5 w-5" />
-                New Recording
-              </Button>
-            </Link>
           </div>
 
           {/* Stats Cards Grid */}
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-            <Card>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <Card className="border-border/50 hover:shadow-md transition-shadow">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
+                <CardTitle className="text-sm font-medium text-muted-foreground">
                   Total Recordings
                 </CardTitle>
-                <Mic className="h-4 w-4 text-muted-foreground" />
+                <Mic className="h-4 w-4 text-muted-foreground/50" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">
-                  {isLoading ? <Skeleton className="h-8 w-16" /> : stats.totalMeetings}
+                <div className="text-3xl font-bold tracking-tight">
+                  {isLoading ? <Skeleton className="h-9 w-16" /> : stats.totalMeetings}
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">
+                <p className="text-xs text-muted-foreground mt-2">
                   All time audio recordings
                 </p>
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="border-border/50 hover:shadow-md transition-shadow">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
+                <CardTitle className="text-sm font-medium text-muted-foreground">
                   This Week
                 </CardTitle>
-                <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                <TrendingUp className="h-4 w-4 text-muted-foreground/50" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">
-                  {isLoading ? <Skeleton className="h-8 w-16" /> : stats.thisWeekMeetings}
+                <div className="text-3xl font-bold tracking-tight">
+                  {isLoading ? <Skeleton className="h-9 w-16" /> : stats.thisWeekMeetings}
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">
+                <p className="text-xs text-muted-foreground mt-2">
                   Recordings this week
                 </p>
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="border-border/50 hover:shadow-md transition-shadow">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
+                <CardTitle className="text-sm font-medium text-muted-foreground">
                   Emails Sent
                 </CardTitle>
-                <Mail className="h-4 w-4 text-muted-foreground" />
+                <Mail className="h-4 w-4 text-muted-foreground/50" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">
-                  {isLoading ? <Skeleton className="h-8 w-16" /> : stats.emailsSent}
+                <div className="text-3xl font-bold tracking-tight">
+                  {isLoading ? <Skeleton className="h-9 w-16" /> : stats.emailsSent}
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">
+                <p className="text-xs text-muted-foreground mt-2">
                   Transcripts & summaries
                 </p>
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="border-border/50 hover:shadow-md transition-shadow">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
+                <CardTitle className="text-sm font-medium text-muted-foreground">
                   Upcoming Events
                 </CardTitle>
-                <Calendar className="h-4 w-4 text-muted-foreground" />
+                <Calendar className="h-4 w-4 text-muted-foreground/50" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">
-                  {isLoading ? <Skeleton className="h-8 w-16" /> : stats.upcomingEvents}
+                <div className="text-3xl font-bold tracking-tight">
+                  {isLoading ? <Skeleton className="h-9 w-16" /> : stats.upcomingEvents}
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">
+                <p className="text-xs text-muted-foreground mt-2">
                   Calendar events
                 </p>
               </CardContent>
@@ -329,16 +335,18 @@ export default function DashboardPage() {
           </div>
 
           {/* Recent activity and upcoming meetings */}
-          <div className="grid gap-6 md:grid-cols-2">
+          <div className="grid gap-4 md:grid-cols-2">
             {/* Upcoming Calendar Events */}
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
+            <Card className="border-border/50 bg-gradient-to-br from-card to-card/50">
+              <CardHeader className="flex flex-row items-center justify-between pb-3">
                 <div>
-                  <CardTitle className="flex items-center gap-2">
-                    <Calendar className="h-5 w-5 text-primary" />
-                    Upcoming Calendar Events
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                      <Calendar className="h-4 w-4 text-primary" />
+                    </div>
+                    Upcoming Events
                   </CardTitle>
-                  <CardDescription className="mt-1">
+                  <CardDescription className="mt-1.5 text-xs">
                     Your next 5 meetings from Google Calendar
                   </CardDescription>
                 </div>
@@ -370,37 +378,39 @@ export default function DashboardPage() {
                       ))}
                     </div>
                   ) : upcomingCalendar.length === 0 ? (
-                    <div className="flex items-center justify-center py-8 text-muted-foreground">
+                    <div className="flex items-center justify-center py-12 text-muted-foreground">
                       <div className="text-center">
-                        <Calendar className="h-12 w-12 mx-auto mb-2 text-muted-foreground" />
-                        <p className="text-sm">No upcoming meetings</p>
-                        <Link href="/settings">
-                          <Button variant="link" className="mt-2">
-                            Connect Google Calendar
-                          </Button>
-                        </Link>
+                        <div className="h-16 w-16 rounded-2xl bg-muted/50 flex items-center justify-center mx-auto mb-3">
+                          <Calendar className="h-8 w-8 text-muted-foreground/50" />
+                        </div>
+                        <p className="text-sm font-medium">No upcoming meetings</p>
+                        <p className="text-xs text-muted-foreground mt-1">Your calendar is clear for now</p>
                       </div>
                     </div>
                   ) : (
                     upcomingCalendar.map((event) => {
                       const when = formatDate(event.start)
                       return (
-                        <div key={event.id} className="rounded-lg border p-3 hover:bg-accent transition-colors group">
-                          <div className="flex items-center gap-2 mb-1">
-                            <Calendar className="h-4 w-4 text-primary flex-shrink-0" />
-                            <p className="font-medium text-sm text-foreground flex-1 min-w-0 truncate">
-                              {event.summary}
-                            </p>
-                            <span className="text-xs text-muted-foreground tabular-nums whitespace-nowrap">
-                              {when}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-2 text-[11px] text-muted-foreground ml-6 min-h-[16px]">
-                            {(event.hangoutLink || event.conferenceData) && (
-                              <Badge variant="secondary" className="text-[10px] h-4 px-1.5">
-                                ONLINE
-                              </Badge>
-                            )}
+                        <div key={event.id} className="rounded-xl border border-border/50 p-3.5 hover:bg-accent/50 hover:border-primary/20 transition-all group">
+                          <div className="flex items-start gap-3 mb-2">
+                            <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                              <Calendar className="h-4 w-4 text-primary" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium text-sm text-foreground mb-1 line-clamp-1">
+                                {event.summary}
+                              </p>
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className="text-xs text-muted-foreground tabular-nums">
+                                  {when}
+                                </span>
+                                {(event.hangoutLink || event.conferenceData) && (
+                                  <Badge variant="secondary" className="text-[10px] h-5 px-2">
+                                    ONLINE
+                                  </Badge>
+                                )}
+                              </div>
+                            </div>
                           </div>
                         </div>
                       )
@@ -411,13 +421,15 @@ export default function DashboardPage() {
             </Card>
 
             {/* Recent Recordings */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Mic className="h-5 w-5 text-primary" />
+            <Card className="border-border/50 bg-gradient-to-br from-card to-card/50">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <Mic className="h-4 w-4 text-primary" />
+                  </div>
                   Recent Recordings
                 </CardTitle>
-                <CardDescription className="mt-1">
+                <CardDescription className="mt-1.5 text-xs">
                   Your latest audio recordings with transcripts
                 </CardDescription>
               </CardHeader>
@@ -436,13 +448,15 @@ export default function DashboardPage() {
                       ))}
                     </div>
                   ) : recentRecordings.length === 0 ? (
-                    <div className="flex items-center justify-center py-8 text-muted-foreground">
+                    <div className="flex items-center justify-center py-12 text-muted-foreground">
                       <div className="text-center">
-                        <Mic className="h-12 w-12 mx-auto mb-2 text-muted-foreground" />
-                        <p className="text-sm">No recordings yet</p>
+                        <div className="h-16 w-16 rounded-2xl bg-muted/50 flex items-center justify-center mx-auto mb-3">
+                          <Mic className="h-8 w-8 text-muted-foreground/50" />
+                        </div>
+                        <p className="text-sm font-medium">No recordings yet</p>
                         <Link href="/record">
-                          <Button variant="link" className="mt-2">
-                            Create your first recording
+                          <Button variant="link" className="mt-2 text-primary">
+                            Create your first recording →
                           </Button>
                         </Link>
                       </div>
@@ -452,23 +466,27 @@ export default function DashboardPage() {
                       const when = recording.recordedAt ? formatDate(recording.recordedAt) : ''
                       return (
                         <Link key={recording.id} href={`/meetings/${recording.id}`} className="block">
-                          <div className="rounded-lg border p-3 hover:bg-accent transition-colors group cursor-pointer">
-                            <div className="flex items-center gap-2 mb-1">
-                              <FileText className="h-4 w-4 text-primary flex-shrink-0" />
-                              <p className="font-medium text-sm text-foreground flex-1 min-w-0 truncate">
-                                {recording.title}
-                              </p>
-                              <span className="text-xs text-muted-foreground tabular-nums whitespace-nowrap">
-                                {when}
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-2 text-[11px] text-muted-foreground ml-6 min-h-[16px]">
-                              <Badge 
-                                variant="secondary" 
-                                className={`text-[10px] h-4 px-1.5 ${getStatusStyles(recording.status)}`}
-                              >
-                                {recording.status}
-                              </Badge>
+                          <div className="rounded-xl border border-border/50 p-3.5 hover:bg-accent/50 hover:border-primary/20 transition-all group cursor-pointer">
+                            <div className="flex items-start gap-3 mb-2">
+                              <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                <Mic className="h-4 w-4 text-primary" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="font-medium text-sm text-foreground mb-1 line-clamp-1 group-hover:text-primary transition-colors">
+                                  {recording.title}
+                                </p>
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <span className="text-xs text-muted-foreground tabular-nums">
+                                    {when}
+                                  </span>
+                                  <Badge 
+                                    variant="secondary" 
+                                    className={`text-[10px] h-5 px-2 ${getStatusStyles(recording.status)}`}
+                                  >
+                                    {recording.status}
+                                  </Badge>
+                                </div>
+                              </div>
                             </div>
                           </div>
                         </Link>

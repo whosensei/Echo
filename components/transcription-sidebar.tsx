@@ -4,11 +4,10 @@ import type React from "react"
 
 import { useState, useEffect, useRef } from "react"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
 import { FileText, Clock, Menu, Trash2, Plus, Edit2, Check, X, Play, Pause } from "lucide-react"
-import { LocalStorageService, type StoredTranscription } from "@/lib/local-storage"
+import { type StoredTranscription } from "@/lib/transcription-types"
 import { useToast } from "@/components/ui/toaster"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 
@@ -272,7 +271,8 @@ export function TranscriptionSidebar({
     }
   }, [onRefresh])
 
-  const formatDate = (dateString: string): string => {
+  const formatDate = (dateString?: string): string => {
+    if (!dateString) return "Unknown date"
     const date = new Date(dateString)
     return (
       date.toLocaleDateString() +
@@ -311,7 +311,7 @@ export function TranscriptionSidebar({
         <>
           <div className="p-4 border-b border-border bg-card">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="flex items-center gap-2 font-semibold text-base text-foreground">
+              <h2 className="flex items-center gap-2 font-medium text-base text-foreground">
                 <FileText className="h-4 w-4 text-primary" />
                 Transcriptions
               </h2>
@@ -335,15 +335,14 @@ export function TranscriptionSidebar({
             </a>
 
             {/* New Recording Button */}
-            <div className="px-0 pr-2">
-              <button
-                onClick={onNewRecording}
-                className="btn-new-recording-glass w-full flex items-center justify-center gap-2"
-              >
-                <Plus className="h-4 w-4" />
-                New Recording
-              </button>
-            </div>
+            <Button
+              onClick={onNewRecording}
+              className="w-full gap-2 h-auto px-4 py-2"
+              size="sm"
+            >
+              <Plus className="h-4 w-4" />
+              New Recording
+            </Button>
           </div>
         </>
       )}
@@ -415,7 +414,7 @@ export function TranscriptionSidebar({
                               <TooltipTrigger asChild>
                                 <h3 className={`font-medium text-sm break-words leading-tight line-clamp-2 overflow-hidden cursor-default ${
                                   selectedTranscriptionId === transcription.id
-                                    ? "text-primary font-semibold"
+                                    ? "text-primary font-medium"
                                     : "text-foreground"
                                 }`}>
                                   {transcription.filename || `Recording ${index + 1}`}

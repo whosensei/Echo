@@ -89,7 +89,7 @@ export default function SettingsPage() {
         <div className="space-y-8">
           {/* Page header */}
           <div>
-            <h1 className="text-3xl font-semibold text-foreground">Settings</h1>
+            <h1 className="text-3xl font-medium text-foreground">Settings</h1>
             <p className="text-slate-600 mt-1">
               Manage your account settings and integrations
             </p>
@@ -186,7 +186,7 @@ export default function SettingsPage() {
                           </div>
                           <div className="flex-1">
                             <div className="flex items-center gap-2 flex-wrap">
-                              <h3 className="text-sm font-semibold">Gmail</h3>
+                              <h3 className="text-sm font-medium">Gmail</h3>
                               {integrationStatus?.isConnected && integrationStatus?.hasGmailAccess ? (
                                 <Badge variant="outline" className="bg-chart-1/10 text-chart-1 border-chart-1/20">
                                   <CheckCircle2 className="h-3 w-3 mr-1" />
@@ -252,7 +252,7 @@ export default function SettingsPage() {
                           </div>
                           <div className="flex-1">
                             <div className="flex items-center gap-2 flex-wrap">
-                              <h3 className="text-sm font-semibold">Google Calendar</h3>
+                              <h3 className="text-sm font-medium">Google Calendar</h3>
                               {integrationStatus?.isConnected && integrationStatus?.hasCalendarAccess ? (
                                 <Badge variant="outline" className="bg-chart-1/10 text-chart-1 border-chart-1/20">
                                   <CheckCircle2 className="h-3 w-3 mr-1" />

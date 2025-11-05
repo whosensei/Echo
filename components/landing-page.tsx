@@ -2,48 +2,69 @@
 
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
 import { useSession } from "@/lib/auth-client"
-import { Mic, Sparkles, Users, FileText, Zap, Shield, ArrowRight, Check } from "lucide-react"
+import { Mic, ArrowRight } from "lucide-react"
+import { HeroSection } from "@/components/sections/hero-section"
+import { FeaturesGridSection } from "@/components/sections/features-grid-section"
+import { PricingSection } from "@/components/sections/pricing-section"
+import { CompaniesSection } from "@/components/sections/companies-section"
+import { TestimonialsSection } from "@/components/sections/testimonials-section"
+import { FAQSection } from "@/components/sections/faq-section"
+import { ThemeSwitcher } from "@/components/theme-switcher"
 
 export default function LandingPage() {
   const { data: session } = useSession()
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
-      {/* Navigation */}
-      <nav className="border-b bg-background/80 backdrop-blur-md sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <div className="flex h-16 items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-                <Mic className="h-5 w-5 text-white" />
+    <div className="min-h-screen bg-background landing-page-dark">
+      <nav className="sticky left-0 top-0 z-[110] flex w-full flex-col border-b border-border bg-background">
+        <div className="flex h-16 bg-background">
+          <div className="container mx-auto flex w-full items-center justify-between px-6">
+            <Link href="/" className="flex items-center ring-offset-2">
+              <div className="flex items-center gap-2.5">
+                <div className="h-9 w-9 rounded-xl bg-primary/10 ring-1 ring-primary/20 flex items-center justify-center">
+                  <Mic className="h-5 w-5 text-primary" strokeWidth={2.5} />
+                </div>
+                <span className="text-xl font-medium tracking-tight">MeetingAI</span>
               </div>
-              <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                MeetingAI
-              </span>
+            </Link>
+            
+            {/* Center Navigation Links */}
+            <div className="hidden md:flex items-center gap-1">
+              <Link href="#features">
+                <Button variant="ghost" size="sm" className="font-medium">
+                  Features
+                </Button>
+              </Link>
+              <Link href="#pricing">
+                <Button variant="ghost" size="sm" className="font-medium">
+                  Pricing
+                </Button>
+              </Link>
+              <Link href="#blog">
+                <Button variant="ghost" size="sm" className="font-medium">
+                  Blog
+                </Button>
+              </Link>
             </div>
+            
             <div className="flex items-center gap-3">
               {session?.user ? (
                 <>
                   <Link href="/dashboard">
-                    <Button variant="ghost" size="sm">Dashboard</Button>
+                    <Button variant="ghost" size="sm" className="font-medium">Dashboard</Button>
                   </Link>
                   <Link href="/record">
-                    <Button size="sm" className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
-                      Start Recording
-                    </Button>
+                    <Button size="sm" className="bg-primary hover:bg-primary/90 font-medium">Start Recording</Button>
                   </Link>
                 </>
               ) : (
                 <>
                   <Link href="/login">
-                    <Button variant="ghost" size="sm">Sign In</Button>
+                    <Button variant="ghost" size="sm" className="font-medium">Sign In</Button>
                   </Link>
                   <Link href="/signup">
-                    <Button size="sm" className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
-                      Get Started
-                    </Button>
+                    <Button size="sm" className="bg-primary hover:bg-primary/90 font-medium">Get Started</Button>
                   </Link>
                 </>
               )}
@@ -52,277 +73,289 @@ export default function LandingPage() {
         </div>
       </nav>
 
-      {/* Hero Section */}
-      <section className="relative overflow-hidden">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8 py-24 md:py-32">
-          <div className="text-center max-w-4xl mx-auto">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border bg-muted/50 mb-8">
-              <Sparkles className="h-4 w-4 text-purple-600" />
-              <span className="text-sm font-medium">AI-Powered Meeting Intelligence</span>
-            </div>
-            
-            <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-6">
-              Turn conversations into
-              <span className="block mt-2 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
-                actionable insights
-              </span>
-            </h1>
-            
-            <p className="text-xl text-muted-foreground mb-10 max-w-2xl mx-auto leading-relaxed">
-              Record, transcribe, and analyze your meetings with cutting-edge AI. Get speaker identification, 
-              smart summaries, and action items—automatically.
-            </p>
-            
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-              {session?.user ? (
-                <Link href="/record">
-                  <Button size="lg" className="text-lg px-8 h-12 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
-                    <Mic className="mr-2 h-5 w-5" />
-                    Start Recording Now
-                  </Button>
-                </Link>
-              ) : (
-                <Link href="/signup">
-                  <Button size="lg" className="text-lg px-8 h-12 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
-                    Get Started Free
-                    <ArrowRight className="ml-2 h-5 w-5" />
-                  </Button>
-                </Link>
-              )}
-              <Link href="#features">
-                <Button size="lg" variant="outline" className="text-lg px-8 h-12">
-                  See How It Works
-                </Button>
-              </Link>
-            </div>
-            
-            <p className="mt-6 text-sm text-muted-foreground">
-              ✨ No credit card required • Free forever plan • 99% accuracy
-            </p>
-          </div>
-        </div>
-        
-        {/* Gradient blur effects */}
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl -z-10" />
-        <div className="absolute top-20 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl -z-10" />
-      </section>
+      <HeroSection
+        customerSatisfactionText="Trusted by thousands of teams worldwide"
+        title="Turn conversations into actionable insights"
+        subtitle="Record, transcribe, and analyze your meetings with cutting-edge AI. Get speaker identification, smart summaries, and action items—automatically."
+        primaryAction={{
+          label: session?.user ? "Start Recording Now" : "Get Started Free",
+          href: session?.user ? "/record" : "/signup"
+        }}
+        secondaryAction={{
+          label: "See How It Works",
+          href: "#features"
+        }}
+      />
+
+      {/* Companies/Logos */}
+      <CompaniesSection
+        subtitle="Trusted by leading teams worldwide"
+        companies={[
+          { id: "1", name: "Acme Corp", logo: "/logos/acme.svg" },
+          { id: "2", name: "TechFlow", logo: "/logos/techflow.svg" },
+          { id: "3", name: "DataSync", logo: "/logos/datasync.svg" },
+          { id: "4", name: "CloudBase", logo: "/logos/cloudbase.svg" },
+          { id: "5", name: "NextGen", logo: "/logos/nextgen.svg" },
+        ]}
+      />
 
       {/* Features Grid */}
-      <section id="features" className="py-24 bg-muted/30">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold mb-4">
-              Everything you need to stay productive
-            </h2>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Powerful AI features that transform how you capture and understand meetings
-            </p>
-          </div>
-          
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {[
-              {
-                icon: Mic,
-                title: "Crystal Clear Recording",
-                description: "Professional-grade audio capture with automatic noise reduction and enhancement"
-              },
-              {
-                icon: FileText,
-                title: "AI Transcription",
-                description: "99% accurate transcription with support for 50+ languages and accents"
-              },
-              {
-                icon: Users,
-                title: "Speaker Identification",
-                description: "Automatically detect and label different speakers in your conversations"
-              },
-              {
-                icon: Sparkles,
-                title: "Smart Summaries",
-                description: "AI-generated summaries with key points, decisions, and action items"
-              },
-              {
-                icon: Zap,
-                title: "Real-time Processing",
-                description: "Get instant transcriptions and insights as your meeting progresses"
-              },
-              {
-                icon: Shield,
-                title: "Enterprise Security",
-                description: "Bank-level encryption, GDPR compliant, and SOC 2 certified"
-              }
-            ].map((feature, i) => (
-              <Card key={i} className="p-6 hover:shadow-lg transition-shadow border-2 hover:border-primary/50">
-                <div className="h-12 w-12 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center mb-4">
-                  <feature.icon className="h-6 w-6 text-white" />
-                </div>
-                <h3 className="text-xl font-semibold mb-2">{feature.title}</h3>
-                <p className="text-muted-foreground leading-relaxed">{feature.description}</p>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
+      <div id="features">
+        <FeaturesGridSection
+          heading={{
+            title: "Everything you need to stay productive",
+            subtitle: "Powerful AI features that transform how you capture and understand meetings",
+            tag: "Features"
+          }}
+        features={[
+          {
+            id: "1",
+            title: "Crystal Clear Recording",
+            description: "Professional-grade audio capture with automatic noise reduction and enhancement",
+            icon: "🎙️"
+          },
+          {
+            id: "2",
+            title: "AI Transcription",
+            description: "99% accurate transcription with support for 50+ languages and accents",
+            icon: "📝"
+          },
+          {
+            id: "3",
+            title: "Speaker Identification",
+            description: "Automatically detect and label different speakers in your conversations",
+            icon: "👥"
+          },
+          {
+            id: "4",
+            title: "Smart Summaries",
+            description: "AI-generated summaries with key points, decisions, and action items",
+            icon: "🧠"
+          },
+          {
+            id: "5",
+            title: "Real-time Processing",
+            description: "Get instant transcriptions and insights as your meeting progresses",
+            icon: "⚡"
+          },
+          {
+            id: "6",
+            title: "Enterprise Security",
+            description: "Bank-level encryption, GDPR compliant, and SOC 2 certified",
+            icon: "🔒"
+          }
+        ]}
+        actions={[
+          {
+            id: "1",
+            label: session?.user ? "Start Recording" : "Get Started Free",
+            href: session?.user ? "/record" : "/signup",
+            type: "primary"
+          }
+        ]}
+      />
+      </div>
 
-      {/* How It Works */}
-      <section className="py-24">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold mb-4">
-              Three simple steps to better meetings
-            </h2>
-            <p className="text-xl text-muted-foreground">
-              From recording to insights in minutes
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-12 max-w-5xl mx-auto">
-            {[
-              {
-                step: "01",
-                title: "Record or Upload",
-                description: "Start recording with one click or upload an existing audio file. We support all major formats."
-              },
-              {
-                step: "02",
-                title: "AI Processing",
-                description: "Our AI transcribes, identifies speakers, and extracts key information automatically."
-              },
-              {
-                step: "03",
-                title: "Get Insights",
-                description: "Review transcripts, summaries, action items, and share them with your team instantly."
-              }
-            ].map((item, i) => (
-              <div key={i} className="text-center relative">
-                <div className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-purple-600 text-white font-bold text-2xl mb-6">
-                  {item.step}
-                </div>
-                {i < 2 && (
-                  <div className="hidden md:block absolute top-8 left-[60%] w-[80%] h-0.5 bg-gradient-to-r from-blue-500 to-purple-600" />
-                )}
-                <h3 className="text-2xl font-semibold mb-3">{item.title}</h3>
-                <p className="text-muted-foreground leading-relaxed">{item.description}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Social Proof */}
-      <section className="py-24 bg-muted/30">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <div className="grid md:grid-cols-4 gap-8 text-center">
+      <section className="py-14 md:py-20 bg-muted/20">
+        <div className="container mx-auto px-6">
+          <div className="grid md:grid-cols-4 gap-12 md:gap-8">
             {[
               { value: "99%", label: "Transcription Accuracy" },
               { value: "50+", label: "Languages Supported" },
               { value: "10M+", label: "Minutes Transcribed" },
               { value: "4.9/5", label: "User Rating" }
             ].map((stat, i) => (
-              <div key={i}>
-                <div className="text-5xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
+              <div key={i} className="text-center">
+                <div className="text-5xl md:text-6xl font-medium bg-gradient-to-br from-primary via-primary to-primary/60 bg-clip-text text-transparent mb-3 tracking-[-1.44px] md:tracking-[-2.16px]">
                   {stat.value}
                 </div>
-                <div className="text-muted-foreground font-medium">{stat.label}</div>
+                <div className="text-muted-foreground font-medium text-[15px]">{stat.label}</div>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Pricing Preview */}
-      <section className="py-24">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold mb-4">
-              Start free, upgrade when you need
-            </h2>
-            <p className="text-xl text-muted-foreground">
-              No credit card required to get started
-            </p>
-          </div>
+      {/* Testimonials */}
+      <TestimonialsSection
+        heading={{
+          title: "Loved by teams everywhere",
+          subtitle: "See what our customers have to say about MeetingAI",
+          tag: "Testimonials"
+        }}
+        testimonials={[
+          {
+            id: "1",
+            quote: "MeetingAI has completely transformed how we handle our team meetings. The transcription accuracy is incredible, and the AI summaries save us hours every week.",
+            author: "Sarah Johnson",
+            role: "VP of Operations",
+            company: "TechCorp"
+          },
+          {
+            id: "2",
+            quote: "The speaker identification feature is a game-changer. We can finally keep track of who said what in our all-hands meetings without taking manual notes.",
+            author: "Michael Chen",
+            role: "Product Manager",
+            company: "InnovateLabs"
+          },
+          {
+            id: "3",
+            quote: "As a remote-first company, MeetingAI helps us stay aligned. The action items extraction is spot-on and ensures nothing falls through the cracks.",
+            author: "Emma Rodriguez",
+            role: "CEO",
+            company: "RemoteWorks"
+          },
+          {
+            id: "4",
+            quote: "The export and integration features make it seamless to share meeting insights with our project management tools. Highly recommend!",
+            author: "David Park",
+            role: "Engineering Lead",
+            company: "DevStream"
+          },
+          {
+            id: "5",
+            quote: "We've tried several meeting tools, but MeetingAI's accuracy and ease of use are unmatched. It's become an essential part of our workflow.",
+            author: "Lisa Anderson",
+            role: "Head of Marketing",
+            company: "GrowthHub"
+          },
+          {
+            id: "6",
+            quote: "The real-time processing is incredible. We get instant transcriptions during live meetings, which helps keep everyone on the same page.",
+            author: "James Wilson",
+            role: "CTO",
+            company: "CloudScale"
+          }
+        ]}
+      />
 
-          <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-            <Card className="p-8 border-2">
-              <h3 className="text-2xl font-bold mb-2">Free</h3>
-              <div className="mb-6">
-                <span className="text-4xl font-bold">$0</span>
-                <span className="text-muted-foreground">/month</span>
-              </div>
-              <ul className="space-y-3 mb-8">
-                {[
-                  "Up to 100 minutes/month",
-                  "AI transcription",
-                  "Speaker identification",
-                  "Basic summaries",
-                  "7-day history"
-                ].map((item, i) => (
-                  <li key={i} className="flex items-center gap-2">
-                    <Check className="h-5 w-5 text-green-600" />
-                    <span>{item}</span>
-                  </li>
-                ))}
-              </ul>
-              <Link href="/signup">
-                <Button className="w-full" variant="outline">Get Started</Button>
-              </Link>
-            </Card>
+      {/* Pricing Section */}
+      <div id="pricing">
+        <PricingSection
+          heading={{
+            title: "Simple pricing for your team",
+            subtitle: "Check out our different pricing plans."
+          }}
+        plans={[
+          {
+            id: "1",
+            title: "Basic plan",
+            price: "$10/mo",
+            billed: "Billed annually",
+            isMostPopular: false,
+            features: [
+              { id: "1", title: "Basic AI model access." },
+              { id: "2", title: "Limited usage quota per month." },
+              { id: "3", title: "Standard email support included." },
+              { id: "4", title: "Basic analytics dashboard access." },
+              { id: "5", title: "Entry-level integration options available." }
+            ]
+          },
+          {
+            id: "2",
+            title: "Pro plan",
+            price: "$20/mo",
+            billed: "Billed annually",
+            isMostPopular: true,
+            features: [
+              { id: "1", title: "Advanced AI model access." },
+              { id: "2", title: "Generous usage quota per month." },
+              { id: "3", title: "Priority email and chat support." },
+              { id: "4", title: "Enhanced analytics dashboard with insights." },
+              { id: "5", title: "Expanded range of integration options." }
+            ]
+          },
+          {
+            id: "3",
+            title: "Premium plan",
+            price: "$30/mo",
+            billed: "Billed annually",
+            isMostPopular: false,
+            features: [
+              { id: "1", title: "Premium AI models with customization." },
+              { id: "2", title: "Unlimited usage quota per month." },
+              { id: "3", title: "Dedicated account manager support." },
+              { id: "4", title: "Comprehensive analytics with predictive features." },
+              { id: "5", title: "Advanced integration with APIs and platforms." }
+            ]
+          }
+        ]}
+      />
+      </div>
 
-            <Card className="p-8 border-2 border-primary shadow-lg relative overflow-hidden">
-              <div className="absolute top-4 right-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white text-xs font-bold px-3 py-1 rounded-full">
-                POPULAR
-              </div>
-              <h3 className="text-2xl font-bold mb-2">Pro</h3>
-              <div className="mb-6">
-                <span className="text-4xl font-bold">$19</span>
-                <span className="text-muted-foreground">/month</span>
-              </div>
-              <ul className="space-y-3 mb-8">
-                {[
-                  "Unlimited minutes",
-                  "Advanced AI summaries",
-                  "Priority processing",
-                  "Team collaboration",
-                  "Unlimited history",
-                  "Export & integrations"
-                ].map((item, i) => (
-                  <li key={i} className="flex items-center gap-2">
-                    <Check className="h-5 w-5 text-green-600" />
-                    <span>{item}</span>
-                  </li>
-                ))}
-              </ul>
-              <Link href="/signup">
-                <Button className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
-                  Start Free Trial
-                </Button>
-              </Link>
-            </Card>
-          </div>
-        </div>
-      </section>
+      {/* FAQ Section */}
+      <FAQSection
+        heading={{
+          title: "Frequently asked questions",
+          subtitle: "Everything you need to know about MeetingAI",
+          tag: "FAQ"
+        }}
+        questions={[
+          {
+            id: "1",
+            question: "How accurate is the transcription?",
+            answer: "Our AI-powered transcription delivers 99% accuracy across 50+ languages and accents. We use advanced speech recognition models that continuously improve with use."
+          },
+          {
+            id: "2",
+            question: "Can I use MeetingAI for free?",
+            answer: "Yes! Our free plan includes up to 100 minutes of transcription per month, along with basic AI summaries and speaker identification. No credit card required."
+          },
+          {
+            id: "3",
+            question: "How does speaker identification work?",
+            answer: "Our AI automatically detects different voices in your recordings and assigns speaker labels. You can also manually edit and assign names to speakers for future meetings."
+          },
+          {
+            id: "4",
+            question: "Is my data secure?",
+            answer: "Absolutely. We use bank-level encryption for all data in transit and at rest. We're GDPR compliant and SOC 2 certified. Your meeting data is never used to train AI models without explicit permission."
+          },
+          {
+            id: "5",
+            question: "What file formats do you support?",
+            answer: "We support all major audio and video formats including MP3, WAV, M4A, MP4, and more. You can also record directly in our app or upload existing files."
+          },
+          {
+            id: "6",
+            question: "What languages are supported?",
+            answer: "We support over 50 languages including English, Spanish, French, German, Mandarin, Japanese, and many more. Our AI handles multiple languages in the same recording."
+          },
+          {
+            id: "7",
+            question: "Can I cancel my subscription anytime?",
+            answer: "Yes, you can cancel your subscription at any time. Your data will remain accessible, and you'll continue to have access until the end of your billing period."
+          }
+        ]}
+      />
 
       {/* CTA Section */}
-      <section className="py-24 bg-gradient-to-br from-blue-600 via-purple-600 to-pink-600 text-white">
-        <div className="max-w-4xl mx-auto px-6 lg:px-8 text-center">
-          <h2 className="text-4xl md:text-5xl font-bold mb-6">
-            Ready to transform your meetings?
+      <section className="py-24 md:py-32 relative overflow-hidden bg-gradient-to-br from-primary/95 via-primary to-primary/90 text-primary-foreground">
+        <div className="absolute inset-0 -z-10">
+          <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-primary-foreground/5 rounded-full blur-3xl" />
+          <div className="absolute bottom-1/4 right-1/4 w-[600px] h-[600px] bg-primary-foreground/5 rounded-full blur-3xl" />
+        </div>
+        
+        <div className="max-w-4xl mx-auto px-6 lg:px-8 text-center relative">
+          <h2 className="text-4xl md:text-5xl lg:text-6xl font-medium tracking-[-1.44px] md:tracking-[-2.16px] leading-tight mb-6">
+            Ready to transform
+            <span className="block">your meetings?</span>
           </h2>
-          <p className="text-xl mb-10 opacity-90">
+          <p className="text-lg md:text-xl mb-12 opacity-90 font-normal max-w-2xl mx-auto">
             Join thousands of teams using MeetingAI to capture every important conversation
           </p>
           {session?.user ? (
             <Link href="/record">
-              <Button size="lg" className="text-lg px-8 h-12 bg-white text-purple-600 hover:bg-gray-100">
-                <Mic className="mr-2 h-5 w-5" />
+              <Button size="lg" className="text-base px-8 h-12 bg-background text-foreground hover:bg-background/90 font-medium shadow-2xl">
+                <Mic className="mr-2 h-4.5 w-4.5" strokeWidth={2.5} />
                 Start Recording Now
               </Button>
             </Link>
           ) : (
             <Link href="/signup">
-              <Button size="lg" className="text-lg px-8 h-12 bg-white text-purple-600 hover:bg-gray-100">
+              <Button size="lg" className="text-base px-8 h-12 bg-background text-foreground hover:bg-background/90 font-medium shadow-2xl">
                 Get Started Free
-                <ArrowRight className="ml-2 h-5 w-5" />
+                <ArrowRight className="ml-2 h-4.5 w-4.5" strokeWidth={2.5} />
               </Button>
             </Link>
           )}
@@ -330,51 +363,72 @@ export default function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t bg-muted/30">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8 py-12">
-          <div className="grid md:grid-cols-4 gap-8 mb-8">
-            <div>
-              <div className="flex items-center gap-2 mb-4">
-                <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-                  <Mic className="h-5 w-5 text-white" />
-                </div>
-                <span className="text-lg font-bold">MeetingAI</span>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                AI-powered transcription and meeting intelligence for modern teams.
-              </p>
+      <footer className="border-t border-border py-16">
+        <div className="container mx-auto grid grid-cols-2 grid-rows-[auto_auto_auto] place-items-start items-center gap-y-7 px-6 sm:grid-cols-[1fr_auto_1fr] sm:grid-rows-2 sm:gap-x-3 sm:gap-y-16">
+          {/* Logo */}
+          <Link href="/" aria-label="Homepage" className="flex items-center gap-2.5">
+            <div className="h-9 w-9 rounded-xl bg-primary/10 ring-1 ring-primary/20 flex items-center justify-center">
+              <Mic className="h-5 w-5 text-primary" strokeWidth={2.5} />
             </div>
-            <div>
-              <h3 className="font-semibold mb-4">Product</h3>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><Link href="/record" className="hover:text-foreground">Recording</Link></li>
-                <li><Link href="/dashboard" className="hover:text-foreground">Dashboard</Link></li>
-                <li><Link href="#features" className="hover:text-foreground">Features</Link></li>
-                <li><Link href="#" className="hover:text-foreground">Pricing</Link></li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="font-semibold mb-4">Company</h3>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><Link href="#" className="hover:text-foreground">About</Link></li>
-                <li><Link href="#" className="hover:text-foreground">Blog</Link></li>
-                <li><Link href="#" className="hover:text-foreground">Careers</Link></li>
-                <li><Link href="#" className="hover:text-foreground">Contact</Link></li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="font-semibold mb-4">Legal</h3>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><Link href="#" className="hover:text-foreground">Privacy Policy</Link></li>
-                <li><Link href="#" className="hover:text-foreground">Terms of Service</Link></li>
-                <li><Link href="#" className="hover:text-foreground">Security</Link></li>
-                <li><Link href="#" className="hover:text-foreground">GDPR</Link></li>
-              </ul>
-            </div>
+            <span className="text-xl font-medium tracking-tight">MeetingAI</span>
+          </Link>
+
+          {/* Navigation */}
+          <nav className="col-start-1 row-start-2 flex flex-col gap-x-2 gap-y-3 self-center sm:col-span-1 sm:col-start-2 sm:row-start-1 sm:flex-row sm:items-center sm:place-self-center md:gap-x-4 lg:gap-x-8">
+            <Link href="#features" className="px-2 font-light tracking-tight text-muted-foreground hover:text-foreground">
+              Features
+            </Link>
+            <Link href="#pricing" className="px-2 font-light tracking-tight text-muted-foreground hover:text-foreground">
+              Pricing
+            </Link>
+            <Link href="/dashboard" className="px-2 font-light tracking-tight text-muted-foreground hover:text-foreground">
+              Dashboard
+            </Link>
+            <Link href="/record" className="px-2 font-light tracking-tight text-muted-foreground hover:text-foreground">
+              Record
+            </Link>
+          </nav>
+
+          {/* Theme Switcher */}
+          <div className="col-start-2 row-start-1 flex items-center gap-3 self-center justify-self-end sm:col-span-1 sm:col-start-3 sm:row-start-1">
+            <p className="hidden text-muted-foreground sm:block text-sm">
+              Appearance
+            </p>
+            <ThemeSwitcher />
           </div>
-          <div className="pt-8 border-t text-center text-sm text-muted-foreground">
-            <p>© 2025 MeetingAI. All rights reserved.</p>
-          </div>
+
+          {/* Copyright */}
+          <p className="col-span-2 text-pretty text-sm text-muted-foreground sm:col-span-1">
+            © 2025 MeetingAI. All rights reserved.
+          </p>
+
+          {/* Social Links */}
+          <ul className="col-span-2 col-start-1 row-start-3 flex w-full items-center gap-x-3.5 gap-y-4 sm:col-span-1 sm:col-start-3 sm:row-start-2 sm:w-auto sm:flex-wrap sm:justify-self-end">
+            <li>
+              <Link href="https://twitter.com" target="_blank" className="block aspect-square p-0.5 hover:opacity-70">
+                <span className="sr-only">Twitter</span>
+                <svg className="size-6" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                </svg>
+              </Link>
+            </li>
+            <li>
+              <Link href="https://github.com" target="_blank" className="block aspect-square p-0.5 hover:opacity-70">
+                <span className="sr-only">GitHub</span>
+                <svg className="size-6" fill="currentColor" viewBox="0 0 24 24">
+                  <path fillRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clipRule="evenodd"/>
+                </svg>
+              </Link>
+            </li>
+            <li>
+              <Link href="https://linkedin.com" target="_blank" className="block aspect-square p-0.5 hover:opacity-70">
+                <span className="sr-only">LinkedIn</span>
+                <svg className="size-6" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+                </svg>
+              </Link>
+            </li>
+          </ul>
         </div>
       </footer>
     </div>

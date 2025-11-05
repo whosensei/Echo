@@ -355,7 +355,7 @@ export default function MeetingDetailsPage() {
         <DashboardLayout>
           <div className="flex items-center justify-center min-h-[400px]">
             <div className="text-center space-y-4">
-              <h2 className="text-2xl font-semibold text-foreground">Meeting not found</h2>
+              <h2 className="text-2xl font-medium text-foreground">Meeting not found</h2>
               <p className="text-muted-foreground">This meeting doesn't exist or you don't have access to it.</p>
               <Link href="/dashboard">
                 <Button>
@@ -385,23 +385,24 @@ export default function MeetingDetailsPage() {
                 </Button>
               </Link>
               <div>
-                <h1 className="text-3xl font-bold text-foreground tracking-tight">{recording.title}</h1>
-                <p className="text-sm text-muted-foreground mt-1">
-                  {new Date(recording.recordedAt || recording.createdAt).toLocaleDateString("en-US", {
-                    year: "numeric",
-                    month: "long",
-                    day: "numeric",
-                    hour: "numeric",
-                    minute: "2-digit",
-                  })}
-                </p>
+                <h1 className="text-3xl font-medium text-foreground tracking-tight">{recording.title}</h1>
+                <div className="flex items-center gap-2 mt-1">
+                  <p className="text-sm text-muted-foreground">
+                    {new Date(recording.recordedAt || recording.createdAt).toLocaleDateString("en-US", {
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                      hour: "numeric",
+                      minute: "2-digit",
+                    })}
+                  </p>
+                  <Badge className={getStatusColor(recording.status)}>
+                    {recording.status}
+                  </Badge>
+                </div>
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <Badge className={getStatusColor(recording.status)}>
-                {recording.status}
-              </Badge>
-              
               {/* Chat with Transcript Button */}
               <Button
                 variant="default"

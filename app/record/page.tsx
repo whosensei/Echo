@@ -1,14 +1,16 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { AudioRecorderComponent } from "@/components/audio-recorder-component"
 import { AudioFileUploader } from "@/components/audio-file-uploader"
 import { TranscriptionSidebar } from "@/components/transcription-sidebar"
 import { TabbedTranscriptDisplay } from "@/components/tabbed-transcript-display"
 import { Toaster } from "@/components/ui/sonner"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Button } from "@/components/ui/button"
+import { Mic } from "lucide-react"
 import { toast } from "sonner"
-import { LocalStorageService, StoredTranscription } from "@/lib/local-storage"
+import { type StoredTranscription } from "@/lib/transcription-types"
 import { useSession } from "@/lib/auth-client"
 import type { TranscriptionResult } from "@/lib/assemblyai-service"
 import type { MeetingSummary } from "@/lib/gemini-service"
@@ -23,6 +25,19 @@ export default function RecordPage() {
   const [refreshTrigger, setRefreshTrigger] = useState(0)
   const [currentAudioData, setCurrentAudioData] = useState<string | undefined>()
   const [activeInputTab, setActiveInputTab] = useState<"record" | "upload">("record")
+
+  // Keyboard shortcut for toggling sidebar (Cmd+B / Ctrl+B)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'b') {
+        e.preventDefault();
+        setIsSidebarCollapsed(prev => !prev);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   const createSpeakerLabeledTranscript = (transcriptionResult: TranscriptionResult) => {
     if (!transcriptionResult?.result?.transcription?.utterances) {
@@ -483,8 +498,7 @@ export default function RecordPage() {
           <div className="h-screen flex flex-col overflow-hidden">
             {/* Top Navigation */}
             <header className="border-b border-border bg-background">
-              <div className="flex h-14 items-center justify-between px-8">
-                <h2 className="text-base font-semibold">Record</h2>
+              <div className="flex h-14 items-center justify-end px-8">
                 <span className="text-sm text-muted-foreground">
                   {session?.user?.name || session?.user?.email}
                 </span>
@@ -492,26 +506,26 @@ export default function RecordPage() {
             </header>
 
             {/* Main Content - Single Page */}
-            <main className="flex-1 flex items-center justify-center px-8">
-              <div className="w-full max-w-4xl">
+            <main className="flex-1 overflow-y-auto px-4 md:px-8">
+              <div className="w-full max-w-3xl mx-auto pt-12 md:pt-16">
                 <div className="flex flex-col items-center text-center space-y-8">
                   {/* Hero Text */}
                   <div className="space-y-4">
                     <h1 
-                      className="text-5xl lg:text-6xl font-thin tracking-tighter text-foreground leading-[1.1] font-[family-name:var(--font-instrument-serif)]"
+                      className="text-4xl md:text-5xl lg:text-6xl font-medium tracking-[-1.44px] md:tracking-[-2.16px] text-foreground leading-none"
                     >
                       Effortless audio recording
                       <span className="block text-muted-foreground mt-2">powered by AI</span>
                     </h1>
                     
-                    <p className="text-lg text-muted-foreground font-light leading-relaxed max-w-2xl mx-auto">
+                    <p className="text-base md:text-lg text-muted-foreground font-light leading-relaxed max-w-2xl mx-auto">
                       Capture conversations with automatic transcription,
                       speaker identification, and intelligent summaries
                     </p>
                   </div>
 
                   {/* Recorder & Upload Tabs */}
-                  <div className="w-full max-w-2xl">
+                  <div className="w-full max-w-xl">
                     <Tabs value={activeInputTab} onValueChange={(v) => setActiveInputTab(v as "record" | "upload")} className="w-full">
                       <TabsList className="grid w-full grid-cols-2 mb-6">
                         <TabsTrigger value="record" className="gap-2">

@@ -4,11 +4,9 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2, Mail } from "lucide-react";
+import { OAuthButtons } from "@/components/auth/oauth-buttons";
+import { Divider } from "@/components/auth/divider";
+import { EmailFieldSignIn, PasswordField } from "@/components/auth/form-fields";
 import Link from "next/link";
 
 export function LoginForm() {
@@ -37,102 +35,71 @@ export function LoginForm() {
     }
   };
 
-  const handleGoogleSignIn = async () => {
-    setError("");
-    setIsLoading(true);
-
-    try {
-      await authClient.signIn.social({
-        provider: "google",
-        callbackURL: "/dashboard",
-      });
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to sign in with Google");
-      setIsLoading(false);
-    }
-  };
-
   return (
-    <Card className="w-full max-w-md">
-      <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl font-semibold">Welcome back</CardTitle>
-        <CardDescription>Sign in to your account to continue</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="you@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              disabled={isLoading}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
-            <Input
-              id="password"
-              type="password"
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              disabled={isLoading}
-            />
-          </div>
+    <div className="w-full max-w-md">
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="space-y-2 text-center">
+          <h1 className="text-3xl font-medium tracking-tight">Welcome to MeetingAI</h1>
+          <p className="text-sm text-muted-foreground">Sign in to your account to continue</p>
+        </div>
 
+        <div className="space-y-4">
+          {/* OAuth */}
+          <OAuthButtons />
+
+          {/* Divider */}
+          <Divider />
+
+          {/* Error Message */}
           {error && (
-            <Alert variant="destructive">
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
+            <div className="text-xs text-destructive text-center">{error}</div>
           )}
 
-          <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Signing in...
-              </>
-            ) : (
-              "Sign in"
-            )}
-          </Button>
-        </form>
+          {/* Form */}
+          <form className="space-y-4" onSubmit={handleSubmit}>
+            <EmailFieldSignIn value={email} onChange={setEmail} disabled={isLoading} />
+            <PasswordField value={password} onChange={setPassword} disabled={isLoading} />
 
-        <div className="relative my-4">
-          <div className="absolute inset-0 flex items-center">
-            <span className="w-full border-t" />
-          </div>
-          <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-background px-2 text-muted-foreground">
-              Or continue with
-            </span>
-          </div>
+            <div className="flex items-center justify-start">
+              <Link 
+                href="/forgot-password" 
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Forgot password?
+              </Link>
+            </div>
+
+            <Button 
+              className="w-full h-11" 
+              type="submit"
+              disabled={isLoading}
+            >
+              {isLoading ? "Signing in..." : "Sign in"}
+            </Button>
+          </form>
         </div>
 
-        <Button
-          type="button"
-          variant="outline"
-          className="w-full"
-          onClick={handleGoogleSignIn}
-          disabled={isLoading}
-        >
-          <Mail className="mr-2 h-4 w-4" />
-          Continue with Google
-        </Button>
-      </CardContent>
-      <CardFooter className="flex flex-col space-y-2">
-        <div className="text-sm text-muted-foreground">
+        {/* Footer */}
+        <p className="text-center text-sm text-muted-foreground">
           Don't have an account?{" "}
-          <Link href="/signup" className="text-primary hover:underline">
+          <Link href="/signup" className="text-foreground hover:underline">
             Sign up
           </Link>
-        </div>
-      </CardFooter>
-    </Card>
+        </p>
+      </div>
+
+      {/* Terms */}
+      <div className="mt-8 text-center text-xs text-muted-foreground">
+        By signing in you agree to our{" "}
+        <Link href="/terms" className="hover:text-foreground transition-colors">
+          Terms of service
+        </Link>
+        {" & "}
+        <Link href="/privacy" className="hover:text-foreground transition-colors">
+          Privacy policy
+        </Link>
+      </div>
+    </div>
   );
 }

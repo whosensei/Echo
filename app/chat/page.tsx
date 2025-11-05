@@ -6,7 +6,7 @@ import { ChatMessage } from '@/components/chat/ChatMessage';
 import { ChatInput } from '@/components/chat/ChatInput';
 import { TranscriptSelector } from '@/components/chat/TranscriptSelector';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -57,7 +57,7 @@ interface Attachment {
   } | null;
 }
 
-export default function ChatPage() {
+function ChatPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
@@ -73,24 +73,11 @@ export default function ChatPage() {
   const [isLoadingSessions, setIsLoadingSessions] = useState(true);
   const [isLoadingSession, setIsLoadingSession] = useState(false);
   const [isLoadingResponse, setIsLoadingResponse] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [hasShownShortcutHint, setHasShownShortcutHint] = useState(false);
+  const processedRecordingIdsRef = useRef<Set<string>>(new Set());
 
-  // Load sessions on mount
-  useEffect(() => {
-    loadSessions();
-    
-    // Check for pre-attached recording from URL
-    const recordingId = searchParams.get('recordingId');
-    if (recordingId) {
-      handleNewChat([recordingId]);
-    }
-  }, []);
-
-  // Auto-scroll to bottom when messages change
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
-
-  const loadSessions = async () => {
+  const loadSessions = useCallback(async () => {
     setIsLoadingSessions(true);
     try {
       const response = await fetch('/api/chat/sessions');
@@ -108,9 +95,9 @@ export default function ChatPage() {
     } finally {
       setIsLoadingSessions(false);
     }
-  };
+  }, [toast]);
 
-  const loadSession = async (sessionId: string) => {
+  const loadSession = useCallback(async (sessionId: string) => {
     setIsLoadingSession(true);
     try {
       const response = await fetch(`/api/chat/sessions/${sessionId}`);
@@ -137,9 +124,9 @@ export default function ChatPage() {
     } finally {
       setIsLoadingSession(false);
     }
-  };
+  }, [toast]);
 
-  const createChatSession = async (preAttachedRecordingIds: string[] = []) => {
+  const createChatSession = useCallback(async (preAttachedRecordingIds: string[] = []) => {
     const title = `Chat ${new Date().toLocaleString()}`;
 
     const response = await fetch('/api/chat/sessions', {
@@ -156,11 +143,11 @@ export default function ChatPage() {
       throw new Error('Failed to create session');
     }
 
-  const data = await response.json();
-  return data.session as { id: string; title: string; model: string };
-  };
+    const data = await response.json();
+    return data.session as { id: string; title: string; model: string };
+  }, [selectedModel]);
 
-  const handleNewChat = async (preAttachedRecordingIds: string[] = []) => {
+  const handleNewChat = useCallback(async (preAttachedRecordingIds: string[] = []) => {
     try {
       const newSession = await createChatSession(preAttachedRecordingIds);
       await loadSessions();
@@ -169,6 +156,7 @@ export default function ChatPage() {
         title: 'Success',
         description: 'New chat created',
       });
+      return true;
     } catch (error) {
       console.error('Failed to create chat:', error);
       toast({
@@ -176,9 +164,71 @@ export default function ChatPage() {
         description: 'Failed to create new chat',
         variant: 'destructive',
       });
+      return false;
     }
-  };
+  }, [createChatSession, loadSession, loadSessions, toast]);
 
+  // Load sessions on mount
+  useEffect(() => {
+    loadSessions();
+  }, [loadSessions]);
+
+  // Auto-create chat when arriving with a recordingId query param
+  useEffect(() => {
+    const recordingId = searchParams.get('recordingId');
+    if (!recordingId) {
+      return;
+    }
+
+    if (processedRecordingIdsRef.current.has(recordingId)) {
+      return;
+    }
+
+    processedRecordingIdsRef.current.add(recordingId);
+
+    const openChatWithRecording = async () => {
+      const created = await handleNewChat([recordingId]);
+      if (!created) {
+        processedRecordingIdsRef.current.delete(recordingId);
+        return;
+      }
+
+      const params = new URLSearchParams(searchParams.toString());
+      params.delete('recordingId');
+      const newQuery = params.toString();
+      router.replace(newQuery ? `/chat?${newQuery}` : '/chat', { scroll: false });
+    };
+
+    void openChatWithRecording();
+  }, [searchParams, router, handleNewChat]);
+
+  // Auto-scroll to bottom when messages change
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  // Keyboard shortcut for toggling sidebar (Cmd+B / Ctrl+B)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'b') {
+        e.preventDefault();
+        setIsSidebarCollapsed(prev => !prev);
+        
+        // Show hint on first use
+        if (!hasShownShortcutHint) {
+          setHasShownShortcutHint(true);
+          const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+          toast({
+            title: 'Keyboard shortcut',
+            description: `Press ${isMac ? '⌘' : 'Ctrl'}+B to toggle the sidebar`,
+          });
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [hasShownShortcutHint, toast]);
   const handleDeleteSession = async (sessionId: string) => {
     try {
       const response = await fetch(`/api/chat/sessions/${sessionId}`, {
@@ -459,7 +509,9 @@ export default function ChatPage() {
     <ProtectedRoute>
       <div className="flex h-screen bg-background">
         {/* Chat Sidebar */}
-        <aside className="w-80 flex-shrink-0 bg-card border-r border-border flex flex-col">
+        <aside className={`flex-shrink-0 bg-card border-r border-border flex flex-col transition-all duration-300 ${
+          isSidebarCollapsed ? 'w-0 overflow-hidden' : 'w-80'
+        }`}>
           {/* Header with Back Button */}
           <div className="flex items-center h-16 px-4 border-b border-border">
             <Button
@@ -535,7 +587,20 @@ export default function ChatPage() {
         </aside>
 
         {/* Main Chat Area */}
-        <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
+        <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden relative">
+          {/* Sidebar toggle button when collapsed */}
+          {isSidebarCollapsed && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setIsSidebarCollapsed(false)}
+              className="absolute top-4 left-4 z-10 h-10 w-10 rounded-lg border bg-background shadow-sm hover:bg-accent"
+              title="Show sidebar (⌘B)"
+            >
+              <MessageSquare className="h-5 w-5" />
+            </Button>
+          )}
+
           {currentSessionId ? (
             <>
               <div
@@ -550,15 +615,19 @@ export default function ChatPage() {
                     <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
                   </div>
                 ) : showCenteredInput ? (
-                  <div className="w-full max-w-3xl mx-auto flex flex-col items-center justify-center gap-6 text-center">
-                    <div>
-                      <Sparkles className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                      <h3 className="text-lg font-semibold mb-2">Start a conversation</h3>
-                      <p className="text-muted-foreground max-w-md mx-auto">
-                        Ask questions about your meetings, request summaries, or have a conversation with AI.
+                  <div className="w-full max-w-3xl mx-auto flex flex-col items-center justify-center gap-6 text-center px-4 relative">
+                    {/* Gradient blur effects */}
+                    <figure className="pointer-events-none absolute left-1/2 top-0 z-0 block aspect-square w-[500px] -translate-x-1/2 rounded-full bg-primary/20 blur-[200px]" />
+                    
+                    <div className="space-y-4 relative z-10">
+                      <h1 className="text-[clamp(32px,7vw,64px)] font-medium leading-none tracking-[-1.44px] md:tracking-[-2.16px] text-foreground">
+                        Talk to your recordings
+                      </h1>
+                      <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto">
+                        Ask questions, get summaries, and explore insights from your meetings and transcripts.
                       </p>
                     </div>
-                    <div className="w-full">{activeChatInput}</div>
+                    <div className="w-full relative z-10">{activeChatInput}</div>
                   </div>
                 ) : (
                   <div className="p-6">
@@ -581,15 +650,19 @@ export default function ChatPage() {
               )}
             </>
           ) : (
-            <div className="flex-1 flex flex-col items-center justify-center gap-8 p-6 text-center">
-              <div>
-                <Sparkles className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-xl font-semibold mb-2">Start a conversation</h3>
-                <p className="text-muted-foreground max-w-md mx-auto">
-                  Ask questions about your meetings, request summaries, or have a conversation with AI.
+            <div className="flex-1 flex flex-col items-center justify-center gap-8 p-6 text-center relative overflow-hidden">
+              {/* Gradient blur effects */}
+              <figure className="pointer-events-none absolute left-1/2 top-1/4 z-0 block aspect-square w-[600px] -translate-x-1/2 rounded-full bg-primary/20 blur-[200px]" />
+              
+              <div className="space-y-4 max-w-4xl relative z-10">
+                <h1 className="text-[clamp(32px,7vw,64px)] font-medium leading-none tracking-[-1.44px] md:tracking-[-2.16px] text-foreground">
+                  Talk to your recordings
+                </h1>
+                <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto">
+                  Ask questions, get summaries, and explore insights from your meetings and transcripts.
                 </p>
               </div>
-              <div className="w-full max-w-3xl">{idleChatInput}</div>
+              <div className="w-full max-w-3xl relative z-10">{idleChatInput}</div>
             </div>
           )}
         </div>
@@ -603,5 +676,17 @@ export default function ChatPage() {
         />
       </div>
     </ProtectedRoute>
+  );
+}
+
+export default function ChatPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex h-screen items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    }>
+      <ChatPageContent />
+    </Suspense>
   );
 }

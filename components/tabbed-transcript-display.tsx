@@ -179,7 +179,7 @@ export function TabbedTranscriptDisplay({ transcription, summary, isLoading, onN
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
           <div className="space-y-2">
-            <h3 className="text-lg font-semibold text-foreground">Processing transcription...</h3>
+            <h3 className="text-lg font-medium text-foreground">Processing transcription...</h3>
             <p className="text-muted-foreground text-sm">This may take a few moments</p>
           </div>
         </div>
@@ -193,7 +193,7 @@ export function TabbedTranscriptDisplay({ transcription, summary, isLoading, onN
         <div className="text-center max-w-md">
           <MessageSquare className="h-16 w-16 mx-auto mb-6 text-muted-foreground opacity-50" />
           <div className="space-y-3">
-            <h3 className="text-xl font-semibold text-foreground">No transcription yet</h3>
+            <h3 className="text-xl font-medium text-foreground">No transcription yet</h3>
             <p className="text-muted-foreground">
               Record audio and complete transcription to view your results here
             </p>
@@ -204,9 +204,9 @@ export function TabbedTranscriptDisplay({ transcription, summary, isLoading, onN
   }
 
   return (
-    <div className="h-full flex flex-col bg-background">
+    <div className="h-full flex flex-col">
       {/* Navigation Header - Modern SaaS Style */}
-      <div className="border-b border-border/50 bg-card/50 backdrop-blur-sm">
+      <div className="border-b border-border/50">
         <div className="max-w-7xl mx-auto px-6 lg:px-12 py-5">
           <div className="flex items-center justify-between">
             {/* Nav items - Pill style navigation with active state */}
@@ -255,7 +255,7 @@ export function TabbedTranscriptDisplay({ transcription, summary, isLoading, onN
             <section id="transcript" className="space-y-6">
               {/* Section Header */}
               <div className="space-y-1">
-                <h2 className="text-3xl font-bold text-foreground tracking-tight">Conversation</h2>
+                <h2 className="text-3xl font-medium text-foreground tracking-tight">Conversation</h2>
                 <p className="text-sm text-muted-foreground">Natural flow of the discussion</p>
               </div>
               
@@ -289,7 +289,7 @@ export function TabbedTranscriptDisplay({ transcription, summary, isLoading, onN
             <section id="fulltext" className="space-y-8">
               {/* Section Header */}
               <div className="space-y-1">
-                <h2 className="text-3xl font-bold text-foreground tracking-tight">Full Transcript</h2>
+                <h2 className="text-3xl font-medium text-foreground tracking-tight">Full Transcript</h2>
                 <p className="text-sm text-muted-foreground">Complete conversation in continuous format</p>
               </div>
               
@@ -309,7 +309,7 @@ export function TabbedTranscriptDisplay({ transcription, summary, isLoading, onN
             <section id="summary" className="space-y-8">
               {/* Section Header */}
               <div className="space-y-1">
-                <h2 className="text-3xl font-bold text-foreground tracking-tight">AI-Powered Insights</h2>
+                <h2 className="text-3xl font-medium text-foreground tracking-tight">AI-Powered Insights</h2>
                 <p className="text-sm text-muted-foreground">Summary, topics, and key entities from your conversation</p>
               </div>
 
@@ -320,7 +320,7 @@ export function TabbedTranscriptDisplay({ transcription, summary, isLoading, onN
                     <CardContent className="p-8 space-y-4">
                       <div className="flex items-center gap-2 mb-4">
                         <MessageSquare className="h-5 w-5 text-primary" />
-                        <h3 className="text-2xl font-bold text-foreground tracking-tight">Summary</h3>
+                        <h3 className="text-2xl font-medium text-foreground tracking-tight">Summary</h3>
                       </div>
                       <div className="prose prose-sm max-w-none">
                         {transcription.result.summary.split('\n').map((line, index) => (
@@ -362,7 +362,7 @@ export function TabbedTranscriptDisplay({ transcription, summary, isLoading, onN
                    Object.keys(transcription.result.iab_categories.summary).length > 0 && (
                     <Card className="border-border/50 shadow-sm">
                       <CardContent className="p-8">
-                        <h4 className="text-xl font-bold text-foreground mb-6 tracking-tight flex items-center gap-2">
+                        <h4 className="text-xl font-medium text-foreground mb-6 tracking-tight flex items-center gap-2">
                           <MessageSquare className="h-5 w-5 text-primary" />
                           Topics Discussed
                         </h4>
@@ -394,7 +394,7 @@ export function TabbedTranscriptDisplay({ transcription, summary, isLoading, onN
                   {transcription.result.named_entities && transcription.result.named_entities.length > 0 && (
                     <Card className="border-border/50 shadow-sm">
                       <CardContent className="p-8">
-                        <h4 className="text-xl font-bold text-foreground mb-6 tracking-tight flex items-center gap-2">
+                        <h4 className="text-xl font-medium text-foreground mb-6 tracking-tight flex items-center gap-2">
                           <User className="h-5 w-5 text-primary" />
                           Key Entities
                         </h4>

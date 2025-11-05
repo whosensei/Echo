@@ -142,7 +142,7 @@ export function TranscriptDisplay({ transcription, summary, isLoading }: Transcr
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <h3 className="font-semibold text-lg mb-2">{summary.title}</h3>
+              <h3 className="font-medium text-lg mb-2">{summary.title}</h3>
               <p className="text-muted-foreground mb-4">{summary.overview}</p>
             </div>
 
