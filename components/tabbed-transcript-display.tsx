@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Clock, User, MessageSquare, Plus, Loader2 } from "lucide-react"
+import { Clock, User, MessageSquare, Plus, Loader2, Zap, CheckCircle2, ListTodo } from "lucide-react"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
@@ -327,6 +327,133 @@ export function TabbedTranscriptDisplay({ transcription, summary, isLoading, onN
                           <p key={index} className="text-muted-foreground leading-relaxed text-base mb-2">
                             {line}
                           </p>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Key Moments Section */}
+                {summary?.keyMoments && summary.keyMoments.length > 0 && (
+                  <Card className="border-border/50 shadow-sm">
+                    <CardContent className="p-8">
+                      <div className="flex items-center gap-2 mb-6">
+                        <Zap className="h-5 w-5 text-primary" />
+                        <h3 className="text-2xl font-medium text-foreground tracking-tight">Key Moments</h3>
+                      </div>
+                      <ul className="space-y-3">
+                        {summary.keyMoments.map((moment, index) => (
+                          <li key={index} className="flex gap-3">
+                            <span className="text-primary font-medium flex-shrink-0">•</span>
+                            <p className="text-foreground leading-relaxed">{moment.description}</p>
+                          </li>
+                        ))}
+                      </ul>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Decisions Made Section */}
+                {summary?.structuredDecisions && summary.structuredDecisions.length > 0 && (
+                  <Card className="border-border/50 shadow-sm">
+                    <CardContent className="p-8">
+                      <div className="flex items-center gap-2 mb-6">
+                        <CheckCircle2 className="h-5 w-5 text-primary" />
+                        <h3 className="text-2xl font-medium text-foreground tracking-tight">Decisions Made</h3>
+                      </div>
+                      <div className="space-y-4">
+                        {summary.structuredDecisions.map((decision, index) => (
+                          <Card key={index} className="border-border/30 bg-muted/30">
+                            <CardContent className="p-5">
+                              <div className="space-y-3">
+                                <div className="flex items-start justify-between gap-4">
+                                  <p className="text-foreground font-medium flex-1">{decision.description}</p>
+                                  <Badge className={`flex-shrink-0 ${
+                                    decision.impact === 'high' ? 'bg-purple-500/10 text-purple-600 border-purple-200' :
+                                    decision.impact === 'medium' ? 'bg-blue-500/10 text-blue-600 border-blue-200' :
+                                    'bg-gray-500/10 text-gray-600 border-gray-200'
+                                  }`}>
+                                    {decision.impact} impact
+                                  </Badge>
+                                </div>
+                                
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                                  <div className="flex items-center gap-2 text-muted-foreground">
+                                    <User className="h-3 w-3" />
+                                    <span><span className="font-medium">Decided by:</span> {decision.decisionMaker}</span>
+                                  </div>
+                                  <div className="flex items-center gap-2 text-muted-foreground">
+                                    <Clock className="h-3 w-3" />
+                                    <span>{decision.timestamp}</span>
+                                  </div>
+                                </div>
+                                
+                                {decision.context && (
+                                  <p className="text-sm text-muted-foreground italic border-l-2 border-primary/30 pl-3">
+                                    {decision.context}
+                                  </p>
+                                )}
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Action Items / TODOs Section */}
+                {summary?.structuredTodos && summary.structuredTodos.length > 0 && (
+                  <Card className="border-border/50 shadow-sm">
+                    <CardContent className="p-8">
+                      <div className="flex items-center gap-2 mb-6">
+                        <ListTodo className="h-5 w-5 text-primary" />
+                        <h3 className="text-2xl font-medium text-foreground tracking-tight">Action Items</h3>
+                      </div>
+                      <div className="space-y-3">
+                        {summary.structuredTodos.map((todo, index) => (
+                          <Card key={index} className="border-border/30 bg-muted/20 hover:bg-muted/40 transition-colors">
+                            <CardContent className="p-5">
+                              <div className="space-y-3">
+                                <div className="flex items-start gap-3">
+                                  <div className="mt-1">
+                                    <div className="w-5 h-5 rounded border-2 border-muted-foreground/30 hover:border-primary transition-colors cursor-pointer" />
+                                  </div>
+                                  <div className="flex-1 space-y-2">
+                                    <p className="text-foreground font-medium">{todo.task}</p>
+                                    
+                                    <div className="flex flex-wrap items-center gap-3">
+                                      <Badge variant="outline" className="text-xs">
+                                        <User className="h-3 w-3 mr-1" />
+                                        {todo.assignee}
+                                      </Badge>
+                                      
+                                      {todo.dueDate !== 'Not specified' && (
+                                        <Badge variant="outline" className="text-xs">
+                                          <Clock className="h-3 w-3 mr-1" />
+                                          {todo.dueDate}
+                                        </Badge>
+                                      )}
+                                      
+                                      <Badge className={`text-xs ${
+                                        todo.priority === 'high' ? 'bg-red-500/10 text-red-600 border-red-200' :
+                                        todo.priority === 'medium' ? 'bg-yellow-500/10 text-yellow-600 border-yellow-200' :
+                                        'bg-green-500/10 text-green-600 border-green-200'
+                                      }`}>
+                                        {todo.priority} priority
+                                      </Badge>
+                                    </div>
+                                    
+                                    {todo.relatedTo && (
+                                      <p className="text-xs text-muted-foreground">
+                                        Related to: {todo.relatedTo}
+                                      </p>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
                         ))}
                       </div>
                     </CardContent>

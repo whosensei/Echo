@@ -23,6 +23,29 @@ export interface MeetingSummaryRequest {
   meetingContext?: string;
 }
 
+export interface KeyMoment {
+  timestamp: string;
+  description: string;
+  participants: string[];
+  importance: 'high' | 'medium' | 'low';
+}
+
+export interface Decision {
+  description: string;
+  decisionMaker: string;
+  timestamp: string;
+  context: string;
+  impact: 'high' | 'medium' | 'low';
+}
+
+export interface Todo {
+  task: string;
+  assignee: string;
+  dueDate: string;
+  priority: 'high' | 'medium' | 'low';
+  relatedTo: string;
+}
+
 export interface MeetingSummary {
   title: string;
   overview: string;
@@ -34,6 +57,10 @@ export interface MeetingSummary {
   duration: string;
   sentiment: 'positive' | 'neutral' | 'negative' | null;
   nextSteps?: string[];
+  // Enhanced structured data
+  keyMoments?: KeyMoment[];
+  structuredDecisions?: Decision[];
+  structuredTodos?: Todo[];
 }
 
 export class GeminiService {
@@ -155,6 +182,31 @@ Please analyze this meeting transcript and provide a comprehensive, structured s
 
 9. **Next Steps**: Future actions, follow-up meetings, or planned activities
 
+10. **Key Moments** (ENHANCED): Extract 5-10 significant moments from the meeting timeline:
+   - Include timestamp from transcript or approximate timing (early/middle/late)
+   - Brief description of what happened or was discussed
+   - Which participants were involved
+   - Importance level based on impact to meeting objectives
+   - GOOD: {"timestamp": "00:15:30", "description": "Sarah presented Q4 revenue projections showing 23% growth", "participants": ["Sarah", "John"], "importance": "high"}
+   - Focus on pivotal points, major announcements, turning points in discussion
+
+11. **Structured Decisions** (ENHANCED): Document decisions with full context:
+   - What exactly was decided (be specific)
+   - Who made or drove the decision
+   - When in the meeting it occurred
+   - Why this decision was made (reasoning/context)
+   - Impact level on project or business
+   - GOOD: {"description": "Approved $50k budget increase for marketing campaign", "decisionMaker": "Sarah (CMO)", "timestamp": "00:22:15", "context": "Based on Q3 performance exceeding targets by 30%", "impact": "high"}
+
+12. **Structured TODOs** (ENHANCED): Extract actionable items with ownership:
+   - Specific task that needs to be completed
+   - Who is responsible (name if mentioned, otherwise "Unassigned")
+   - Due date or deadline if mentioned
+   - Priority based on urgency and importance discussed
+   - What decision or topic this relates to
+   - GOOD: {"task": "Prepare revised budget proposal with detailed breakdown", "assignee": "John", "dueDate": "2025-11-12", "priority": "high", "relatedTo": "Marketing budget decision"}
+   - BAD: {"task": "Follow up", "assignee": "Someone", "dueDate": "Soon", "priority": "medium", "relatedTo": "Something"}
+
 **JSON Response Format:**
 {
   "title": "Clear, descriptive meeting title",
@@ -178,6 +230,31 @@ Please analyze this meeting transcript and provide a comprehensive, structured s
   "nextSteps": [
     "Planned follow-up action or future meeting",
     "Another next step or future activity"
+  ],
+  "keyMoments": [
+    {
+      "timestamp": "00:05:23 or 'Early in meeting' if exact time unknown",
+      "description": "Brief description of the significant moment (1-2 sentences)",
+      "participants": ["Speaker A", "Speaker B"],
+    }
+  ],
+  "structuredDecisions": [
+    {
+      "description": "Clear statement of what was decided",
+      "decisionMaker": "Name of person who made the decision or 'Team consensus'",
+      "timestamp": "00:12:45 or approximate timing",
+      "context": "Why this decision was made or what led to it",
+
+    }
+  ],
+  "structuredTodos": [
+    {
+      "task": "Specific actionable task",
+      "assignee": "Person responsible or 'Unassigned' if not mentioned",
+      "dueDate": "YYYY-MM-DD or 'Not specified' or 'Next week'",
+      "priority": "high | medium | low",
+      "relatedTo": "Which decision or discussion this relates to"
+    }
   ]
 }
 
@@ -261,6 +338,16 @@ Now analyze the transcript and provide the structured summary:
         duration: parsed.duration || 'Unknown',
         sentiment: ['positive', 'neutral', 'negative'].includes(parsed.sentiment) ? parsed.sentiment : null,
         nextSteps: filterEmptyItems(parsed.nextSteps || []),
+        // Enhanced structured data
+        keyMoments: Array.isArray(parsed.keyMoments) ? parsed.keyMoments.filter((m: any) => 
+          m && typeof m === 'object' && m.description && m.timestamp
+        ) : [],
+        structuredDecisions: Array.isArray(parsed.structuredDecisions) ? parsed.structuredDecisions.filter((d: any) => 
+          d && typeof d === 'object' && d.description && d.decisionMaker
+        ) : [],
+        structuredTodos: Array.isArray(parsed.structuredTodos) ? parsed.structuredTodos.filter((t: any) => 
+          t && typeof t === 'object' && t.task && t.assignee
+        ) : [],
       };
     } catch (error) {
       console.error('Error parsing Gemini response:', error);

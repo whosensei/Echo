@@ -257,6 +257,33 @@ function ChatPageContent() {
     }
   };
 
+  const handleRenameSession = async (sessionId: string, newTitle: string) => {
+    try {
+      const response = await fetch(`/api/chat/sessions/${sessionId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: newTitle }),
+      });
+
+      if (response.ok) {
+        setSessions((prev) =>
+          prev.map((s) => (s.id === sessionId ? { ...s, title: newTitle } : s))
+        );
+        toast({
+          title: 'Success',
+          description: 'Chat renamed',
+        });
+      }
+    } catch (error) {
+      console.error('Failed to rename session:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to rename chat',
+        variant: 'destructive',
+      });
+    }
+  };
+
   const handleAttachTranscripts = async (recordingIds: string[]) => {
     if (recordingIds.length === 0) {
       return;
@@ -538,6 +565,7 @@ function ChatPageContent() {
               onSessionSelect={loadSession}
               onNewChat={() => handleNewChat()}
               onDeleteSession={handleDeleteSession}
+              onRenameSession={handleRenameSession}
               isLoading={isLoadingSessions}
             />
           </div>

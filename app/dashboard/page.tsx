@@ -119,8 +119,8 @@ export default function DashboardPage() {
         const recordingsData = await recordingsRes.json();
         const allRecordings = recordingsData.recordings || [];
         
-        // Set recent recordings (limit to 5)
-        setRecentRecordings(allRecordings.slice(0, 5));
+        // Set recent recordings (limit to 3)
+        setRecentRecordings(allRecordings.slice(0, 3));
         
         // Calculate stats based on recordings
         const total = allRecordings.length;

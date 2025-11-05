@@ -378,160 +378,108 @@ export function TranscriptionSidebar({
               <p className="text-xs">Start recording to see them here</p>
             </div>
           ) : (
-            <div className="space-y-2 pr-2">
+            <div className="space-y-0.5">
               {transcriptions.map((transcription, index) => (
-                <div key={transcription.id} className="relative">
-                  {/* Main transcription card */}
+                <div key={transcription.id}>
+                  {/* Main transcription item */}
                   <div
-                    className={`relative rounded-lg border cursor-pointer transition-all hover:shadow-sm ${
+                    className={`relative group rounded-md px-3 py-2.5 cursor-pointer transition-all duration-150 ${
                       selectedTranscriptionId === transcription.id
-                        ? "bg-primary/5 border-primary shadow-sm"
-                        : "bg-card hover:bg-accent/50 border-border"
+                        ? "bg-primary/10"
+                        : "hover:bg-muted/70"
                     }`}
                     onClick={() => onTranscriptionSelect(transcription)}
                   >
-                    <div className="p-4">
-                      {/* Header row with filename and buttons */}
-                      <div className="flex items-center justify-between gap-2 mb-3">
-                        <div className="flex-1 min-w-0 max-w-[180px]">
-                          {editingId === transcription.id ? (
-                            <Input
-                              value={editingName}
-                              onChange={(e) => setEditingName(e.target.value)}
-                              className="h-7 text-sm font-medium w-full"
-                              autoFocus
-                              maxLength={50}
-                              onKeyDown={(e) => {
-                                if (e.key === 'Enter') {
-                                  handleSaveEdit(e as any, transcription.id)
-                                } else if (e.key === 'Escape') {
-                                  handleCancelEdit(e as any)
-                                }
-                              }}
-                            />
-                          ) : (
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <h3 className={`font-medium text-sm break-words leading-tight line-clamp-2 overflow-hidden cursor-default ${
-                                  selectedTranscriptionId === transcription.id
-                                    ? "text-primary font-medium"
-                                    : "text-foreground"
-                                }`}>
-                                  {transcription.filename || `Recording ${index + 1}`}
-                                </h3>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p>{transcription.filename || `Recording ${index + 1}`}</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          )}
-                        </div>
-
-                        {/* Action buttons - always positioned on the right */}
-                        <div className="flex gap-1 opacity-70 hover:opacity-100 transition-opacity flex-shrink-0">
-                          {editingId === transcription.id ? (
-                            <>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <button
-                                    onClick={(e) => handleSaveEdit(e, transcription.id)}
-                                    className="w-6 h-6 rounded-full bg-primary/10 hover:bg-primary/20 flex items-center justify-center border border-primary/20"
-                                  >
-                                    <Check className="h-3 w-3 text-primary" />
-                                  </button>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <p>Save</p>
-                                </TooltipContent>
-                              </Tooltip>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <button
-                                    onClick={(e) => handleCancelEdit(e)}
-                                    className="w-6 h-6 rounded-full bg-primary/10 hover:bg-primary/20 flex items-center justify-center border border-primary/20"
-                                  >
-                                    <X className="h-3 w-3 text-primary" />
-                                  </button>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <p>Cancel</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </>
-                          ) : (
-                            <>
-                              {/* Play/Pause button - only show if audio data exists */}
-                              {transcription.audioData && (
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <button
-                                      className={`w-6 h-6 rounded-full flex items-center justify-center shadow-sm border ${
-                                        playingId === transcription.id
-                                          ? "bg-chart-4/10 hover:bg-chart-4/20 border-chart-4/20"
-                                          : "bg-primary/10 hover:bg-primary/20 border-primary/20"
-                                      }`}
-                                      onClick={(e) => handlePlayAudio(e, transcription)}
-                                    >
-                                      {playingId === transcription.id ? (
-                                        <Pause className="h-3 w-3 text-chart-4" />
-                                      ) : (
-                                        <Play className="h-3 w-3 text-primary" />
-                                      )}
-                                    </button>
-                                  </TooltipTrigger>
-                                  <TooltipContent>
-                                    <p>{playingId === transcription.id ? "Pause audio" : "Play audio"}</p>
-                                  </TooltipContent>
-                                </Tooltip>
-                              )}
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <button
-                                    className="w-6 h-6 rounded-full bg-primary/10 hover:bg-primary/20 flex items-center justify-center shadow-sm border border-primary/20"
-                                    onClick={(e) => handleStartEdit(e, transcription)}
-                                  >
-                                    <Edit2 className="h-3 w-3 text-primary" />
-                                  </button>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <p>Edit name</p>
-                                </TooltipContent>
-                              </Tooltip>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <button
-                                    className="w-6 h-6 rounded-full bg-primary/10 hover:bg-primary/20 flex items-center justify-center shadow-sm border border-primary/20"
-                                    onClick={(e) => handleDeleteTranscription(e, transcription.id)}
-                                  >
-                                    <Trash2 className="h-3 w-3 text-primary" />
-                                  </button>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <p>Delete transcription</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Date row */}
-                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                        <Clock className="h-3 w-3 flex-shrink-0" />
-                        <span>{formatDate(transcription.createdAt)}</span>
-                      </div>
-
-                      {/* Error state */}
-                      {transcription.error && (
-                        <div className="mt-2 p-2 rounded bg-destructive/10 border border-destructive/20">
-                          <p className="text-xs text-destructive truncate">
-                            Error: {transcription.error}
-                          </p>
-                        </div>
+                    {/* Filename row */}
+                    <div className="flex items-center gap-2 mb-1.5">
+                      {editingId === transcription.id ? (
+                        <Input
+                          value={editingName}
+                          onChange={(e) => setEditingName(e.target.value)}
+                          className="h-7 text-sm font-medium w-full"
+                          autoFocus
+                          maxLength={50}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              handleSaveEdit(e as any, transcription.id)
+                            } else if (e.key === 'Escape') {
+                              handleCancelEdit(e as any)
+                            }
+                          }}
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                      ) : (
+                        <h3 className={`font-medium text-sm truncate flex-1 ${
+                          selectedTranscriptionId === transcription.id ? 'text-primary' : 'text-foreground'
+                        }`}>
+                          {transcription.filename || `Recording ${index + 1}`}
+                        </h3>
                       )}
                     </div>
+                    
+                    {/* Metadata and actions row */}
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                        <Clock className="h-3 w-3" />
+                        <span className="truncate">{formatDate(transcription.createdAt)}</span>
+                        {transcription.error && (
+                          <span className="text-destructive ml-1">• Error</span>
+                        )}
+                      </div>
 
+                      {/* Action buttons */}
+                      <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                        {editingId === transcription.id ? (
+                          <>
+                            <button
+                              className="p-1 rounded hover:bg-primary/20 transition-colors"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleSaveEdit(e as any, transcription.id);
+                              }}
+                            >
+                              <Check className="h-3.5 w-3.5 text-primary" />
+                            </button>
+                            <button
+                              className="p-1 rounded hover:bg-muted transition-colors"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleCancelEdit(e as any);
+                              }}
+                            >
+                              <X className="h-3.5 w-3.5" />
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            <button
+                              className="p-1 rounded hover:bg-primary/20 transition-colors"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleStartEdit(e, transcription);
+                              }}
+                            >
+                              <Edit2 className="h-3.5 w-3.5" />
+                            </button>
+                            <button
+                              className="p-1 rounded hover:bg-destructive/20 transition-colors"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteTranscription(e as any, transcription.id);
+                              }}
+                            >
+                              <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </div>
                   </div>
+                  
+                  {/* Separator */}
+                  {index < transcriptions.length - 1 && (
+                    <div className="h-px bg-border/50 my-1.5 mx-3" />
+                  )}
                 </div>
               ))}
               </div>

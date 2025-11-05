@@ -7,8 +7,8 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Card } from '@/components/ui/card';
-import { Plus, MessageSquare, Trash2, Loader2 } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Plus, Trash2, Loader2, Edit2, Check, X } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import {
   AlertDialog,
@@ -37,6 +37,7 @@ interface ChatSidebarProps {
   onSessionSelect: (sessionId: string) => void;
   onNewChat: () => void;
   onDeleteSession: (sessionId: string) => void;
+  onRenameSession?: (sessionId: string, newTitle: string) => void;
   isLoading?: boolean;
 }
 
@@ -46,11 +47,20 @@ export function ChatSidebar({
   onSessionSelect,
   onNewChat,
   onDeleteSession,
+  onRenameSession,
   isLoading,
 }: ChatSidebarProps) {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [sessionToDelete, setSessionToDelete] = useState<string | null>(null);
-  const showInitialLoadingState = Boolean(isLoading && sessions.length === 0);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingTitle, setEditingTitle] = useState<string>("");
+  const [showInitialLoadingState, setShowInitialLoadingState] = useState(true);
+
+  useEffect(() => {
+    if (!isLoading) {
+      setShowInitialLoadingState(false);
+    }
+  }, [isLoading, sessions.length]);
 
   const handleDeleteClick = (sessionId: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -66,8 +76,29 @@ export function ChatSidebar({
     }
   };
 
+  const handleStartEdit = (e: React.MouseEvent, session: ChatSessionItem) => {
+    e.stopPropagation();
+    setEditingId(session.id);
+    setEditingTitle(session.title);
+  };
+
+  const handleSaveEdit = async (e: React.MouseEvent, sessionId: string) => {
+    e.stopPropagation();
+    if (editingTitle.trim() && onRenameSession) {
+      await onRenameSession(sessionId, editingTitle.trim());
+    }
+    setEditingId(null);
+    setEditingTitle("");
+  };
+
+  const handleCancelEdit = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setEditingId(null);
+    setEditingTitle("");
+  };
+
   return (
-    <div className="flex flex-col h-full border-r bg-muted/10">
+    <div className="flex flex-col h-full bg-muted/10">
       <div className="p-4 border-b">
         <Button onClick={onNewChat} className="w-full" size="sm">
           <Plus className="h-4 w-4 mr-2" />
@@ -76,7 +107,7 @@ export function ChatSidebar({
       </div>
 
       <ScrollArea className="flex-1">
-  <div className="relative p-2 space-y-2">
+        <div className="relative p-3">
           {showInitialLoadingState ? (
             <div className="flex items-center justify-center p-8">
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -88,39 +119,94 @@ export function ChatSidebar({
               Click "New Chat" to start!
             </div>
           ) : (
-            sessions.map((session) => (
-              <Card
-                key={session.id}
-                className={`p-3 cursor-pointer transition-colors hover:bg-accent group shadow-none ${
-                  selectedSessionId === session.id ? 'bg-accent border-primary' : ''
-                }`}
-                onClick={() => onSessionSelect(session.id)}
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <MessageSquare className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
-                      <h3 className="font-medium text-sm truncate">{session.title}</h3>
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {session.messageCount} messages
-                      {session.attachmentCount > 0 && ` • ${session.attachmentCount} attachments`}
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {formatDistanceToNow(new Date(session.updatedAt), { addSuffix: true })}
-                    </p>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/10"
-                    onClick={(e) => handleDeleteClick(session.id, e)}
+            <div className="space-y-0.5">
+              {sessions.map((session, index) => (
+                <div key={session.id}>
+                  <div
+                    className={`relative group rounded-md px-3 py-2.5 cursor-pointer transition-all duration-150 ${
+                      selectedSessionId === session.id 
+                        ? 'bg-primary/10' 
+                        : 'hover:bg-muted/70'
+                    }`}
+                    onClick={() => onSessionSelect(session.id)}
                   >
-                    <Trash2 className="h-4 w-4 text-destructive" />
-                  </Button>
+                    {/* Title row */}
+                    <div className="flex items-center gap-2 mb-1.5">
+                      {editingId === session.id ? (
+                        <Input
+                          value={editingTitle}
+                          onChange={(e) => setEditingTitle(e.target.value)}
+                          className="h-7 text-sm font-medium w-full"
+                          autoFocus
+                          maxLength={100}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              handleSaveEdit(e as any, session.id);
+                            } else if (e.key === 'Escape') {
+                              handleCancelEdit(e as any);
+                            }
+                          }}
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                      ) : (
+                        <h3 className={`font-medium text-sm truncate flex-1 ${
+                          selectedSessionId === session.id ? 'text-primary' : 'text-foreground'
+                        }`}>
+                          {session.title}
+                        </h3>
+                      )}
+                    </div>
+                    
+                    {/* Metadata and actions row */}
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                        <span className="truncate">{formatDistanceToNow(new Date(session.updatedAt), { addSuffix: true })}</span>
+                      </div>
+
+                      {/* Action buttons */}
+                      <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                        {editingId === session.id ? (
+                          <>
+                            <button
+                              className="p-1 rounded hover:bg-primary/20 transition-colors"
+                              onClick={(e) => handleSaveEdit(e, session.id)}
+                            >
+                              <Check className="h-3.5 w-3.5 text-primary" />
+                            </button>
+                            <button
+                              className="p-1 rounded hover:bg-muted transition-colors"
+                              onClick={(e) => handleCancelEdit(e)}
+                            >
+                              <X className="h-3.5 w-3.5" />
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            <button
+                              className="p-1 rounded hover:bg-primary/20 transition-colors"
+                              onClick={(e) => handleStartEdit(e, session)}
+                            >
+                              <Edit2 className="h-3.5 w-3.5" />
+                            </button>
+                            <button
+                              className="p-1 rounded hover:bg-destructive/20 transition-colors"
+                              onClick={(e) => handleDeleteClick(session.id, e)}
+                            >
+                              <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Separator */}
+                  {index < sessions.length - 1 && (
+                    <div className="h-px bg-border/50 my-1.5 mx-3" />
+                  )}
                 </div>
-              </Card>
-            ))
+              ))}
+            </div>
           )}
           {isLoading && sessions.length > 0 && (
             <div className="pointer-events-none absolute inset-x-0 top-4 flex justify-center">

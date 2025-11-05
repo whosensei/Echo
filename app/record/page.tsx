@@ -277,6 +277,18 @@ export default function RecordPage() {
                     keyTopics: summaryData.topics,
                     participants: summaryData.participants,
                     sentiment: summaryData.sentiment,
+                    metadata: {
+                      title: summaryData.title,
+                      keyPoints: summaryData.keyPoints,
+                      actionItems: summaryData.actionItems,
+                      decisions: summaryData.decisions,
+                      topics: summaryData.topics,
+                      nextSteps: summaryData.nextSteps,
+                      // Enhanced structured data
+                      keyMoments: summaryData.keyMoments,
+                      structuredDecisions: summaryData.structuredDecisions,
+                      structuredTodos: summaryData.structuredTodos,
+                    },
                   }),
                 })
               }
@@ -431,6 +443,10 @@ export default function RecordPage() {
           topics: metadata.topics || [],
           duration: `${Math.floor(durationInSeconds / 60)}:${String(durationInSeconds % 60).padStart(2, '0')}`,
           sentiment: (summary.sentiment as "positive" | "neutral" | "negative") || null,
+          // Enhanced structured data
+          keyMoments: metadata.keyMoments || [],
+          structuredDecisions: metadata.structuredDecisions || [],
+          structuredTodos: metadata.structuredTodos || [],
         }
         setCurrentSummary(summaryData)
       } else {

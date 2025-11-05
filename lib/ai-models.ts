@@ -51,24 +51,24 @@ export const AVAILABLE_MODELS: ModelInfo[] = [
     costPer1MTokens: { input: 3, output: 15 },
   },
   {
-    id: 'claude-3-5-haiku-20241022',
-    name: 'Claude 3.5 Haiku',
+    id: 'claude-4x`-5-haiku-20241022',
+    name: 'Claude 4.5 Haiku',
     provider: 'anthropic',
     contextWindow: 200000,
     description: 'Fastest and most compact model',
     costPer1MTokens: { input: 0.8, output: 4 },
   },
   {
-    id: 'gemini-1.5-pro',
-    name: 'Gemini 1.5 Pro',
+    id: 'gemini-2.5-pro',
+    name: 'Gemini 2.5 Pro',
     provider: 'google',
     contextWindow: 1000000,
     description: 'Massive context window, great for transcripts',
     costPer1MTokens: { input: 1.25, output: 5 },
   },
   {
-    id: 'gemini-1.5-flash',
-    name: 'Gemini 1.5 Flash',
+    id: 'gemini-2.5-flash',
+    name: 'Gemini 2.5 Flash',
     provider: 'google',
     contextWindow: 1000000,
     description: 'Fast and versatile, large context',
@@ -115,13 +115,13 @@ export function getModel(modelId: string) {
  */
 export function getDefaultModel(): string {
   if (config.gemini?.apiKey) {
-    return 'gemini-1.5-flash';
+    return 'gemini-2.5-flash';
   }
   if (config.openai?.apiKey) {
     return 'gpt-4o-mini';
   }
   if (config.anthropic?.apiKey) {
-    return 'claude-3-5-haiku-20241022';
+    return 'claude-4-5-haiku-20241022';
   }
   
   // Return first available
