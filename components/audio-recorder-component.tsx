@@ -168,19 +168,19 @@ export function AudioRecorderComponent({
       <div className="max-w-5xl mx-auto p-8 space-y-8">
         {/* Status Messages */}
         {error && (
-          <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+          <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
             <div className="flex items-center gap-2">
-              <div className="w-2 h-2 bg-red-500 rounded-full" />
-              <span className="text-sm font-medium text-red-700">{error}</span>
+              <div className="w-2 h-2 bg-destructive rounded-full" />
+              <span className="text-sm font-medium text-destructive">{error}</span>
             </div>
           </div>
         )}
 
         {!isInitialized && !error && (
-          <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+          <div className="p-4 bg-primary/10 border border-primary/20 rounded-lg">
             <div className="flex items-center gap-2">
-              <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
-              <span className="text-sm font-medium text-blue-700">Initializing recorder...</span>
+              <div className="w-2 h-2 bg-primary rounded-full animate-pulse" />
+              <span className="text-sm font-medium text-primary">Initializing recorder...</span>
             </div>
           </div>
         )}
@@ -197,10 +197,10 @@ export function AudioRecorderComponent({
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-muted rounded-full border">
               <div className={`w-2 h-2 rounded-full ${
                 recordedAudio
-                  ? "bg-green-500"
+                  ? "bg-chart-1"
                   : isRecording
-                    ? (isPaused ? "bg-yellow-500" : "bg-red-500 animate-pulse")
-                    : "bg-gray-400"
+                    ? (isPaused ? "bg-chart-4" : "bg-destructive animate-pulse")
+                    : "bg-muted-foreground"
               }`} />
               <span className="text-sm font-medium text-foreground">
                 {getRecordingStatus()}
@@ -212,52 +212,60 @@ export function AudioRecorderComponent({
           <div className="flex justify-center items-center">
             {recordedAudio ? (
               /* Recording completed - show main action button */
-              <div className="flex items-center gap-6">
-                <button
+              <div className="flex items-center gap-4">
+                <Button
                   onClick={handleUploadAndTranscribe}
-                  className="btn-minimal flex items-center gap-3 px-8 py-4 text-lg"
+                  size="lg"
+                  className="gap-2"
                 >
                   <Upload className="h-5 w-5" />
                   Transcribe
-                </button>
+                </Button>
 
-                <button
+                <Button
                   onClick={handleDiscardRecording}
-                  className="btn-outline flex items-center gap-3 px-8 py-4 text-lg"
+                  variant="outline"
+                  size="lg"
+                  className="gap-2"
                 >
                   <Trash2 className="h-5 w-5" />
                   Discard
-                </button>
+                </Button>
               </div>
             ) : !isRecording ? (
               /* Ready to start recording - show circular mic button */
-              <button
+              <Button
                 onClick={startRecording}
                 disabled={!isInitialized}
-                className={`btn-record-glass ${!isInitialized ? 'opacity-50 cursor-not-allowed' : ''}`}
+                size="lg"
+                className="h-20 w-20 rounded-full p-0"
               >
-                <Mic className="h-8 w-8 btn-record-icon" />
-              </button>
+                <Mic className="h-8 w-8" />
+              </Button>
             ) : (
               /* Currently recording - show control buttons */
-              <div className="flex items-center gap-6">
-                <button
+              <div className="flex items-center gap-4">
+                <Button
                   onClick={pauseRecording}
-                  className={`btn-record ${isPaused ? 'paused' : ''}`}
+                  size="lg"
+                  variant={isPaused ? "secondary" : "default"}
+                  className="h-20 w-20 rounded-full p-0"
                 >
                   {isPaused ? (
-                    <Play className="h-8 w-8 btn-record-icon" />
+                    <Play className="h-8 w-8" />
                   ) : (
-                    <Pause className="h-8 w-8 btn-record-icon" />
+                    <Pause className="h-8 w-8" />
                   )}
-                </button>
+                </Button>
 
-                <button
+                <Button
                   onClick={stopRecording}
-                  className="btn-record recording"
+                  variant="destructive"
+                  size="lg"
+                  className="h-20 w-20 rounded-full p-0"
                 >
-                  <Square className="h-8 w-8 btn-record-icon" />
-                </button>
+                  <Square className="h-8 w-8" />
+                </Button>
               </div>
             )}
           </div>
@@ -278,55 +286,6 @@ export function AudioRecorderComponent({
             ))}
           </div>
         )}
-
-        {/* Info Card */}
-        <div className="card-minimal">
-          <div className="text-center space-y-4">
-            <h3 className="text-lg font-semibold text-foreground">
-              {recordedAudio ? "Recording Complete" : "Audio Recorder"}
-            </h3>
-            <p className="text-muted-foreground text-sm">
-              {recordedAudio
-                ? "Your audio is ready for transcription and analysis"
-                : "High-quality audio recording with speaker separation"
-              }
-            </p>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-              {recordedAudio ? (
-                <>
-                  <div className="flex items-center gap-2 p-3 bg-green-50 rounded-lg border border-green-200">
-                    <div className="w-2 h-2 bg-green-500 rounded-full" />
-                    <span className="font-medium text-green-800">Ready for processing</span>
-                  </div>
-                  <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full" />
-                    <span className="font-medium text-blue-800">WAV format</span>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full" />
-                    <span className="font-medium text-blue-800">44.1kHz quality</span>
-                  </div>
-                  <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full" />
-                    <span className="font-medium text-blue-800">Pause/resume</span>
-                  </div>
-                  <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full" />
-                    <span className="font-medium text-blue-800">Real-time timer</span>
-                  </div>
-                  <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full" />
-                    <span className="font-medium text-blue-800">Speaker detection</span>
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   )

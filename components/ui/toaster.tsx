@@ -62,8 +62,8 @@ export function Toaster() {
           key={toast.id}
           className={`pointer-events-auto relative flex w-full items-center justify-between space-x-4 overflow-hidden rounded-md border p-6 pr-8 shadow-lg transition-all ${
             toast.variant === 'destructive'
-              ? 'border-red-500 bg-red-50 text-red-900'
-              : 'border-gray-200 bg-white text-gray-900'
+              ? 'border-destructive bg-destructive/10 text-destructive'
+              : 'border-border bg-card text-card-foreground'
           }`}
         >
           <div className="grid gap-1">
@@ -74,7 +74,7 @@ export function Toaster() {
           </div>
           <button
             onClick={() => dismiss(toast.id)}
-            className="absolute right-2 top-2 rounded-md p-1 text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-300"
+            className="absolute right-2 top-2 rounded-md p-1 text-muted-foreground hover:text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
           >
             <X className="h-4 w-4" />
           </button>

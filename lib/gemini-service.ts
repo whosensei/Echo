@@ -23,6 +23,29 @@ export interface MeetingSummaryRequest {
   meetingContext?: string;
 }
 
+export interface KeyMoment {
+  timestamp: string;
+  description: string;
+  participants: string[];
+  importance: 'high' | 'medium' | 'low';
+}
+
+export interface Decision {
+  description: string;
+  decisionMaker: string;
+  timestamp: string;
+  context: string;
+  impact: 'high' | 'medium' | 'low';
+}
+
+export interface Todo {
+  task: string;
+  assignee: string;
+  dueDate: string;
+  priority: 'high' | 'medium' | 'low';
+  relatedTo: string;
+}
+
 export interface MeetingSummary {
   title: string;
   overview: string;
@@ -34,6 +57,10 @@ export interface MeetingSummary {
   duration: string;
   sentiment: 'positive' | 'neutral' | 'negative' | null;
   nextSteps?: string[];
+  // Enhanced structured data
+  keyMoments?: KeyMoment[];
+  structuredDecisions?: Decision[];
+  structuredTodos?: Todo[];
 }
 
 export class GeminiService {
@@ -48,7 +75,7 @@ export class GeminiService {
     }
 
     this.genAI = new GoogleGenerativeAI(apiKey);
-    this.model = this.genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    this.model = this.genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' });
   }
 
   /**
@@ -110,38 +137,146 @@ ${transcript}
     }
 
     prompt += `
-Please provide a comprehensive analysis in the following JSON structure:
+Please analyze this meeting transcript and provide a comprehensive, structured summary in JSON format.
 
+**IMPORTANT INSTRUCTIONS:**
+
+1. **Title**: Create a concise, descriptive title that captures the meeting's main purpose (e.g., "Q4 Marketing Strategy Review", "Product Roadmap Planning Session")
+
+2. **Overview**: Write a 2-3 sentence executive summary covering:
+   - Main purpose of the meeting
+   - Key outcomes or conclusions
+   - Overall context
+
+3. **Key Points/Highlights**: Extract specific discussion points that were actually talked about:
+   - Each point should be ONE distinct topic or statement
+   - Include WHO said WHAT when relevant (use actual names from speaker mapping)
+   - Be specific, not general or vague
+   - Extract concrete details, numbers, dates, or references mentioned
+   - GOOD: "Sarah proposed increasing the marketing budget by 15% for Q4"
+   - BAD: "Budget discussions occurred"
+
+4. **Action Items/To-Dos**: Extract ACTIONABLE tasks with these details:
+   - What needs to be done (specific task)
+   - Who is responsible (assignee)
+   - When it's due (deadline if mentioned)
+   - Format: "Task description [Owner: Name] [Due: Date]" or just "Task description" if details not mentioned
+   - Only include items that are clearly actionable, not general discussions
+   - GOOD: "John to send revised proposal to client by Friday"
+   - BAD: "Follow up on proposal"
+
+5. **Decisions Made**: Document specific decisions or agreements:
+   - Only include items where a clear decision was reached
+   - Include what was decided and why (if context given)
+   - GOOD: "Approved budget increase to $50k for new campaign based on Q3 performance"
+   - BAD: "Budget was discussed"
+
+6. **Topics Discussed**: High-level themes or subjects covered (3-7 topics max)
+
+7. **Participants**: List all speakers using actual names from speaker mapping
+
+8. **Sentiment**: Analyze the overall tone:
+   - positive: Productive, enthusiastic, collaborative, successful outcomes
+   - neutral: Informational, standard business discussion
+   - negative: Conflicts, concerns, problems without clear solutions
+
+9. **Next Steps**: Future actions, follow-up meetings, or planned activities
+
+10. **Key Moments** (ENHANCED): Extract 5-10 significant moments from the meeting timeline:
+   - Include timestamp from transcript or approximate timing (early/middle/late)
+   - Brief description of what happened or was discussed
+   - Which participants were involved
+   - Importance level based on impact to meeting objectives
+   - GOOD: {"timestamp": "00:15:30", "description": "Sarah presented Q4 revenue projections showing 23% growth", "participants": ["Sarah", "John"], "importance": "high"}
+   - Focus on pivotal points, major announcements, turning points in discussion
+
+11. **Structured Decisions** (ENHANCED): Document decisions with full context:
+   - What exactly was decided (be specific)
+   - Who made or drove the decision
+   - When in the meeting it occurred
+   - Why this decision was made (reasoning/context)
+   - Impact level on project or business
+   - GOOD: {"description": "Approved $50k budget increase for marketing campaign", "decisionMaker": "Sarah (CMO)", "timestamp": "00:22:15", "context": "Based on Q3 performance exceeding targets by 30%", "impact": "high"}
+
+12. **Structured TODOs** (ENHANCED): Extract actionable items with ownership:
+   - Specific task that needs to be completed
+   - Who is responsible (name if mentioned, otherwise "Unassigned")
+   - Due date or deadline if mentioned
+   - Priority based on urgency and importance discussed
+   - What decision or topic this relates to
+   - GOOD: {"task": "Prepare revised budget proposal with detailed breakdown", "assignee": "John", "dueDate": "2025-11-12", "priority": "high", "relatedTo": "Marketing budget decision"}
+   - BAD: {"task": "Follow up", "assignee": "Someone", "dueDate": "Soon", "priority": "medium", "relatedTo": "Something"}
+
+**JSON Response Format:**
 {
-  "title": "A concise, descriptive title for the meeting",
-  "overview": "A 2-3 sentence summary of the meeting's main purpose and outcomes",
-  "keyPoints": ["Array of specific, individual discussion points - each point should be a distinct statement, not a combination of multiple topics"],
-  "actionItems": ["Array of specific tasks, assignments, or follow-ups mentioned"],
-  "decisions": ["Array of decisions made during the meeting"],
-  "participants": ["Array of identified participants/speakers using their actual names when available"],
-  "topics": ["Array of main topics/themes discussed"],
-  "duration": "Estimated meeting duration based on transcript",
-  "sentiment": "Overall meeting sentiment: positive, neutral, or negative",
-  "nextSteps": ["Array of planned next steps or future actions"]
+  "title": "Clear, descriptive meeting title",
+  "overview": "2-3 sentence executive summary of purpose and outcomes",
+  "keyPoints": [
+    "Specific discussion point with details and speaker attribution when relevant",
+    "Another distinct point - each should be standalone and specific"
+  ],
+  "actionItems": [
+    "Specific task with owner and deadline if mentioned [Owner: Name] [Due: Date]",
+    "Another actionable task with clear responsibility"
+  ],
+  "decisions": [
+    "Specific decision made with context and reasoning if available",
+    "Another decision reached during the meeting"
+  ],
+  "participants": ["Actual participant names from speaker mapping"],
+  "topics": ["Main theme 1", "Main theme 2", "Main theme 3"],
+  "duration": "Estimated duration (e.g., '45 minutes', '1 hour')",
+  "sentiment": "positive | neutral | negative",
+  "nextSteps": [
+    "Planned follow-up action or future meeting",
+    "Another next step or future activity"
+  ],
+  "keyMoments": [
+    {
+      "timestamp": "00:05:23 or 'Early in meeting' if exact time unknown",
+      "description": "Brief description of the significant moment (1-2 sentences)",
+      "participants": ["Speaker A", "Speaker B"],
+    }
+  ],
+  "structuredDecisions": [
+    {
+      "description": "Clear statement of what was decided",
+      "decisionMaker": "Name of person who made the decision or 'Team consensus'",
+      "timestamp": "00:12:45 or approximate timing",
+      "context": "Why this decision was made or what led to it",
+
+    }
+  ],
+  "structuredTodos": [
+    {
+      "task": "Specific actionable task",
+      "assignee": "Person responsible or 'Unassigned' if not mentioned",
+      "dueDate": "YYYY-MM-DD or 'Not specified' or 'Next week'",
+      "priority": "high | medium | low",
+      "relatedTo": "Which decision or discussion this relates to"
+    }
+  ]
 }
 
-Guidelines:
-- Use the speaker-labeled transcript with timestamps and speaker names for better context
-- When referencing speakers in summaries, use their actual names from the speaker mapping when available
-- For keyPoints: Extract each distinct discussion point as a separate item. DO NOT combine multiple unrelated topics into one point
-  * GOOD: "John mentioned wanting to buy a new iPhone", "Sarah discussed her sleep schedule issues", "Mike talked about playing badminton"
-  * BAD: "Individual statements regarding personal interests and desires (e.g., iPhone purchase, sleep, badminton)"
-- Each keyPoint should be specific and standalone, mentioning who said what when relevant
-- Be concise but comprehensive
-- Focus on actionable items and key decisions
-- Extract concrete next steps and deadlines if mentioned
-- Pay attention to who said what by using the speaker labels
-- Assess the overall tone and productivity of the meeting
-- Use clear, professional language
-- Ensure all JSON fields are properly formatted
-- Avoid vague generalizations - be specific about what was actually discussed
+**Quality Guidelines:**
+- Be specific and detailed, not vague or general
+- Use names from the speaker mapping when referencing who said what
+- Extract actual quotes or paraphrases of important statements
+- Ensure action items are truly actionable with clear owners when mentioned
+- Only list decisions where actual agreement or conclusion was reached
+- Each key point should be a complete, standalone statement
+- Use professional, clear language
+- Focus on substance over filler words
+- If something wasn't discussed, leave that array empty rather than making assumptions
 
-Respond ONLY with valid JSON, no additional text or formatting.
+**Response Requirements:**
+- Respond ONLY with valid JSON
+- No markdown code blocks, no extra text
+- Ensure all arrays have at least one meaningful item or are empty []
+- All strings must be properly escaped for JSON
+- Double-check JSON validity before responding
+
+Now analyze the transcript and provide the structured summary:
 `;
 
     return prompt;
@@ -162,6 +297,12 @@ Respond ONLY with valid JSON, no additional text or formatting.
         cleanedResponse = cleanedResponse.replace(/```\n?/, '').replace(/\n?```$/, '');
       }
 
+      // Try to find JSON if there's extra text
+      const jsonMatch = cleanedResponse.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        cleanedResponse = jsonMatch[0];
+      }
+
       const parsed = JSON.parse(cleanedResponse);
 
       // Validate required fields - throw error if missing
@@ -173,20 +314,44 @@ Respond ONLY with valid JSON, no additional text or formatting.
         throw new Error('AI response has invalid format for keyPoints or actionItems');
       }
 
+      // Filter out empty or placeholder items
+      const filterEmptyItems = (items: any[]): string[] => {
+        if (!Array.isArray(items)) return [];
+        return items.filter(item => 
+          typeof item === 'string' && 
+          item.trim().length > 0 && 
+          !item.toLowerCase().includes('none') &&
+          !item.toLowerCase().includes('n/a')
+        );
+      };
+
       return {
-        title: parsed.title,
-        overview: parsed.overview,
-        keyPoints: parsed.keyPoints,
-        actionItems: parsed.actionItems,
-        decisions: Array.isArray(parsed.decisions) ? parsed.decisions : [],
-        participants: Array.isArray(parsed.participants) ? parsed.participants : this.extractParticipants(request.speakers, request.speakerMapping),
-        topics: Array.isArray(parsed.topics) ? parsed.topics : [],
-        duration: parsed.duration,
+        title: parsed.title.trim(),
+        overview: parsed.overview.trim(),
+        keyPoints: filterEmptyItems(parsed.keyPoints),
+        actionItems: filterEmptyItems(parsed.actionItems),
+        decisions: filterEmptyItems(parsed.decisions || []),
+        participants: Array.isArray(parsed.participants) && parsed.participants.length > 0 
+          ? parsed.participants.filter((p: any) => typeof p === 'string' && p.trim().length > 0)
+          : this.extractParticipants(request.speakers, request.speakerMapping),
+        topics: filterEmptyItems(parsed.topics || []),
+        duration: parsed.duration || 'Unknown',
         sentiment: ['positive', 'neutral', 'negative'].includes(parsed.sentiment) ? parsed.sentiment : null,
-        nextSteps: Array.isArray(parsed.nextSteps) ? parsed.nextSteps : [],
+        nextSteps: filterEmptyItems(parsed.nextSteps || []),
+        // Enhanced structured data
+        keyMoments: Array.isArray(parsed.keyMoments) ? parsed.keyMoments.filter((m: any) => 
+          m && typeof m === 'object' && m.description && m.timestamp
+        ) : [],
+        structuredDecisions: Array.isArray(parsed.structuredDecisions) ? parsed.structuredDecisions.filter((d: any) => 
+          d && typeof d === 'object' && d.description && d.decisionMaker
+        ) : [],
+        structuredTodos: Array.isArray(parsed.structuredTodos) ? parsed.structuredTodos.filter((t: any) => 
+          t && typeof t === 'object' && t.task && t.assignee
+        ) : [],
       };
     } catch (error) {
       console.error('Error parsing Gemini response:', error);
+      console.error('Raw response:', response);
       throw new Error(`Failed to parse AI response: ${error instanceof Error ? error.message : 'Invalid JSON format'}`);
     }
   }

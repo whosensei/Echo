@@ -1,13 +1,57 @@
-# Audio Transcription & Meeting Summary App
+# 🎙️ Meeting Assistant - AI-Powered Meeting Management
 
-An intelligent audio recording application that provides AI-powered transcription with speaker diarization and generates comprehensive meeting summaries using Gladia and Google Gemini APIs.
+A modern, full-stack meeting assistant with AI transcription, automatic summaries, Gmail integration, Google Calendar sync, and comprehensive authentication.
 
-## Features
+## ✨ Features
 
-- **Lossless Audio Recording**: Records high-quality WAV audio using Web Audio API (no MediaRecorder)
-- **AI Transcription**: Powered by Gladia API with speaker diarization and named entity recognition
-- **Meeting Summaries**: Intelligent summaries generated using Google Gemini AI
-- **Beautiful UI**: Modern, responsive interface built with Next.js and Shadcn UI
+### 🔐 Authentication
+- **Email/Password Login** - Secure authentication with Better Auth
+- **Google OAuth** - Single sign-on with Google account  
+- **Session Management** - Persistent sessions with automatic refresh
+
+### � AI Chat Assistant
+- **Multi-Model Support** - Choose from GPT-4o, Claude 3.5, Gemini 1.5, and more
+- **Transcript Context** - Attach meeting transcripts to provide context
+- **Streaming Responses** - Real-time token-by-token AI responses
+- **Chat History** - Persistent conversation sessions
+- **Model Switching** - Change AI models on the fly
+- **Markdown Support** - Rich text formatting with code highlighting
+
+### �📧 Gmail Integration
+- Send meeting transcripts via email
+- Share AI-generated summaries
+- Email action points to participants
+- Track email delivery status
+
+### 📅 Google Calendar Integration  
+- View upcoming 5 meetings
+- Auto-sync calendar events
+- Link transcriptions to calendar meetings
+- Display meeting details and participants
+
+### 🎤 Meeting Transcription
+- **Lossless Audio Recording** - High-quality WAV audio using Web Audio API
+- **AI Transcription** - Powered by AssemblyAI with advanced features:
+  - Speaker diarization and identification
+  - Entity detection (people, organizations, locations, dates)
+  - Sentiment analysis
+  - IAB topic categorization
+  - Auto-generated summaries
+- Multiple language support
+- Named entity recognition
+
+### 🤖 AI Summaries
+- **Intelligent Summaries** - Generated using AssemblyAI
+- Extract action points automatically
+- Identify key topics with IAB categories
+- Participant tracking
+- Sentiment analysis
+
+### 🎨 Modern UI
+- Clean, minimal design with shadcn/ui
+- Responsive layout (mobile-first)
+- Professional dashboard
+- Smooth animations and transitions
 - **Real-time Processing**: Live recording controls with pause/resume functionality
 - **Transcript Management**: Sidebar showing all previous transcriptions
 - **Local Storage**: Audio files saved locally for privacy and reliability
@@ -27,12 +71,24 @@ npm install
 Create a `.env.local` file in the root directory:
 
 ```bash
-# Gladia API Configuration
-GLADIA_API_KEY=your_gladia_api_key_here
-GLADIA_BASE_URL=https://api.gladia.io/v2
+# AssemblyAI API Configuration
+ASSEMBLYAI_API_KEY=your_assemblyai_api_key_here
+ASSEMBLYAI_BASE_URL=https://api.assemblyai.com/v2
 
-# Google Gemini API Configuration  
+# Google Gemini API Configuration (optional - for additional summaries)
 GEMINI_API_KEY=your_gemini_api_key_here
+
+# OpenAI API Configuration (optional - for AI chat)
+OPENAI_API_KEY=your_openai_api_key_here
+
+# Anthropic API Configuration (optional - for AI chat)
+ANTHROPIC_API_KEY=your_anthropic_api_key_here
+
+# AWS S3 Configuration
+AWS_S3_BUCKET_NAME=your_bucket_name
+AWS_S3_REGION=us-east-1
+AWS_ACCESS_KEY_ID=your_access_key
+AWS_SECRET_ACCESS_KEY=your_secret_key
 
 # Application Configuration
 AUDIO_STORAGE_PATH=./audio-recordings
@@ -40,12 +96,12 @@ AUDIO_STORAGE_PATH=./audio-recordings
 
 ### 3. Get API Keys
 
-**Gladia API Key:**
-- Visit [Gladia.io](https://gladia.io)
+**AssemblyAI API Key:**
+- Visit [AssemblyAI](https://www.assemblyai.com)
 - Sign up for an account
 - Navigate to your dashboard to get your API key
 
-**Google Gemini API Key:**
+**Google Gemini API Key (Optional):**
 - Go to [Google AI Studio](https://aistudio.google.com)
 - Create a new project or select existing one
 - Generate an API key for Gemini
@@ -61,31 +117,36 @@ Open [http://localhost:3000](http://localhost:3000) to use the application.
 ## How It Works
 
 1. **Record Audio**: Click "Start Recording" to begin capturing lossless WAV audio
-2. **Upload & Process**: Audio is saved locally and uploaded to Gladia for processing
-3. **Transcription**: Gladia provides transcription with speaker diarization and entity detection
-4. **Summary Generation**: Transcript is sent to Gemini AI for intelligent meeting summary
-5. **View Results**: See transcripts with speaker identification and comprehensive summaries
+2. **Upload & Process**: Audio is uploaded to AWS S3 and sent to AssemblyAI
+3. **Transcription**: AssemblyAI provides:
+   - Transcription with speaker diarization
+   - Entity detection (people, organizations, locations)
+   - Sentiment analysis
+   - Topic categorization (IAB)
+   - Auto-generated summary
+4. **View Results**: See transcripts with speaker identification, comprehensive summaries, topics, and entities
 
 ## Project Structure
 
 ```
 ├── app/
 │   ├── api/                 # Backend API routes
-│   │   ├── upload-audio/    # Audio file upload
-│   │   ├── transcribe/      # Gladia transcription
-│   │   ├── summarize/       # Gemini summary generation
+│   │   ├── upload-audio/    # Audio file upload to S3
+│   │   ├── transcribe/      # AssemblyAI transcription
+│   │   ├── summarize/       # Optional Gemini summary
 │   │   └── transcriptions/  # List all transcriptions
 │   ├── page.tsx            # Main application page
 │   └── layout.tsx          # App layout with providers
 ├── components/
 │   ├── audio-recorder-component.tsx  # Recording interface
-│   ├── transcript-display.tsx        # Transcript & summary display
+│   ├── tabbed-transcript-display.tsx # Transcript & summary display
 │   ├── transcription-sidebar.tsx     # Transcript history sidebar
 │   └── ui/                          # Shadcn UI components
 ├── lib/
-│   ├── audio-recorder.ts    # Web Audio API implementation
-│   ├── gladia-service.ts    # Gladia API integration
-│   └── gemini-service.ts    # Gemini AI integration
+│   ├── audio-recorder.ts      # Web Audio API implementation
+│   ├── assemblyai-service.ts  # AssemblyAI API integration
+│   ├── s3-service.ts          # AWS S3 integration
+│   └── gemini-service.ts      # Optional Gemini AI integration
 ├── config/
 │   └── env.ts              # Environment configuration
 └── audio-recordings/       # Local audio storage directory
@@ -93,19 +154,21 @@ Open [http://localhost:3000](http://localhost:3000) to use the application.
 
 ## API Integration
 
-### Gladia API Features Used
+### AssemblyAI Features Used
 - Audio file upload
-- Pre-recorded transcription with diarization
-- Named entity recognition
+- Advanced transcription with all features in one request:
+  - Speaker diarization and identification
+  - Entity detection (people, organizations, locations, dates)
+  - Sentiment analysis
+  - IAB topic categorization
+  - Auto-generated summaries
+  - Text formatting and punctuation
 - Transcription status polling
-- Transcript listing
+- Multi-language support with auto-detection
 
-### Gemini AI Features Used
-- Meeting summary generation
-- Key points extraction
-- Action items identification
-- Participant analysis
-- Sentiment analysis
+### Optional: Gemini AI Features
+- Additional summary generation
+- Custom analysis and insights
 
 ## Technical Specifications
 
@@ -113,8 +176,9 @@ Open [http://localhost:3000](http://localhost:3000) to use the application.
 - **UI Components**: Shadcn UI with Tailwind CSS
 - **Audio Recording**: Web Audio API (lossless WAV format)
 - **Backend**: Next.js API routes (serverless functions)
-- **AI Services**: Gladia API for transcription, Google Gemini for summaries
-- **Storage**: Local file system for audio recordings
+- **AI Services**: AssemblyAI for transcription and analysis
+- **Storage**: AWS S3 for audio files, PostgreSQL for metadata
+- **Database**: Drizzle ORM with PostgreSQL
 
 ## Browser Requirements
 

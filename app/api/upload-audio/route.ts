@@ -1,12 +1,10 @@
 /**
  * API Route: Upload Audio
- * Handles audio file upload and saves to local storage
+ * Handles audio file upload and saves to AWS S3
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { writeFile, mkdir } from 'fs/promises';
-import path from 'path';
-import { config } from '@/config/env';
+import { S3Service } from '@/lib/s3-service';
 
 export async function POST(request: NextRequest) {
   try {
@@ -28,35 +26,35 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create unique filename with timestamp
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    const filename = `recording_${timestamp}.wav`;
-    
-    // Ensure audio recordings directory exists
-    const audioDir = path.resolve(config.app.audioStoragePath);
-    await mkdir(audioDir, { recursive: true });
-    
-    // Save file to local storage
-    const filePath = path.join(audioDir, filename);
+    // Convert file to buffer
     const bytes = await audioFile.arrayBuffer();
     const buffer = Buffer.from(bytes);
     
-    await writeFile(filePath, buffer);
+    // Initialize S3 service
+    const s3Service = new S3Service();
 
-    // Return file information
+    // Upload to S3
+    const uploadResult = await s3Service.uploadFile(
+      buffer,
+      audioFile.name,
+      audioFile.type
+    );
+
+    // Return file information with S3 URL
     return NextResponse.json({
       success: true,
-      filename,
-      filepath: filePath,
+      filename: audioFile.name,
+      fileKey: uploadResult.fileKey,
+      s3Url: uploadResult.publicUrl,
       size: audioFile.size,
       type: audioFile.type,
       timestamp: new Date().toISOString(),
     });
 
   } catch (error) {
-    console.error('Error uploading audio:', error);
+    console.error('Error uploading audio to S3:', error);
     return NextResponse.json(
-      { error: 'Failed to upload audio file' },
+      { error: 'Failed to upload audio file to S3' },
       { status: 500 }
     );
   }

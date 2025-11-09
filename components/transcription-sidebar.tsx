@@ -4,11 +4,10 @@ import type React from "react"
 
 import { useState, useEffect, useRef } from "react"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
 import { FileText, Clock, Menu, Trash2, Plus, Edit2, Check, X, Play, Pause } from "lucide-react"
-import { LocalStorageService, type StoredTranscription } from "@/lib/local-storage"
+import { type StoredTranscription } from "@/lib/transcription-types"
 import { useToast } from "@/components/ui/toaster"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 
@@ -40,15 +39,39 @@ export function TranscriptionSidebar({
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const { toast } = useToast()
 
-  const loadTranscriptions = () => {
-    console.log("Loading transcriptions...")
+  const loadTranscriptions = async () => {
+    console.log("Loading transcriptions from backend...")
     setIsLoading(true)
     setError(null)
 
     try {
-      const storedTranscriptions = LocalStorageService.getTranscriptions()
-      console.log("Loaded transcriptions:", storedTranscriptions.length, storedTranscriptions)
-      setTranscriptions(storedTranscriptions)
+      // Fetch recordings from backend API
+      const response = await fetch("/api/recordings?limit=100")
+      
+      if (!response.ok) {
+        throw new Error("Failed to fetch recordings")
+      }
+
+      const data = await response.json()
+      
+      // Convert recordings to StoredTranscription format
+      const recordings = data.recordings || []
+      const convertedTranscriptions: StoredTranscription[] = recordings.map((recording: any) => ({
+        id: recording.id,
+        filename: recording.title,
+        createdAt: recording.createdAt || recording.recordedAt,
+        status: recording.status === "completed" ? "completed" : 
+                recording.status === "processing" ? "processing" : 
+                recording.status === "failed" ? "failed" : "pending",
+        audioData: recording.audioFileUrl ? `/audio-recordings/${recording.audioFileUrl}` : undefined,
+        transcriptionData: recording.transcriptionData || null,
+        summaryData: recording.summaryData || null,
+        error: recording.status === "failed" ? "Transcription failed" : undefined,
+        recordingId: recording.id,
+      }))
+      
+      console.log("Loaded transcriptions from backend:", convertedTranscriptions.length, convertedTranscriptions)
+      setTranscriptions(convertedTranscriptions)
       setError(null)
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Unknown error occurred"
@@ -59,16 +82,34 @@ export function TranscriptionSidebar({
     }
   }
 
-  const handleDeleteTranscription = (e: React.MouseEvent, id: string) => {
+  const handleDeleteTranscription = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation() // Prevent triggering selection
 
     if (confirm("Are you sure you want to delete this transcription?")) {
-      const success = LocalStorageService.deleteTranscription(id)
-      if (success) {
-        loadTranscriptions() // Refresh the list
+      try {
+        const response = await fetch(`/api/recordings/${id}`, {
+          method: "DELETE",
+        })
+
+        if (!response.ok) {
+          throw new Error("Failed to delete recording")
+        }
+
+        await loadTranscriptions() // Refresh the list
         onRefresh?.() // Notify parent if needed
-      } else {
-        setError("Failed to delete transcription")
+
+        toast({
+          title: "Deleted successfully",
+          description: "The recording has been deleted.",
+        })
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : "Failed to delete transcription"
+        setError(errorMessage)
+        toast({
+          title: "Delete failed",
+          description: errorMessage,
+          variant: "destructive",
+        })
       }
     }
   }
@@ -79,20 +120,39 @@ export function TranscriptionSidebar({
     setEditingName(transcription.filename || `Recording`)
   }
 
-  const handleSaveEdit = (e: React.MouseEvent, id: string) => {
+  const handleSaveEdit = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation() // Prevent triggering selection
 
     if (editingName.trim()) {
-      const success = LocalStorageService.updateTranscription(id, {
-        filename: editingName.trim()
-      })
+      try {
+        const response = await fetch(`/api/recordings/${id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            title: editingName.trim(),
+          }),
+        })
 
-      if (success) {
+        if (!response.ok) {
+          throw new Error("Failed to update recording")
+        }
+
         setEditingId(null)
         setEditingName("")
-        loadTranscriptions() // Refresh the list
-      } else {
-        setError("Failed to update transcription name")
+        await loadTranscriptions() // Refresh the list
+
+        toast({
+          title: "Updated successfully",
+          description: "The recording title has been updated.",
+        })
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : "Failed to update transcription name"
+        setError(errorMessage)
+        toast({
+          title: "Update failed",
+          description: errorMessage,
+          variant: "destructive",
+        })
       }
     }
   }
@@ -211,7 +271,8 @@ export function TranscriptionSidebar({
     }
   }, [onRefresh])
 
-  const formatDate = (dateString: string): string => {
+  const formatDate = (dateString?: string): string => {
+    if (!dateString) return "Unknown date"
     const date = new Date(dateString)
     return (
       date.toLocaleDateString() +
@@ -226,44 +287,62 @@ export function TranscriptionSidebar({
   console.log("TranscriptionSidebar rendering - collapsed:", isCollapsed, "transcriptions:", transcriptions.length)
 
   return (
-    <div className={`h-full flex flex-col bg-sidebar transition-all duration-300 ${isCollapsed ? 'w-12' : 'w-80'}`}>
+    <div className={`h-full flex flex-col bg-card transition-all duration-300 ${isCollapsed ? 'w-16' : 'w-80'}`}>
       {isCollapsed ? (
-        /* Collapsed state - only hamburger */
-        <div className="p-3 flex justify-center">
+        /* Collapsed state - only hamburger and back button */
+        <div className="w-full p-2 flex flex-col gap-3 items-center justify-start">
           <button
             onClick={onToggleCollapse}
-            className="p-2 rounded-md border border-sidebar-border hover:bg-sidebar-accent/10 transition-colors"
+            className="w-10 h-10 rounded-md border border-border hover:bg-accent transition-colors flex items-center justify-center"
           >
-            <Menu className="h-4 w-4 text-sidebar-foreground" />
+            <Menu className="h-4 w-4 text-foreground" />
           </button>
+          <a
+            href="/dashboard"
+            className="w-10 h-10 rounded-md border border-border hover:bg-accent transition-colors flex items-center justify-center"
+          >
+            <svg className="h-4 w-4 text-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+          </a>
         </div>
       ) : (
         /* Expanded state - full header */
         <>
-          <div className="p-4 border-b border-sidebar-border">
+          <div className="p-4 border-b border-border bg-card">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="flex items-center gap-2 font-semibold text-base text-sidebar-foreground">
+              <h2 className="flex items-center gap-2 font-medium text-base text-foreground">
                 <FileText className="h-4 w-4 text-primary" />
                 Transcriptions
               </h2>
               <button
                 onClick={onToggleCollapse}
-                className="p-2 rounded-md border border-sidebar-border hover:bg-sidebar-accent/10 transition-colors"
+                className="p-2 rounded-md border border-border hover:bg-accent transition-colors"
               >
-                <Menu className="h-4 w-4 text-sidebar-foreground" />
+                <Menu className="h-4 w-4 text-foreground" />
               </button>
             </div>
 
+            {/* Back to Dashboard Button */}
+            <a
+              href="/dashboard"
+              className="w-full flex items-center justify-center gap-2 px-4 py-2 mb-3 rounded-lg border border-border hover:bg-accent transition-colors text-sm font-medium text-foreground"
+            >
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+              Back to Dashboard
+            </a>
+
             {/* New Recording Button */}
-            <div className="px-0 pr-2">
-              <button
-                onClick={onNewRecording}
-                className="btn-new-recording-glass w-full flex items-center justify-center gap-2"
-              >
-                <Plus className="h-4 w-4" />
-                New Recording
-              </button>
-            </div>
+            <Button
+              onClick={onNewRecording}
+              className="w-full gap-2 h-auto px-4 py-2"
+              size="sm"
+            >
+              <Plus className="h-4 w-4" />
+              New Recording
+            </Button>
           </div>
         </>
       )}
@@ -299,160 +378,108 @@ export function TranscriptionSidebar({
               <p className="text-xs">Start recording to see them here</p>
             </div>
           ) : (
-            <div className="space-y-2 pr-2">
+            <div className="space-y-0.5">
               {transcriptions.map((transcription, index) => (
-                <div key={transcription.id} className="relative">
-                  {/* Main transcription card */}
+                <div key={transcription.id}>
+                  {/* Main transcription item */}
                   <div
-                    className={`relative rounded-lg border cursor-pointer transition-all hover:shadow-sm ${
+                    className={`relative group rounded-md px-3 py-2.5 cursor-pointer transition-all duration-150 ${
                       selectedTranscriptionId === transcription.id
-                        ? "sidebar-item-glass-active shadow-sm"
-                        : "bg-card hover:bg-muted/50 border-border"
+                        ? "bg-primary/10"
+                        : "hover:bg-muted/70"
                     }`}
                     onClick={() => onTranscriptionSelect(transcription)}
                   >
-                    <div className="p-4">
-                      {/* Header row with filename and buttons */}
-                      <div className="flex items-center justify-between gap-2 mb-3">
-                        <div className="flex-1 min-w-0 max-w-[180px]">
-                          {editingId === transcription.id ? (
-                            <Input
-                              value={editingName}
-                              onChange={(e) => setEditingName(e.target.value)}
-                              className="h-7 text-sm font-medium w-full"
-                              autoFocus
-                              maxLength={50}
-                              onKeyDown={(e) => {
-                                if (e.key === 'Enter') {
-                                  handleSaveEdit(e as any, transcription.id)
-                                } else if (e.key === 'Escape') {
-                                  handleCancelEdit(e as any)
-                                }
-                              }}
-                            />
-                          ) : (
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <h3 className={`font-medium text-sm break-words leading-tight line-clamp-2 overflow-hidden cursor-default ${
-                                  selectedTranscriptionId === transcription.id
-                                    ? "text-primary font-semibold"
-                                    : "text-foreground"
-                                }`}>
-                                  {transcription.filename || `Recording ${index + 1}`}
-                                </h3>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p>{transcription.filename || `Recording ${index + 1}`}</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          )}
-                        </div>
-
-                        {/* Action buttons - always positioned on the right */}
-                        <div className="flex gap-1 opacity-70 hover:opacity-100 transition-opacity flex-shrink-0">
-                          {editingId === transcription.id ? (
-                            <>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <button
-                                    onClick={(e) => handleSaveEdit(e, transcription.id)}
-                                    className="w-6 h-6 rounded-full bg-blue-100 hover:bg-blue-200 flex items-center justify-center border border-blue-200"
-                                  >
-                                    <Check className="h-3 w-3 text-blue-600" />
-                                  </button>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <p>Save</p>
-                                </TooltipContent>
-                              </Tooltip>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <button
-                                    onClick={(e) => handleCancelEdit(e)}
-                                    className="w-6 h-6 rounded-full bg-blue-100 hover:bg-blue-200 flex items-center justify-center border border-blue-200"
-                                  >
-                                    <X className="h-3 w-3 text-blue-600" />
-                                  </button>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <p>Cancel</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </>
-                          ) : (
-                            <>
-                              {/* Play/Pause button - only show if audio data exists */}
-                              {transcription.audioData && (
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <button
-                                      className={`w-6 h-6 rounded-full flex items-center justify-center shadow-sm border ${
-                                        playingId === transcription.id
-                                          ? "bg-orange-100 hover:bg-orange-200 border-orange-200"
-                                          : "bg-blue-100 hover:bg-blue-200 border-blue-200"
-                                      }`}
-                                      onClick={(e) => handlePlayAudio(e, transcription)}
-                                    >
-                                      {playingId === transcription.id ? (
-                                        <Pause className="h-3 w-3 text-orange-600" />
-                                      ) : (
-                                        <Play className="h-3 w-3 text-blue-600" />
-                                      )}
-                                    </button>
-                                  </TooltipTrigger>
-                                  <TooltipContent>
-                                    <p>{playingId === transcription.id ? "Pause audio" : "Play audio"}</p>
-                                  </TooltipContent>
-                                </Tooltip>
-                              )}
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <button
-                                    className="w-6 h-6 rounded-full bg-blue-100 hover:bg-blue-200 flex items-center justify-center shadow-sm border border-blue-200"
-                                    onClick={(e) => handleStartEdit(e, transcription)}
-                                  >
-                                    <Edit2 className="h-3 w-3 text-blue-600" />
-                                  </button>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <p>Edit name</p>
-                                </TooltipContent>
-                              </Tooltip>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <button
-                                    className="w-6 h-6 rounded-full bg-blue-100 hover:bg-blue-200 flex items-center justify-center shadow-sm border border-blue-200"
-                                    onClick={(e) => handleDeleteTranscription(e, transcription.id)}
-                                  >
-                                    <Trash2 className="h-3 w-3 text-blue-600" />
-                                  </button>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <p>Delete transcription</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Date row */}
-                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                        <Clock className="h-3 w-3 flex-shrink-0" />
-                        <span>{formatDate(transcription.createdAt)}</span>
-                      </div>
-
-                      {/* Error state */}
-                      {transcription.error && (
-                        <div className="mt-2 p-2 rounded bg-red-50 border border-red-200">
-                          <p className="text-xs text-red-700 truncate">
-                            Error: {transcription.error}
-                          </p>
-                        </div>
+                    {/* Filename row */}
+                    <div className="flex items-center gap-2 mb-1.5">
+                      {editingId === transcription.id ? (
+                        <Input
+                          value={editingName}
+                          onChange={(e) => setEditingName(e.target.value)}
+                          className="h-7 text-sm font-medium w-full"
+                          autoFocus
+                          maxLength={50}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              handleSaveEdit(e as any, transcription.id)
+                            } else if (e.key === 'Escape') {
+                              handleCancelEdit(e as any)
+                            }
+                          }}
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                      ) : (
+                        <h3 className={`font-medium text-sm truncate flex-1 ${
+                          selectedTranscriptionId === transcription.id ? 'text-primary' : 'text-foreground'
+                        }`}>
+                          {transcription.filename || `Recording ${index + 1}`}
+                        </h3>
                       )}
                     </div>
+                    
+                    {/* Metadata and actions row */}
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                        <Clock className="h-3 w-3" />
+                        <span className="truncate">{formatDate(transcription.createdAt)}</span>
+                        {transcription.error && (
+                          <span className="text-destructive ml-1">• Error</span>
+                        )}
+                      </div>
 
+                      {/* Action buttons */}
+                      <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                        {editingId === transcription.id ? (
+                          <>
+                            <button
+                              className="p-1 rounded hover:bg-primary/20 transition-colors"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleSaveEdit(e as any, transcription.id);
+                              }}
+                            >
+                              <Check className="h-3.5 w-3.5 text-primary" />
+                            </button>
+                            <button
+                              className="p-1 rounded hover:bg-muted transition-colors"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleCancelEdit(e as any);
+                              }}
+                            >
+                              <X className="h-3.5 w-3.5" />
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            <button
+                              className="p-1 rounded hover:bg-primary/20 transition-colors"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleStartEdit(e, transcription);
+                              }}
+                            >
+                              <Edit2 className="h-3.5 w-3.5" />
+                            </button>
+                            <button
+                              className="p-1 rounded hover:bg-destructive/20 transition-colors"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteTranscription(e as any, transcription.id);
+                              }}
+                            >
+                              <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </div>
                   </div>
+                  
+                  {/* Separator */}
+                  {index < transcriptions.length - 1 && (
+                    <div className="h-px bg-border/50 my-1.5 mx-3" />
+                  )}
                 </div>
               ))}
               </div>
