@@ -53,7 +53,7 @@ export function AudioPlayer({ audioUrl, recordingId, onPlay, onPause, onTimeUpda
           try {
             data = await response.json()
           } catch (parseError) {
-            console.error("[AudioPlayer] Failed to parse presigned URL response JSON:", parseError)
+            // Failed to parse JSON response
           }
         }
 
@@ -76,7 +76,6 @@ export function AudioPlayer({ audioUrl, recordingId, onPlay, onPause, onTimeUpda
         }
 
         const message = err instanceof Error ? err.message : String(err)
-        console.error("[AudioPlayer] Failed to fetch presigned URL:", err)
         return { url: null, errorMessage: message, attempted: true }
       }
     },
@@ -99,7 +98,6 @@ export function AudioPlayer({ audioUrl, recordingId, onPlay, onPause, onTimeUpda
     const audio = audioRef.current
 
     const handleLoadedMetadata = () => {
-      console.log("[AudioPlayer] Metadata loaded, duration:", audio.duration)
       setDuration(audio.duration)
       setIsLoading(false)
       setError(null)
@@ -128,33 +126,16 @@ export function AudioPlayer({ audioUrl, recordingId, onPlay, onPause, onTimeUpda
 
     const handleError = (e: Event) => {
       const audioElement = e.target as HTMLAudioElement
-      const error = audioElement.error
-      console.error("[AudioPlayer] Audio error:", {
-        code: error?.code,
-        message: error?.message,
-        src: audioElement.src,
-        networkState: audioElement.networkState,
-        readyState: audioElement.readyState,
-        recordingId,
-      })
 
       if (recordingId) {
-        console.log("[AudioPlayer] Attempting to recover by fetching a presigned URL")
         void (async () => {
           setIsLoading(true)
           const result = await fetchPresignedAudioUrl()
 
           if (result.url) {
-            console.log("[AudioPlayer] Received new presigned URL after error")
             setActualAudioUrl(result.url)
             setError(null)
             return
-          }
-
-          if (result.errorMessage) {
-            console.error("[AudioPlayer] Failed to recover with presigned URL:", result.errorMessage)
-          } else if (!result.attempted) {
-            console.log("[AudioPlayer] Presigned URL fetch was skipped or aborted during error recovery")
           }
 
           setIsLoading(false)
@@ -170,21 +151,19 @@ export function AudioPlayer({ audioUrl, recordingId, onPlay, onPause, onTimeUpda
     }
 
     const handleCanPlay = () => {
-      console.log("[AudioPlayer] Can play event fired")
       setIsLoading(false)
     }
 
     const handleLoadStart = () => {
-      console.log("[AudioPlayer] Load start event fired")
       setIsLoading(true)
     }
 
     const handleStalled = () => {
-      console.warn("[AudioPlayer] Stalled event fired")
+      // Audio stalled
     }
 
     const handleSuspend = () => {
-      console.warn("[AudioPlayer] Suspend event fired")
+      // Audio suspended
     }
 
     audio.addEventListener("loadedmetadata", handleLoadedMetadata)
@@ -203,7 +182,6 @@ export function AudioPlayer({ audioUrl, recordingId, onPlay, onPause, onTimeUpda
 
     // Try to load immediately
     if (actualAudioUrl) {
-      console.log("[AudioPlayer] Loading audio from:", actualAudioUrl)
       audio.load()
     }
 
@@ -228,7 +206,6 @@ export function AudioPlayer({ audioUrl, recordingId, onPlay, onPause, onTimeUpda
     const audioElement = audioRef.current
 
     if (actualAudioUrl) {
-      console.log("[AudioPlayer] Setting audio source:", actualAudioUrl)
       audioElement.src = actualAudioUrl
       setIsLoading(true)
       setError(null)
@@ -240,23 +217,10 @@ export function AudioPlayer({ audioUrl, recordingId, onPlay, onPause, onTimeUpda
     }
   }, [actualAudioUrl])
 
-  // Log initial URL
-  useEffect(() => {
-    console.log("[AudioPlayer] Initialized with:", {
-      audioUrl,
-      recordingId,
-      actualAudioUrl,
-    })
-  }, [])
 
   // Reset to initial audio URL when prop changes
   useEffect(() => {
     let isCancelled = false
-
-    console.log("[AudioPlayer] audioUrl or recordingId changed, preparing source", {
-      audioUrl,
-      recordingId,
-    })
 
     setError(null)
     setIsPlaying(false)
@@ -295,18 +259,8 @@ export function AudioPlayer({ audioUrl, recordingId, onPlay, onPause, onTimeUpda
       }
 
       if (result.url) {
-        console.log("[AudioPlayer] Using presigned audio URL fetched during initialization")
         setActualAudioUrl(result.url)
         return
-      }
-
-      if (result.errorMessage) {
-        console.warn(
-          "[AudioPlayer] Failed to fetch presigned URL during initialization, falling back to provided URL",
-          result.errorMessage
-        )
-      } else if (!result.attempted) {
-        console.log("[AudioPlayer] Presigned URL fetch was skipped or aborted; using provided URL")
       }
 
       setActualAudioUrl(audioUrl)
@@ -333,7 +287,6 @@ export function AudioPlayer({ audioUrl, recordingId, onPlay, onPause, onTimeUpda
         onPlay?.()
       }
     } catch (err) {
-      console.error("Error playing audio:", err)
       setError("Failed to play audio")
     }
   }
@@ -382,8 +335,7 @@ export function AudioPlayer({ audioUrl, recordingId, onPlay, onPause, onTimeUpda
       if (wasPlayingRef.current) {
         const playPromise = audio.play()
         if (playPromise && typeof playPromise.then === "function") {
-          playPromise.catch((err) => {
-            console.warn("[AudioPlayer] Failed to autoplay after scrubbing:", err)
+          playPromise.catch(() => {
             setIsPlaying(!audio.paused)
           })
         }
