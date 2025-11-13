@@ -411,10 +411,10 @@ function ChatPageContent() {
 
     if (!sessionId) {
       try {
-        const newSession = await createChatSession();
+        const { session: newSession, attachments: newAttachments } = await createChatSession();
         sessionId = newSession.id;
         setCurrentSessionId(sessionId);
-        setAttachments([]);
+        setAttachments(newAttachments);
         setMessages([]);
         loadSessions();
         newSessionCreated = true;

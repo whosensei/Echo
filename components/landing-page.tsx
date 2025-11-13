@@ -19,18 +19,21 @@ export default function LandingPage() {
     <div className="min-h-screen bg-background landing-page-dark">
       <nav className="sticky left-0 top-0 z-[110] flex w-full flex-col border-b border-border bg-background">
         <div className="flex h-16 bg-background">
-          <div className="container mx-auto flex w-full items-center justify-between px-6">
-            <Link href="/" className="flex items-center ring-offset-2">
-              <div className="flex items-center gap-2.5">
-                <div className="h-9 w-9 rounded-xl bg-primary/10 ring-1 ring-primary/20 flex items-center justify-center">
-                  <Mic className="h-5 w-5 text-primary" strokeWidth={2.5} />
+          <div className="container mx-auto grid w-full grid-cols-3 items-center px-6">
+            {/* Left: Logo */}
+            <div className="flex items-center">
+              <Link href="/" className="flex items-center ring-offset-2">
+                <div className="flex items-center gap-2.5">
+                  <div className="h-9 w-9 rounded-xl bg-primary/10 ring-1 ring-primary/20 flex items-center justify-center">
+                    <Mic className="h-5 w-5 text-primary" strokeWidth={2.5} />
+                  </div>
+                  <span className="text-xl font-medium tracking-tight">Echo</span>
                 </div>
-                <span className="text-xl font-medium tracking-tight">Echo</span>
-              </div>
-            </Link>
+              </Link>
+            </div>
             
-            {/* Center Navigation Links */}
-            <div className="hidden md:flex items-center gap-1">
+            {/* Center: Navigation Links */}
+            <div className="hidden md:flex items-center justify-center gap-1">
               <Link href="#features">
                 <Button variant="ghost" size="sm" className="font-medium">
                   Features
@@ -48,7 +51,8 @@ export default function LandingPage() {
               </Link>
             </div>
             
-            <div className="flex items-center gap-3">
+            {/* Right: Auth Buttons */}
+            <div className="flex items-center justify-end gap-3">
               {session?.user ? (
                 <>
                   <Link href="/dashboard">

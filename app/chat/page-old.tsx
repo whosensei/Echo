@@ -379,8 +379,6 @@ export default function ChatPage() {
                         ? 'AI is thinking...'
                         : 'Ask a question about your meetings...'
                     }
-                    selectedModel={selectedModel}
-                    onModelChange={setSelectedModel}
                   />
                 </div>
               </>
