@@ -239,44 +239,49 @@ export default function LandingPage() {
         plans={[
           {
             id: "1",
-            title: "Basic plan",
-            price: "$10/mo",
-            billed: "Billed annually",
+            title: "Free",
+            price: "Free",
+            billed: "Forever free",
             isMostPopular: false,
+            planType: "free",
             features: [
-              { id: "1", title: "Basic AI model access." },
-              { id: "2", title: "Limited usage quota per month." },
-              { id: "3", title: "Standard email support included." },
-              { id: "4", title: "Basic analytics dashboard access." },
-              { id: "5", title: "Entry-level integration options available." }
+              { id: "1", title: "Basic AI model access" },
+              { id: "2", title: "Limited usage quota per month" },
+              { id: "3", title: "Standard email support" },
+              { id: "4", title: "Basic analytics dashboard" },
+              { id: "5", title: "Entry-level integration options" }
             ]
           },
           {
             id: "2",
-            title: "Pro plan",
-            price: "$20/mo",
-            billed: "Billed annually",
+            title: "Pro",
+            price: "$19/mo",
+            billed: "Billed monthly",
             isMostPopular: true,
+            planType: "pro",
             features: [
-              { id: "1", title: "Advanced AI model access." },
-              { id: "2", title: "Generous usage quota per month." },
-              { id: "3", title: "Priority email and chat support." },
-              { id: "4", title: "Enhanced analytics dashboard with insights." },
-              { id: "5", title: "Expanded range of integration options." }
+              { id: "1", title: "Advanced AI model access" },
+              { id: "2", title: "300 transcription minutes included" },
+              { id: "3", title: "300,000 AI tokens included" },
+              { id: "4", title: "Overage: $0.06/min, $0.30 per 1K tokens" },
+              { id: "5", title: "Priority email and chat support" },
+              { id: "6", title: "Enhanced analytics dashboard" }
             ]
           },
           {
             id: "3",
-            title: "Premium plan",
-            price: "$30/mo",
-            billed: "Billed annually",
+            title: "Enterprise",
+            price: "Custom",
+            billed: "Contact sales",
             isMostPopular: false,
+            planType: "enterprise",
             features: [
-              { id: "1", title: "Premium AI models with customization." },
-              { id: "2", title: "Unlimited usage quota per month." },
-              { id: "3", title: "Dedicated account manager support." },
-              { id: "4", title: "Comprehensive analytics with predictive features." },
-              { id: "5", title: "Advanced integration with APIs and platforms." }
+              { id: "1", title: "Premium AI models with customization" },
+              { id: "2", title: "Higher usage quotas" },
+              { id: "3", title: "Dedicated account manager" },
+              { id: "4", title: "Custom integrations and APIs" },
+              { id: "5", title: "SLA and enterprise support" },
+              { id: "6", title: "Volume discounts available" }
             ]
           }
         ]}

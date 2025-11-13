@@ -85,7 +85,7 @@ export async function POST(req: NextRequest) {
 
     const userId = session.user.id;
     const body = await req.json();
-    const { title, model = 'gemini-1.5-flash', attachedRecordingIds = [] } = body;
+    const { title, model = 'gemini-2.5-flash', attachedRecordingIds = [] } = body;
 
     if (!title) {
       return NextResponse.json(

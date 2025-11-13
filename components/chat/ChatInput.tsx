@@ -9,6 +9,9 @@ import { Badge } from '@/components/ui/badge';
 import { ArrowUpIcon, Plus, X } from 'lucide-react';
 import { ModelSelector } from '@/components/chat/ModelSelector';
 import { cn } from '@/lib/utils';
+import { useUsageLimits } from '@/hooks/use-usage-limits';
+import { UpgradePrompt } from '@/components/billing/UpgradePrompt';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   InputGroup,
   InputGroupTextarea,
@@ -47,12 +50,13 @@ export function ChatInput({
   onModelChange,
   className,
 }: ChatInputProps) {
+  const { usage, canChat } = useUsageLimits();
   const [input, setInput] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const handleSend = () => {
     const trimmedInput = input.trim();
-    if (trimmedInput && !disabled) {
+    if (trimmedInput && !disabled && canChat) {
       onSend(trimmedInput);
       setInput('');
       
@@ -82,6 +86,13 @@ export function ChatInput({
 
   return (
     <div className={cn('space-y-2', className)}>
+      {!canChat && usage && (
+        <UpgradePrompt
+          type="tokens"
+          used={usage.aiTokens.used}
+          limit={usage.aiTokens.limit}
+        />
+      )}
       {/* Input Group */}
       <InputGroup className={cn('[--radius:0.95rem]', 'rounded-[var(--radius)] py-2')}>
         <InputGroupTextarea
@@ -90,7 +101,7 @@ export function ChatInput({
           value={input}
           onChange={handleInput}
           onKeyDown={handleKeyDown}
-          disabled={disabled}
+          disabled={disabled || !canChat}
           className="pl-3 pt-1"
         />
         <InputGroupAddon align="block-end">
@@ -101,7 +112,7 @@ export function ChatInput({
               className="rounded-full"
               size="icon"
               onClick={onAttachClick}
-              disabled={disabled}
+              disabled={disabled || !canChat}
             >
               <Plus className="h-4 w-4" />
             </InputGroupButton>
@@ -111,7 +122,7 @@ export function ChatInput({
           <ModelSelector
             selectedModel={selectedModel}
             onModelChange={onModelChange}
-            disabled={disabled}
+            disabled={disabled || !canChat}
           />
 
           {/* Attachments - Inline with model selector */}
@@ -142,16 +153,29 @@ export function ChatInput({
 
           <div className="ml-auto flex items-center gap-2">
             {/* Send Button */}
-            <InputGroupButton
-              variant="default"
-              className="rounded-full"
-              size="icon"
-              disabled={disabled || !input.trim()}
-              onClick={handleSend}
-            >
-              <ArrowUpIcon className="h-4 w-4" />
-              <span className="sr-only">Send</span>
-            </InputGroupButton>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span>
+                    <InputGroupButton
+                      variant="default"
+                      className="rounded-full"
+                      size="icon"
+                      disabled={disabled || !input.trim() || !canChat}
+                      onClick={handleSend}
+                    >
+                      <ArrowUpIcon className="h-4 w-4" />
+                      <span className="sr-only">Send</span>
+                    </InputGroupButton>
+                  </span>
+                </TooltipTrigger>
+                {!canChat && usage && (
+                  <TooltipContent>
+                    <p>You've reached your AI token limit ({usage.aiTokens.used.toLocaleString()}/{usage.aiTokens.limit.toLocaleString()} tokens)</p>
+                  </TooltipContent>
+                )}
+              </Tooltip>
+            </TooltipProvider>
           </div>
         </InputGroupAddon>
       </InputGroup>

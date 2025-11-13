@@ -17,6 +17,7 @@ interface TranscriptionSidebarProps {
   onRefresh?: () => void
   onNewRecording?: () => void
   isCollapsed?: boolean
+  isPinned?: boolean
   onToggleCollapse?: () => void
   refreshTrigger?: number
 }
@@ -27,6 +28,7 @@ export function TranscriptionSidebar({
   onRefresh,
   onNewRecording,
   isCollapsed,
+  isPinned,
   onToggleCollapse,
   refreshTrigger,
 }: TranscriptionSidebarProps) {
@@ -287,10 +289,10 @@ export function TranscriptionSidebar({
   console.log("TranscriptionSidebar rendering - collapsed:", isCollapsed, "transcriptions:", transcriptions.length)
 
   return (
-    <div className={`h-full flex flex-col bg-card transition-all duration-300 ${isCollapsed ? 'w-16' : 'w-80'}`}>
+    <div className={`h-full w-full flex flex-col bg-card`}>
       {isCollapsed ? (
         /* Collapsed state - only hamburger and back button */
-        <div className="w-full p-2 flex flex-col gap-3 items-center justify-start">
+        <div className="w-full p-2 pt-4 flex flex-col gap-3 items-center justify-start">
           <button
             onClick={onToggleCollapse}
             className="w-10 h-10 rounded-md border border-border hover:bg-accent transition-colors flex items-center justify-center"
@@ -310,14 +312,14 @@ export function TranscriptionSidebar({
         /* Expanded state - full header */
         <>
           <div className="p-4 border-b border-border bg-card">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="flex items-center gap-2 font-medium text-base text-foreground">
-                <FileText className="h-4 w-4 text-primary" />
-                Transcriptions
+            <div className="flex items-center justify-between gap-3 mb-4">
+              <h2 className="flex items-center gap-2 font-medium text-base text-foreground truncate">
+                <FileText className="h-4 w-4 text-primary flex-shrink-0" />
+                <span className="truncate">Transcriptions</span>
               </h2>
               <button
                 onClick={onToggleCollapse}
-                className="p-2 rounded-md border border-border hover:bg-accent transition-colors"
+                className="p-2 rounded-md border border-border hover:bg-accent transition-colors flex-shrink-0"
               >
                 <Menu className="h-4 w-4 text-foreground" />
               </button>

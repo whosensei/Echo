@@ -12,6 +12,7 @@ import { Separator } from "@/components/ui/separator";
 import { useSession } from "@/lib/auth-client";
 import { useToast } from "@/components/ui/toaster";
 import { User, Mail, Calendar, CheckCircle2, XCircle, Loader2, AlertTriangle, Trash2, LogOut, RefreshCw } from "lucide-react";
+import { PlanStatusButton } from "@/components/billing/PlanStatusButton";
 
 interface IntegrationStatus {
   isConnected: boolean;
@@ -355,6 +356,11 @@ export default function SettingsPage() {
                 )}
               </>
             )}
+          </section>
+
+          {/* Plan Status */}
+          <section className="space-y-4">
+            <PlanStatusButton />
           </section>
 
           {/* Danger Zone */}

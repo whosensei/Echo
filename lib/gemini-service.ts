@@ -75,26 +75,62 @@ export class GeminiService {
     }
 
     this.genAI = new GoogleGenerativeAI(apiKey);
-    this.model = this.genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' });
+    // Use Gemini 2.5 models (1.5 models are deprecated)
+    // Options: gemini-2.5-flash, gemini-2.5-pro, gemini-2.0-flash-exp
+    const modelName = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+    this.model = this.genAI.getGenerativeModel({ model: modelName });
   }
 
   /**
    * Generate a comprehensive meeting summary from transcript
+   * Includes retry logic for rate limit errors
    */
   async generateMeetingSummary(request: MeetingSummaryRequest): Promise<MeetingSummary> {
-    try {
-      const prompt = this.buildSummaryPrompt(request);
+    const maxRetries = 3;
+    const retryDelay = 2000; // 2 seconds base delay
 
-      const result = await this.model.generateContent(prompt);
-      const response = await result.response;
-      const text = response.text();
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+      try {
+        const prompt = this.buildSummaryPrompt(request);
 
-      // Parse the structured response
-      return this.parseGeminiResponse(text, request);
-    } catch (error) {
-      console.error('Error generating meeting summary:', error);
-      throw new Error(`Failed to generate meeting summary: ${error}`);
+        const result = await this.model.generateContent(prompt);
+        const response = await result.response;
+        const text = response.text();
+
+        // Parse the structured response
+        return this.parseGeminiResponse(text, request);
+      } catch (error: any) {
+        const isRateLimit = error?.status === 429 || 
+                          error?.message?.includes('429') ||
+                          error?.message?.includes('quota') ||
+                          error?.message?.includes('rate limit');
+
+        if (isRateLimit && attempt < maxRetries - 1) {
+          // Extract retry delay from error if available
+          const retryInfo = error?.errorDetails?.find?.((d: any) => d['@type'] === 'type.googleapis.com/google.rpc.RetryInfo');
+          const delay = retryInfo?.retryDelay 
+            ? parseInt(retryInfo.retryDelay.replace('s', '')) * 1000 
+            : retryDelay * (attempt + 1); // Exponential backoff
+
+          console.warn(`Rate limit hit, retrying in ${delay}ms (attempt ${attempt + 1}/${maxRetries})...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+          continue;
+        }
+
+        // If quota exceeded (limit: 0), provide helpful error message
+        if (error?.message?.includes('limit: 0') || error?.message?.includes('quota')) {
+          throw new Error(
+            'Google Gemini API quota exceeded. Please upgrade your API key or wait for quota reset. ' +
+            'You can set GEMINI_MODEL=gemini-2.5-pro in your .env to use a different model with different quotas.'
+          );
+        }
+
+        console.error('Error generating meeting summary:', error);
+        throw new Error(`Failed to generate meeting summary: ${error?.message || error}`);
+      }
     }
+
+    throw new Error('Failed to generate meeting summary after retries');
   }
 
   /**
@@ -371,10 +407,15 @@ Now analyze the transcript and provide the structured summary:
 
   /**
    * Generate a quick summary for display purposes
+   * Includes retry logic for rate limit errors
    */
   async generateQuickSummary(transcript: string): Promise<string> {
-    try {
-      const prompt = `
+    const maxRetries = 3;
+    const retryDelay = 2000;
+
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+      try {
+        const prompt = `
 Provide a brief 2-3 sentence summary of this meeting transcript:
 
 ${transcript}
@@ -382,12 +423,37 @@ ${transcript}
 Focus on the main topic and key outcomes. Be concise and clear.
 `;
 
-      const result = await this.model.generateContent(prompt);
-      const response = await result.response;
-      return response.text().trim();
-    } catch (error) {
-      console.error('Error generating quick summary:', error);
-      throw new Error(`Failed to generate quick summary: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        const result = await this.model.generateContent(prompt);
+        const response = await result.response;
+        return response.text().trim();
+      } catch (error: any) {
+        const isRateLimit = error?.status === 429 || 
+                          error?.message?.includes('429') ||
+                          error?.message?.includes('quota') ||
+                          error?.message?.includes('rate limit');
+
+        if (isRateLimit && attempt < maxRetries - 1) {
+          const retryInfo = error?.errorDetails?.find?.((d: any) => d['@type'] === 'type.googleapis.com/google.rpc.RetryInfo');
+          const delay = retryInfo?.retryDelay 
+            ? parseInt(retryInfo.retryDelay.replace('s', '')) * 1000 
+            : retryDelay * (attempt + 1);
+
+          console.warn(`Rate limit hit on quick summary, retrying in ${delay}ms...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+          continue;
+        }
+
+        if (error?.message?.includes('limit: 0') || error?.message?.includes('quota')) {
+          throw new Error(
+            'Google Gemini API quota exceeded. Please upgrade your API key or wait for quota reset.'
+          );
+        }
+
+        console.error('Error generating quick summary:', error);
+        throw new Error(`Failed to generate quick summary: ${error?.message || error}`);
+      }
     }
+
+    throw new Error('Failed to generate quick summary after retries');
   }
 }

@@ -18,6 +18,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { PlanBadge } from "@/components/billing/PlanBadge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -48,6 +49,23 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const { data: session } = useSession();
   const router = useRouter();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [plan, setPlan] = useState<'free' | 'pro' | 'enterprise'>('free');
+
+  // Fetch plan from billing status
+  useEffect(() => {
+    const fetchPlan = async () => {
+      try {
+        const response = await fetch('/api/billing/status');
+        if (response.ok) {
+          const data = await response.json();
+          setPlan(data.plan || 'free');
+        }
+      } catch (error) {
+        console.error('Failed to fetch plan:', error);
+      }
+    };
+    fetchPlan();
+  }, []);
 
   const handleSignOut = async () => {
     await authClient.signOut();
@@ -184,12 +202,20 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                   </Avatar>
                   {!isSidebarCollapsed && (
                     <div className="ml-3 text-left flex-1 min-w-0">
-                      <p className="text-sm font-medium text-foreground truncate">
-                        {session?.user?.name || "User"}
-                      </p>
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-sm font-medium text-foreground truncate">
+                          {session?.user?.name || "User"}
+                        </p>
+                        <PlanBadge plan={plan} />
+                      </div>
                       <p className="text-xs text-muted-foreground truncate">
                         {session?.user?.email || ""}
                       </p>
+                    </div>
+                  )}
+                  {isSidebarCollapsed && (
+                    <div className="absolute -top-1 -right-1">
+                      <PlanBadge plan={plan} className="text-[10px] px-1 py-0" />
                     </div>
                   )}
                 </button>
@@ -210,35 +236,37 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       {/* Main content */}
       <div className="flex flex-col flex-1 overflow-hidden">
         {/* Mobile header */}
-        <header className="md:hidden flex items-center h-16 px-4 border-b border-border bg-card">
-          <div className="flex items-center space-x-2">
-            <Mic className="h-6 w-6 text-primary" />
-            <span className="text-xl font-semibold text-foreground">
-              Meeting AI
-            </span>
-          </div>
-          <div className="ml-auto flex items-center gap-2">
-            <ThemeToggle />
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon">
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage src={session?.user?.image || ""} />
-                    <AvatarFallback>
-                      {session?.user?.name?.charAt(0).toUpperCase() || "U"}
-                    </AvatarFallback>
-                  </Avatar>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuLabel>My Account</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleSignOut}>
-                  <LogOut className="mr-2 h-4 w-4" />
-                  Sign out
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+        <header className="md:hidden bg-card border-b border-border">
+          <div className="flex items-center h-16 px-4">
+            <div className="flex items-center space-x-2">
+              <Mic className="h-6 w-6 text-primary" />
+              <span className="text-xl font-semibold text-foreground">
+                Meeting AI
+              </span>
+            </div>
+            <div className="ml-auto flex items-center gap-2">
+              <ThemeToggle />
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon">
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src={session?.user?.image || ""} />
+                      <AvatarFallback>
+                        {session?.user?.name?.charAt(0).toUpperCase() || "U"}
+                      </AvatarFallback>
+                    </Avatar>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleSignOut}>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Sign out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </div>
         </header>
 

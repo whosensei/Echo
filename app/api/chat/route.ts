@@ -8,14 +8,28 @@ import { NextRequest } from 'next/server';
 import { getModel } from '@/lib/ai-models';
 import { db } from '@/lib/db';
 import { chatMessage, chatAttachment, recording, transcript as transcriptTable, summary } from '@/lib/db/schema';
-import { eq, inArray } from 'drizzle-orm';
+import { headers } from 'next/headers';
+import { auth } from '@/lib/auth';
+import { ingestChatTokens, checkTokenLimit } from '@/lib/billing/usage';
 
 export const maxDuration = 30; // Allow up to 30 seconds for streaming
 
 export async function POST(req: NextRequest) {
   try {
+    // Get authenticated user for usage checks
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
+
+    if (!session?.user?.id) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
     const body = await req.json();
-    const { messages = [], sessionId, model = 'gemini-1.5-flash', attachedRecordingIds = [] } = body;
+    const { messages = [], sessionId, model = 'gemini-2.5-flash', attachedRecordingIds = [] } = body;
 
     if (!Array.isArray(messages)) {
       return new Response(
@@ -31,22 +45,46 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Estimate token usage for limit check (rough estimate: ~4 chars per token)
+    // We'll do a more accurate check after getting the actual usage
+    const estimatedTokens = Math.ceil(
+      messages.reduce((acc: number, msg: any) => acc + (msg.content?.length || 0), 0) / 4
+    ) + 1000; // Add buffer for response tokens
+    const limitCheck = await checkTokenLimit(session.user.id, estimatedTokens);
+    
+    if (!limitCheck.allowed) {
+      return new Response(
+        JSON.stringify({
+          error: 'Token limit exceeded',
+          message: `You have used ${limitCheck.used.toLocaleString()} of ${limitCheck.limit.toLocaleString()} AI tokens. Please upgrade your plan to continue.`,
+          used: limitCheck.used,
+          limit: limitCheck.limit,
+          remaining: limitCheck.remaining,
+        }),
+        { status: 403, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
     // Build context from attached transcripts
     let contextMessage = '';
     
     if (attachedRecordingIds.length > 0) {
       try {
-        // Fetch recordings with their transcripts and summaries
-        const recordings = await db
-          .select({
-            recording: recording,
-            transcript: transcriptTable,
-            summary: summary,
-          })
-          .from(recording)
-          .leftJoin(transcriptTable, eq(recording.id, transcriptTable.recordingId))
-          .leftJoin(summary, eq(recording.id, summary.recordingId))
-          .where(inArray(recording.id, attachedRecordingIds));
+        // Fetch recordings with their transcripts and summaries using Drizzle's query API
+        const recRows = await db.query.recording.findMany({
+          where: (rec, { inArray }) => inArray(rec.id, attachedRecordingIds),
+          with: {
+            transcript: true,
+            summary: true,
+          },
+        });
+
+        // Normalize to existing shape expected by buildContextFromRecordings
+        const recordings = recRows.map((rec) => ({
+          recording: rec,
+          transcript: rec.transcript,
+          summary: rec.summary,
+        }));
 
         if (recordings.length > 0) {
           contextMessage = buildContextFromRecordings(recordings);
@@ -95,6 +133,36 @@ export async function POST(req: NextRequest) {
           } catch (error) {
             console.error('Error saving assistant message:', error);
           }
+        }
+
+        // Ingest usage (tokens) for billing
+        try {
+          const userId = (session as any)?.user?.id;
+
+          // Attempt to extract tokens from usage shapes
+          let tokensUsed = 0;
+          if (usage) {
+            const u: any = usage as any;
+            if (typeof u.totalTokens === 'number') {
+              tokensUsed = u.totalTokens;
+            } else {
+              const inTok = Number(u.inputTokens ?? 0);
+              const outTok = Number(u.outputTokens ?? 0);
+              const total = Number(u.total ?? 0);
+              tokensUsed = total || inTok + outTok || 0;
+            }
+          }
+
+          if (userId && tokensUsed > 0) {
+            await ingestChatTokens({
+              userId,
+              tokens: Math.max(0, Math.floor(tokensUsed)),
+              sessionId,
+              model,
+            });
+          }
+        } catch (e) {
+          console.warn('Failed to ingest chat tokens:', e);
         }
       },
     });

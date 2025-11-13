@@ -30,6 +30,10 @@ export interface SpeechUnderstandingConfig {
   };
 }
 
+export interface LanguageDetectionOptions {
+  code_switching?: boolean;
+}
+
 export interface AssemblyAITranscriptionRequest {
   audio_url: string;
   speaker_labels?: boolean;
@@ -45,6 +49,7 @@ export interface AssemblyAITranscriptionRequest {
   speech_model?: string;
   language_code?: string;
   language_detection?: boolean;
+  language_detection_options?: LanguageDetectionOptions;
   speech_understanding?: SpeechUnderstandingConfig;
 }
 
