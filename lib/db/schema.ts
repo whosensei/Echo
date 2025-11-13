@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, uuid, integer, jsonb, boolean, varchar } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, uuid, integer, jsonb, boolean, varchar, real, unique } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
 // Users table - managed by Better Auth
@@ -203,6 +203,57 @@ export const chatAttachment = pgTable("chat_attachment", {
   attachedAt: timestamp("attachedAt").notNull().defaultNow(),
 });
 
+// Dodo Payments Subscriptions table - stores subscription data from Dodo Payments
+export const subscription = pgTable("subscription", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: text("userId")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  dodoCustomerId: text("dodoCustomerId").notNull(), // Dodo customer ID
+  dodoSubscriptionId: text("dodoSubscriptionId").notNull().unique(), // Dodo subscription ID
+  productId: text("productId").notNull(), // Dodo product ID (pro/enterprise)
+  plan: text("plan").notNull(), // "free" | "pro" | "enterprise"
+  status: text("status").notNull().default("inactive"), // active, trialing, on_hold, cancelled, expired, inactive
+  currentPeriodStart: timestamp("currentPeriodStart"),
+  currentPeriodEnd: timestamp("currentPeriodEnd"),
+  cancelAtPeriodEnd: boolean("cancelAtPeriodEnd").notNull().default(false),
+  canceledAt: timestamp("canceledAt"),
+  metadata: jsonb("metadata"), // Store full Dodo subscription object for reference
+  createdAt: timestamp("createdAt").notNull().defaultNow(),
+  updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+});
+
+// Dodo Payments Webhook Events table - logs all webhook events for audit trail
+export const webhookEvent = pgTable("webhook_event", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  eventId: text("eventId").notNull().unique(), // Dodo event ID (for idempotency)
+  eventType: text("eventType").notNull(), // subscription.active, payment.succeeded, etc.
+  dodoCustomerId: text("dodoCustomerId"), // Associated customer ID if available
+  dodoSubscriptionId: text("dodoSubscriptionId"), // Associated subscription ID if available
+  payload: jsonb("payload").notNull(), // Full webhook payload
+  processed: boolean("processed").notNull().default(false), // Whether we successfully processed it
+  processedAt: timestamp("processedAt"),
+  errorMessage: text("errorMessage"), // Error if processing failed
+  createdAt: timestamp("createdAt").notNull().defaultNow(),
+});
+
+// Usage tracking table - tracks user usage per billing period
+export const usage = pgTable("usage", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: text("userId")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  periodStart: timestamp("periodStart").notNull(), // Subscription period start
+  periodEnd: timestamp("periodEnd").notNull(), // Subscription period end
+  transcriptionMinutes: real("transcriptionMinutes").notNull().default(0), // Accumulated transcription minutes
+  aiTokens: integer("aiTokens").notNull().default(0), // Accumulated AI tokens
+  createdAt: timestamp("createdAt").notNull().defaultNow(),
+  updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+}, (table) => ({
+  // Unique constraint on userId + periodStart to prevent duplicates
+  uniqueUserPeriod: unique().on(table.userId, table.periodStart),
+}));
+
 // Relations
 export const userRelations = relations(user, ({ many, one }) => ({
   sessions: many(session),
@@ -213,6 +264,8 @@ export const userRelations = relations(user, ({ many, one }) => ({
   settings: one(userSettings),
   apiKeys: many(apiKey),
   chatSessions: many(chatSession),
+  subscriptions: many(subscription),
+  usage: many(usage),
 }));
 
 export const sessionRelations = relations(session, ({ one }) => ({
@@ -323,6 +376,20 @@ export const chatAttachmentRelations = relations(chatAttachment, ({ one }) => ({
   }),
 }));
 
+export const subscriptionRelations = relations(subscription, ({ one }) => ({
+  user: one(user, {
+    fields: [subscription.userId],
+    references: [user.id],
+  }),
+}));
+
+export const usageRelations = relations(usage, ({ one }) => ({
+  user: one(user, {
+    fields: [usage.userId],
+    references: [user.id],
+  }),
+}));
+
 // Type exports for TypeScript
 export type User = typeof user.$inferSelect;
 export type NewUser = typeof user.$inferInsert;
@@ -362,3 +429,12 @@ export type NewChatMessage = typeof chatMessage.$inferInsert;
 
 export type ChatAttachment = typeof chatAttachment.$inferSelect;
 export type NewChatAttachment = typeof chatAttachment.$inferInsert;
+
+export type Subscription = typeof subscription.$inferSelect;
+export type NewSubscription = typeof subscription.$inferInsert;
+
+export type WebhookEvent = typeof webhookEvent.$inferSelect;
+export type NewWebhookEvent = typeof webhookEvent.$inferInsert;
+
+export type Usage = typeof usage.$inferSelect;
+export type NewUsage = typeof usage.$inferInsert;

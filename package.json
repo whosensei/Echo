@@ -10,7 +10,8 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio",
-    "db:push": "drizzle-kit push"
+    "db:push": "drizzle-kit push",
+    "ngrok:webhook": "bash scripts/ngrok-webhook.sh"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^2.0.37",
@@ -58,6 +59,7 @@
     "clsx": "^2.1.1",
     "cmdk": "1.0.4",
     "date-fns": "4.1.0",
+    "dodopayments": "^2.4.4",
     "drizzle-orm": "^0.44.5",
     "embla-carousel-react": "8.5.1",
     "form-data": "^4.0.4",
@@ -71,6 +73,7 @@
     "react": "^19",
     "react-day-picker": "9.11.0",
     "react-dom": "^19",
+    "react-h5-audio-player": "^3.10.1",
     "react-hook-form": "^7.60.0",
     "react-markdown": "^10.1.0",
     "react-resizable-panels": "^2.1.7",

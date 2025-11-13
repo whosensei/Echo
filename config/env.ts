@@ -21,6 +21,17 @@ export const config = {
       secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || '',
     },
   },
+  // Dodo Payments configuration
+  dodo: {
+    apiKey: process.env.DODO_API_KEY || '',
+    // 'test_mode' for sandbox; 'live' for production (aligns with Dodo client init)
+    environment: process.env.DODO_ENV || 'test_mode',
+    // Webhook signature verification secret
+    webhookSecret: process.env.DODO_WEBHOOK_SECRET || '',
+    // Product IDs configured in Dodo for your paid plans
+    proProductId: process.env.DODO_PRO_PRODUCT_ID || '',
+    enterpriseProductId: process.env.DODO_ENTERPRISE_PRODUCT_ID || '',
+  },
   app: {
     audioStoragePath: process.env.AUDIO_STORAGE_PATH || './audio-recordings',
   },

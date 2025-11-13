@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
-import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { TabbedTranscriptDisplay } from "@/components/tabbed-transcript-display";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -101,6 +100,29 @@ export default function MeetingDetailsPage() {
   const [emailSubject, setEmailSubject] = useState("");
   const [emailMessage, setEmailMessage] = useState("");
 
+  const getTranscriptDurationSeconds = (transcript?: Transcript | null): number => {
+    if (!transcript) return 0;
+
+    if (typeof transcript.duration === "number" && transcript.duration > 0) {
+      return transcript.duration;
+    }
+
+    const metadataDuration = transcript.metadata?.audio_duration;
+
+    if (typeof metadataDuration === "number" && metadataDuration > 0) {
+      return Math.round(metadataDuration);
+    }
+
+    if (typeof metadataDuration === "string") {
+      const parsed = parseFloat(metadataDuration);
+      if (!Number.isNaN(parsed) && parsed > 0) {
+        return Math.round(parsed);
+      }
+    }
+
+    return 0;
+  };
+
   useEffect(() => {
     fetchMeetingDetails();
   }, [meetingId]);
@@ -115,6 +137,8 @@ export default function MeetingDetailsPage() {
 
       const recordingData = await response.json() as RecordingDetails;
       setData(recordingData);
+
+      const transcriptDurationSeconds = getTranscriptDurationSeconds(recordingData.transcript);
 
       // Transform transcript data to match TranscriptionResult format
       if (recordingData.transcript) {
@@ -136,9 +160,9 @@ export default function MeetingDetailsPage() {
             chapters: recordingData.transcript.metadata?.chapters,
             metadata: {
               ...recordingData.transcript.metadata,
-              audio_duration: recordingData.transcript.duration || 0,
+              audio_duration: transcriptDurationSeconds,
               number_of_channels: 1,
-              billing_time: recordingData.transcript.duration || 0,
+              billing_time: transcriptDurationSeconds,
               number_of_distinct_speakers: recordingData.transcript.metadata?.number_of_distinct_speakers || 0,
             },
           },
@@ -157,7 +181,7 @@ export default function MeetingDetailsPage() {
           decisions: metadata.decisions || [],
           participants: recordingData.summary.participants || [],
           topics: metadata.topics || [],
-          duration: formatDuration(recordingData.transcript?.duration),
+          duration: formatDuration(transcriptDurationSeconds),
           sentiment: (recordingData.summary.sentiment as "positive" | "neutral" | "negative") || null,
         };
         setSummaryResult(transformedSummary);
@@ -190,7 +214,7 @@ export default function MeetingDetailsPage() {
         description: "The recording has been permanently deleted.",
       });
 
-      router.push("/dashboard");
+      router.push("/meetings");
     } catch (error) {
       toast({
         title: "Delete failed",
@@ -225,7 +249,7 @@ export default function MeetingDetailsPage() {
       const pdfData = {
         title: data.recording.title,
         startTime: data.recording.recordedAt,
-        duration: formatDuration(data.transcript?.duration || null),
+        duration: formatDuration(getTranscriptDurationSeconds(data.transcript)),
         speakerCount: data.transcript?.speakerCount || null,
         confidence: data.transcript?.confidence || null,
         content: data.transcript?.content || "",
@@ -286,7 +310,7 @@ export default function MeetingDetailsPage() {
       const pdfData = {
         title: data.recording.title,
         startTime: data.recording.recordedAt,
-        duration: formatDuration(data.transcript?.duration || null),
+        duration: formatDuration(getTranscriptDurationSeconds(data.transcript)),
         speakerCount: data.transcript?.speakerCount || null,
         confidence: data.transcript?.confidence || null,
         content: data.transcript?.content || "",
@@ -313,10 +337,12 @@ export default function MeetingDetailsPage() {
   };
 
   const formatDuration = (seconds: number | null | undefined): string => {
-    if (!seconds) return "N/A";
-    const minutes = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return `${minutes}m ${secs}s`;
+    if (typeof seconds !== "number" || Number.isNaN(seconds)) return "N/A";
+
+    const safeSeconds = Math.max(0, seconds);
+    const minutes = Math.floor(safeSeconds / 60);
+    const secs = Math.floor(safeSeconds % 60);
+    return `${minutes}m ${secs.toString().padStart(2, "0")}s`;
   };
 
   const getStatusColor = (status: string) => {
@@ -337,14 +363,18 @@ export default function MeetingDetailsPage() {
   if (isLoading) {
     return (
       <ProtectedRoute>
-        <DashboardLayout>
-          <div className="flex items-center justify-center min-h-[400px]">
-            <div className="text-center">
-              <Loader2 className="h-12 w-12 animate-spin mx-auto text-muted-foreground" />
-              <p className="mt-4 text-muted-foreground">Loading meeting details...</p>
+        <div className="min-h-screen bg-background">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="flex items-center justify-center min-h-[400px]">
+              <div className="text-center">
+                <div className="flex items-center justify-center">
+                  <Loader2 className="h-12 w-12 animate-spin text-muted-foreground" />
+                </div>
+                <p className="mt-4 text-muted-foreground">Loading meeting details...</p>
+              </div>
             </div>
           </div>
-        </DashboardLayout>
+        </div>
       </ProtectedRoute>
     );
   }
@@ -352,20 +382,22 @@ export default function MeetingDetailsPage() {
   if (!data) {
     return (
       <ProtectedRoute>
-        <DashboardLayout>
-          <div className="flex items-center justify-center min-h-[400px]">
-            <div className="text-center space-y-4">
-              <h2 className="text-2xl font-medium text-foreground">Meeting not found</h2>
-              <p className="text-muted-foreground">This meeting doesn't exist or you don't have access to it.</p>
-              <Link href="/dashboard">
-                <Button>
-                  <ArrowLeft className="mr-2 h-4 w-4" />
-                  Back to Dashboard
-                </Button>
-              </Link>
+        <div className="min-h-screen bg-background">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="flex items-center justify-center min-h-[400px]">
+              <div className="text-center space-y-4">
+                <h2 className="text-2xl font-medium text-foreground">Meeting not found</h2>
+                <p className="text-muted-foreground">This meeting doesn't exist or you don't have access to it.</p>
+                <Link href="/meetings">
+                  <Button>
+                    <ArrowLeft className="mr-2 h-4 w-4" />
+                    Back to Meetings
+                  </Button>
+                </Link>
+              </div>
             </div>
           </div>
-        </DashboardLayout>
+        </div>
       </ProtectedRoute>
     );
   }
@@ -374,181 +406,185 @@ export default function MeetingDetailsPage() {
 
   return (
     <ProtectedRoute>
-      <DashboardLayout>
-        <div className="space-y-6">
-          {/* Header */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Link href="/dashboard">
-                <Button variant="ghost" size="icon">
-                  <ArrowLeft className="h-5 w-5" />
-                </Button>
-              </Link>
-              <div>
-                <h1 className="text-3xl font-medium text-foreground tracking-tight">{recording.title}</h1>
-                <div className="flex items-center gap-2 mt-1">
-                  <p className="text-sm text-muted-foreground">
-                    {new Date(recording.recordedAt || recording.createdAt).toLocaleDateString("en-US", {
-                      year: "numeric",
-                      month: "long",
-                      day: "numeric",
-                      hour: "numeric",
-                      minute: "2-digit",
-                    })}
-                  </p>
-                  <Badge className={getStatusColor(recording.status)}>
-                    {recording.status}
-                  </Badge>
+      <div className="min-h-screen bg-background">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="space-y-6">
+            {/* Header */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <Link href="/meetings">
+                  <Button variant="ghost" size="icon">
+                    <ArrowLeft className="h-5 w-5" />
+                  </Button>
+                </Link>
+                <div>
+                  <h1 className="text-3xl font-medium text-foreground tracking-tight">{recording.title}</h1>
+                  <div className="flex items-center gap-2 mt-1">
+                    <p className="text-sm text-muted-foreground">
+                      {new Date(recording.recordedAt || recording.createdAt).toLocaleDateString("en-US", {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                        hour: "numeric",
+                        minute: "2-digit",
+                      })}
+                    </p>
+                    <Badge className={getStatusColor(recording.status)}>
+                      {recording.status}
+                    </Badge>
+                  </div>
                 </div>
               </div>
-            </div>
-            <div className="flex items-center gap-3">
-              {/* Chat with Transcript Button */}
-              <Button
-                variant="default"
-                size="sm"
-                disabled={!transcriptionResult}
-                onClick={() => router.push(`/chat?recordingId=${recording.id}`)}
-              >
-                <MessageSquare className="mr-2 h-4 w-4" />
-                Chat with Transcript
-              </Button>
-              
-              {/* Action Buttons */}
-              <Dialog open={isEmailDialogOpen} onOpenChange={setIsEmailDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={!transcriptionResult}
-                  >
-                    <Mail className="mr-2 h-4 w-4" />
-                    Send via Email
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-[525px]">
-                  <DialogHeader>
-                    <DialogTitle>Send Meeting PDF via Email</DialogTitle>
-                    <DialogDescription>
-                      Send the meeting transcript and summary as a PDF attachment
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="grid gap-4 py-4">
-                    <div className="grid gap-2">
-                      <Label htmlFor="recipients">
-                        Recipients <span className="text-destructive">*</span>
-                      </Label>
-                      <Input
-                        id="recipients"
-                        placeholder="email@example.com, another@example.com"
-                        value={emailRecipients}
-                        onChange={(e) => setEmailRecipients(e.target.value)}
-                        disabled={isSendingEmail}
-                      />
-                      <p className="text-xs text-muted-foreground">
-                        Separate multiple emails with commas
-                      </p>
-                    </div>
-                    <div className="grid gap-2">
-                      <Label htmlFor="subject">Subject (Optional)</Label>
-                      <Input
-                        id="subject"
-                        placeholder={`Meeting Transcript: ${recording.title}`}
-                        value={emailSubject}
-                        onChange={(e) => setEmailSubject(e.target.value)}
-                        disabled={isSendingEmail}
-                      />
-                    </div>
-                    <div className="grid gap-2">
-                      <Label htmlFor="message">Message (Optional)</Label>
-                      <Textarea
-                        id="message"
-                        placeholder="Add a custom message to include in the email..."
-                        value={emailMessage}
-                        onChange={(e) => setEmailMessage(e.target.value)}
-                        disabled={isSendingEmail}
-                        rows={4}
-                      />
-                    </div>
-                  </div>
-                  <DialogFooter>
+              <div className="flex items-center gap-3">
+                {/* Chat with Transcript Button */}
+                <Button
+                  variant="default"
+                  size="sm"
+                  disabled={!transcriptionResult}
+                  onClick={() => router.push(`/chat?recordingId=${recording.id}`)}
+                >
+                  <MessageSquare className="mr-2 h-4 w-4" />
+                  Chat with Transcript
+                </Button>
+                
+                {/* Action Buttons */}
+                <Dialog open={isEmailDialogOpen} onOpenChange={setIsEmailDialogOpen}>
+                  <DialogTrigger asChild>
                     <Button
                       variant="outline"
-                      onClick={() => setIsEmailDialogOpen(false)}
-                      disabled={isSendingEmail}
+                      size="sm"
+                      disabled={!transcriptionResult}
                     >
-                      Cancel
+                      <Mail className="mr-2 h-4 w-4" />
+                      Send via Email
                     </Button>
-                    <Button onClick={handleSendEmail} disabled={isSendingEmail}>
-                      {isSendingEmail ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Sending...
-                        </>
-                      ) : (
-                        <>
-                          <Mail className="mr-2 h-4 w-4" />
-                          Send Email
-                        </>
-                      )}
-                    </Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
-              
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleExportPDF}
-                disabled={!transcriptionResult && !summaryResult}
-              >
-                <Download className="mr-2 h-4 w-4" />
-                Export PDF
-              </Button>
-              
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button variant="destructive" size="sm">
-                    <Trash2 className="mr-2 h-4 w-4" />
-                    Delete
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Delete Meeting</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      Are you sure you want to delete this meeting? This action cannot be undone and will
-                      permanently delete the meeting, transcript, and summary.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction
-                      onClick={handleDelete}
-                      disabled={isDeleting}
-                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                    >
-                      {isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-[525px]">
+                    <DialogHeader>
+                      <DialogTitle>Send Meeting PDF via Email</DialogTitle>
+                      <DialogDescription>
+                        Send the meeting transcript and summary as a PDF attachment
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                      <div className="grid gap-2">
+                        <Label htmlFor="recipients">
+                          Recipients <span className="text-destructive">*</span>
+                        </Label>
+                        <Input
+                          id="recipients"
+                          placeholder="email@example.com, another@example.com"
+                          value={emailRecipients}
+                          onChange={(e) => setEmailRecipients(e.target.value)}
+                          disabled={isSendingEmail}
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Separate multiple emails with commas
+                        </p>
+                      </div>
+                      <div className="grid gap-2">
+                        <Label htmlFor="subject">Subject (Optional)</Label>
+                        <Input
+                          id="subject"
+                          placeholder={`Meeting Transcript: ${recording.title}`}
+                          value={emailSubject}
+                          onChange={(e) => setEmailSubject(e.target.value)}
+                          disabled={isSendingEmail}
+                        />
+                      </div>
+                      <div className="grid gap-2">
+                        <Label htmlFor="message">Message (Optional)</Label>
+                        <Textarea
+                          id="message"
+                          placeholder="Add a custom message to include in the email..."
+                          value={emailMessage}
+                          onChange={(e) => setEmailMessage(e.target.value)}
+                          disabled={isSendingEmail}
+                          rows={4}
+                        />
+                      </div>
+                    </div>
+                    <DialogFooter>
+                      <Button
+                        variant="outline"
+                        onClick={() => setIsEmailDialogOpen(false)}
+                        disabled={isSendingEmail}
+                      >
+                        Cancel
+                      </Button>
+                      <Button onClick={handleSendEmail} disabled={isSendingEmail}>
+                        {isSendingEmail ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Sending...
+                          </>
+                        ) : (
+                          <>
+                            <Mail className="mr-2 h-4 w-4" />
+                            Send Email
+                          </>
+                        )}
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleExportPDF}
+                  disabled={!transcriptionResult && !summaryResult}
+                >
+                  <Download className="mr-2 h-4 w-4" />
+                  Export PDF
+                </Button>
+                
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="destructive" size="sm">
+                      <Trash2 className="mr-2 h-4 w-4" />
                       Delete
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Delete Meeting</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Are you sure you want to delete this meeting? This action cannot be undone and will
+                        permanently delete the meeting, transcript, and summary.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={handleDelete}
+                        disabled={isDeleting}
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      >
+                        {isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Delete
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
+            </div>
+
+            {/* Tabbed Transcript Display */}
+            <div className="min-h-[600px]">
+              <TabbedTranscriptDisplay
+                transcription={transcriptionResult}
+                summary={summaryResult}
+                isLoading={false}
+                isSidebarCollapsed={true}
+                meetingId={meetingId}
+                hideUsageLimits={true}
+                audioUrl={recording.audioFileUrl}
+              />
             </div>
           </div>
-
-          {/* Tabbed Transcript Display - Same as /record */}
-          <div className="min-h-[600px]">
-            <TabbedTranscriptDisplay
-              transcription={transcriptionResult}
-              summary={summaryResult}
-              isLoading={false}
-              isSidebarCollapsed={true}
-              meetingId={meetingId}
-            />
-          </div>
         </div>
-      </DashboardLayout>
+      </div>
     </ProtectedRoute>
   );
 }

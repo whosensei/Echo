@@ -29,6 +29,20 @@
       "when": 1761460673188,
       "tag": "0003_volatile_dragon_lord",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1762781106831,
+      "tag": "0004_special_marauders",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1762873165377,
+      "tag": "0005_loving_doctor_spectrum",
+      "breakpoints": true
     }
   ]
 }

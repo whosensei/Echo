@@ -12,6 +12,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useToast } from "@/components/ui/toaster"
 import { useSession } from "@/lib/auth-client"
+import { UsageLimits } from "@/components/billing/UsageLimits"
+import { AudioPlayer } from "@/components/audio-player"
 import type { TranscriptionResult } from "@/lib/assemblyai-service"
 import type { MeetingSummary } from "@/lib/gemini-service"
 
@@ -21,10 +23,12 @@ interface TabbedTranscriptDisplayProps {
   isLoading?: boolean
   onNewRecording?: () => void
   isSidebarCollapsed?: boolean
-  meetingId?: string | null
+  meetingId?: string | null // This is actually the recordingId
+  audioUrl?: string
+  hideUsageLimits?: boolean // Option to hide usage limits
 }
 
-export function TabbedTranscriptDisplay({ transcription, summary, isLoading, onNewRecording, isSidebarCollapsed, meetingId }: TabbedTranscriptDisplayProps) {
+export function TabbedTranscriptDisplay({ transcription, summary, isLoading, onNewRecording, isSidebarCollapsed, meetingId, audioUrl, hideUsageLimits = false }: TabbedTranscriptDisplayProps) {
   const { data: session } = useSession();
   const { toast } = useToast();
   const [showTranscriptEmailDialog, setShowTranscriptEmailDialog] = useState(false);
@@ -208,8 +212,8 @@ export function TabbedTranscriptDisplay({ transcription, summary, isLoading, onN
       {/* Navigation Header - Modern SaaS Style */}
       <div className="border-b border-border/50">
         <div className="max-w-7xl mx-auto px-6 lg:px-12 py-5">
-          <div className="flex items-center justify-between">
-            {/* Nav items - Pill style navigation with active state */}
+          <div className="flex items-center justify-between gap-4">
+            {/* Left side: Nav items - Pill style navigation */}
             <div className="flex gap-1 bg-muted/50 p-1 rounded-lg">
               {navItems.map((item) => {
                 const Icon = item.icon
@@ -232,20 +236,36 @@ export function TabbedTranscriptDisplay({ transcription, summary, isLoading, onN
                 )
               })}
             </div>
-            {/* New Recording Button - Prominent CTA */}
-            {onNewRecording && (
-              <Button
-                onClick={onNewRecording}
-                size="sm"
-                className="flex items-center gap-2 shadow-sm"
-              >
-                <Plus className="h-4 w-4" />
-                <span>New Recording</span>
-              </Button>
-            )}
+            {/* Right side: Usage Limits in pill and New Recording Button */}
+            <div className="flex items-center gap-4">
+              {!hideUsageLimits && (
+                <div className="bg-card border border-border rounded-lg px-3 py-2 shadow-sm">
+                  <UsageLimits compact />
+                </div>
+              )}
+              {onNewRecording && (
+                <Button
+                  onClick={onNewRecording}
+                  size="sm"
+                  className="flex items-center gap-2 shadow-sm"
+                >
+                  <Plus className="h-4 w-4" />
+                  <span>New Recording</span>
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       </div>
+
+      {/* Audio Player - Below tabs, above content */}
+      {audioUrl && (
+        <div className="py-4">
+          <div className="max-w-7xl mx-auto px-6 lg:px-12">
+            <AudioPlayer audioUrl={audioUrl} recordingId={meetingId || undefined} />
+          </div>
+        </div>
+      )}
 
       {/* Content - Spacious and clean */}
       <ScrollArea className="flex-1">
@@ -316,7 +336,7 @@ export function TabbedTranscriptDisplay({ transcription, summary, isLoading, onN
               <div className="space-y-8">
                 {/* AI Summary Card */}
                 {transcription.result.summary && (
-                  <Card className="border-border/50 shadow-sm bg-gradient-to-br from-card to-card/50">
+                  <Card className="border border-border/40 dark:border-2 dark:border-border dark:shadow-md bg-gradient-to-br from-card to-card/50">
                     <CardContent className="p-8 space-y-4">
                       <div className="flex items-center gap-2 mb-4">
                         <MessageSquare className="h-5 w-5 text-primary" />
@@ -335,7 +355,7 @@ export function TabbedTranscriptDisplay({ transcription, summary, isLoading, onN
 
                 {/* Key Moments Section */}
                 {summary?.keyMoments && summary.keyMoments.length > 0 && (
-                  <Card className="border-border/50 shadow-sm">
+                  <Card className="border border-border/40 dark:border-2 dark:border-border dark:shadow-md">
                     <CardContent className="p-8">
                       <div className="flex items-center gap-2 mb-6">
                         <Zap className="h-5 w-5 text-primary" />
@@ -355,7 +375,7 @@ export function TabbedTranscriptDisplay({ transcription, summary, isLoading, onN
 
                 {/* Decisions Made Section */}
                 {summary?.structuredDecisions && summary.structuredDecisions.length > 0 && (
-                  <Card className="border-border/50 shadow-sm">
+                  <Card className="border border-border/40 dark:border-2 dark:border-border dark:shadow-md">
                     <CardContent className="p-8">
                       <div className="flex items-center gap-2 mb-6">
                         <CheckCircle2 className="h-5 w-5 text-primary" />
@@ -363,15 +383,15 @@ export function TabbedTranscriptDisplay({ transcription, summary, isLoading, onN
                       </div>
                       <div className="space-y-4">
                         {summary.structuredDecisions.map((decision, index) => (
-                          <Card key={index} className="border-border/30 bg-muted/30">
+                          <Card key={index} className="border border-border/60 bg-muted/30">
                             <CardContent className="p-5">
                               <div className="space-y-3">
                                 <div className="flex items-start justify-between gap-4">
                                   <p className="text-foreground font-medium flex-1">{decision.description}</p>
-                                  <Badge className={`flex-shrink-0 ${
-                                    decision.impact === 'high' ? 'bg-purple-500/10 text-purple-600 border-purple-200' :
-                                    decision.impact === 'medium' ? 'bg-blue-500/10 text-blue-600 border-blue-200' :
-                                    'bg-gray-500/10 text-gray-600 border-gray-200'
+                                  <Badge className={`flex-shrink-0 border ${
+                                    decision.impact === 'high' ? 'bg-purple-500/15 dark:bg-purple-500/25 text-purple-700 dark:text-purple-300 border-purple-500/30 dark:border-purple-500/40' :
+                                    decision.impact === 'medium' ? 'bg-blue-500/15 dark:bg-blue-500/25 text-blue-700 dark:text-blue-300 border-blue-500/30 dark:border-blue-500/40' :
+                                    'bg-slate-500/15 dark:bg-slate-500/25 text-slate-700 dark:text-slate-300 border-slate-500/30 dark:border-slate-500/40'
                                   }`}>
                                     {decision.impact} impact
                                   </Badge>
@@ -404,7 +424,7 @@ export function TabbedTranscriptDisplay({ transcription, summary, isLoading, onN
 
                 {/* Action Items / TODOs Section */}
                 {summary?.structuredTodos && summary.structuredTodos.length > 0 && (
-                  <Card className="border-border/50 shadow-sm">
+                  <Card className="border border-border/40 dark:border-2 dark:border-border dark:shadow-md">
                     <CardContent className="p-8">
                       <div className="flex items-center gap-2 mb-6">
                         <ListTodo className="h-5 w-5 text-primary" />
@@ -412,7 +432,7 @@ export function TabbedTranscriptDisplay({ transcription, summary, isLoading, onN
                       </div>
                       <div className="space-y-3">
                         {summary.structuredTodos.map((todo, index) => (
-                          <Card key={index} className="border-border/30 bg-muted/20 hover:bg-muted/40 transition-colors">
+                          <Card key={index} className="border border-border/60 bg-muted/20 hover:bg-muted/40 transition-colors">
                             <CardContent className="p-5">
                               <div className="space-y-3">
                                 <div className="flex items-start gap-3">
@@ -435,10 +455,10 @@ export function TabbedTranscriptDisplay({ transcription, summary, isLoading, onN
                                         </Badge>
                                       )}
                                       
-                                      <Badge className={`text-xs ${
-                                        todo.priority === 'high' ? 'bg-red-500/10 text-red-600 border-red-200' :
-                                        todo.priority === 'medium' ? 'bg-yellow-500/10 text-yellow-600 border-yellow-200' :
-                                        'bg-green-500/10 text-green-600 border-green-200'
+                                      <Badge className={`text-xs border ${
+                                        todo.priority === 'high' ? 'bg-red-500/15 dark:bg-red-500/25 text-red-700 dark:text-red-300 border-red-500/30 dark:border-red-500/40' :
+                                        todo.priority === 'medium' ? 'bg-amber-500/15 dark:bg-amber-500/25 text-amber-700 dark:text-amber-300 border-amber-500/30 dark:border-amber-500/40' :
+                                        'bg-emerald-500/15 dark:bg-emerald-500/25 text-emerald-700 dark:text-emerald-300 border-emerald-500/30 dark:border-emerald-500/40'
                                       }`}>
                                         {todo.priority} priority
                                       </Badge>
@@ -462,17 +482,17 @@ export function TabbedTranscriptDisplay({ transcription, summary, isLoading, onN
 
                 {/* Stats Pills */}
                 <div className="flex flex-wrap gap-3">
-                  <div className="px-5 py-3 bg-muted/50 rounded-xl border border-border/50 shadow-sm">
+                  <div className="px-5 py-3 bg-muted/50 rounded-xl border border-border dark:shadow-sm">
                     <div className="flex items-center gap-2 text-sm">
                       <Clock className="h-4 w-4 text-primary" />
                       <span className="font-medium">
                         {transcription.result.metadata.audio_duration 
-                          ? `${Math.floor(transcription.result.metadata.audio_duration / 60000)}:${Math.floor((transcription.result.metadata.audio_duration % 60000) / 1000).toString().padStart(2, '0')}`
-                          : 'N/A'}
+                          ? `${Math.floor(transcription.result.metadata.audio_duration / 60)}:${Math.floor(transcription.result.metadata.audio_duration % 60).toString().padStart(2, '0')}`
+                          : '0:00'}
                       </span>
                     </div>
                   </div>
-                  <div className="px-5 py-3 bg-muted/50 rounded-xl border border-border/50 shadow-sm">
+                  <div className="px-5 py-3 bg-muted/50 rounded-xl border border-border dark:shadow-sm">
                     <div className="flex items-center gap-2 text-sm">
                       <User className="h-4 w-4 text-primary" />
                       <span className="font-medium">
@@ -487,7 +507,7 @@ export function TabbedTranscriptDisplay({ transcription, summary, isLoading, onN
                   {/* IAB Categories (Topics) */}
                   {transcription.result.iab_categories?.summary && 
                    Object.keys(transcription.result.iab_categories.summary).length > 0 && (
-                    <Card className="border-border/50 shadow-sm">
+                    <Card className="border border-border/40 dark:border-2 dark:border-border dark:shadow-md">
                       <CardContent className="p-8">
                         <h4 className="text-xl font-medium text-foreground mb-6 tracking-tight flex items-center gap-2">
                           <MessageSquare className="h-5 w-5 text-primary" />
@@ -519,7 +539,7 @@ export function TabbedTranscriptDisplay({ transcription, summary, isLoading, onN
 
                   {/* Entity Highlights */}
                   {transcription.result.named_entities && transcription.result.named_entities.length > 0 && (
-                    <Card className="border-border/50 shadow-sm">
+                    <Card className="border border-border/40 dark:border-2 dark:border-border dark:shadow-md">
                       <CardContent className="p-8">
                         <h4 className="text-xl font-medium text-foreground mb-6 tracking-tight flex items-center gap-2">
                           <User className="h-5 w-5 text-primary" />
@@ -530,14 +550,18 @@ export function TabbedTranscriptDisplay({ transcription, summary, isLoading, onN
                           {transcription.result.named_entities.filter(e => 
                             e.type === 'person_name' || e.type === 'person_age'
                           ).length > 0 && (
-                            <div className="space-y-2">
+                            <div className="space-y-3">
                               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">People</p>
-                              <div className="flex flex-wrap gap-2">
+                              <div className="flex flex-wrap gap-2.5">
                                 {transcription.result.named_entities
                                   .filter(e => e.type === 'person_name' || e.type === 'person_age')
                                   .slice(0, 6)
                                   .map((entity, idx) => (
-                                    <Badge key={idx} variant="outline" className="bg-blue-500/10 text-blue-600 border-blue-200">
+                                    <Badge 
+                                      key={idx} 
+                                      variant="secondary" 
+                                      className="bg-blue-500/15 dark:bg-blue-500/25 text-blue-700 dark:text-blue-300 border border-blue-500/30 dark:border-blue-500/40 hover:bg-blue-500/25 dark:hover:bg-blue-500/35 transition-colors px-3 py-1.5 text-sm font-medium"
+                                    >
                                       {entity.entity}
                                     </Badge>
                                   ))}
@@ -549,14 +573,18 @@ export function TabbedTranscriptDisplay({ transcription, summary, isLoading, onN
                           {transcription.result.named_entities.filter(e => 
                             e.type === 'organization'
                           ).length > 0 && (
-                            <div className="space-y-2">
+                            <div className="space-y-3">
                               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Organizations</p>
-                              <div className="flex flex-wrap gap-2">
+                              <div className="flex flex-wrap gap-2.5">
                                 {transcription.result.named_entities
                                   .filter(e => e.type === 'organization')
                                   .slice(0, 6)
                                   .map((entity, idx) => (
-                                    <Badge key={idx} variant="outline" className="bg-purple-500/10 text-purple-600 border-purple-200">
+                                    <Badge 
+                                      key={idx} 
+                                      variant="secondary" 
+                                      className="bg-purple-500/15 dark:bg-purple-500/25 text-purple-700 dark:text-purple-300 border border-purple-500/30 dark:border-purple-500/40 hover:bg-purple-500/25 dark:hover:bg-purple-500/35 transition-colors px-3 py-1.5 text-sm font-medium"
+                                    >
                                       {entity.entity}
                                     </Badge>
                                   ))}
@@ -568,14 +596,18 @@ export function TabbedTranscriptDisplay({ transcription, summary, isLoading, onN
                           {transcription.result.named_entities.filter(e => 
                             e.type === 'location'
                           ).length > 0 && (
-                            <div className="space-y-2">
+                            <div className="space-y-3">
                               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Locations</p>
-                              <div className="flex flex-wrap gap-2">
+                              <div className="flex flex-wrap gap-2.5">
                                 {transcription.result.named_entities
                                   .filter(e => e.type === 'location')
                                   .slice(0, 6)
                                   .map((entity, idx) => (
-                                    <Badge key={idx} variant="outline" className="bg-green-500/10 text-green-600 border-green-200">
+                                    <Badge 
+                                      key={idx} 
+                                      variant="secondary" 
+                                      className="bg-emerald-500/15 dark:bg-emerald-500/25 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 dark:border-emerald-500/40 hover:bg-emerald-500/25 dark:hover:bg-emerald-500/35 transition-colors px-3 py-1.5 text-sm font-medium"
+                                    >
                                       {entity.entity}
                                     </Badge>
                                   ))}
@@ -587,14 +619,18 @@ export function TabbedTranscriptDisplay({ transcription, summary, isLoading, onN
                           {transcription.result.named_entities.filter(e => 
                             e.type === 'date' || e.type === 'date_interval'
                           ).length > 0 && (
-                            <div className="space-y-2">
+                            <div className="space-y-3">
                               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Dates</p>
-                              <div className="flex flex-wrap gap-2">
+                              <div className="flex flex-wrap gap-2.5">
                                 {transcription.result.named_entities
                                   .filter(e => e.type === 'date' || e.type === 'date_interval')
                                   .slice(0, 6)
                                   .map((entity, idx) => (
-                                    <Badge key={idx} variant="outline" className="bg-orange-500/10 text-orange-600 border-orange-200">
+                                    <Badge 
+                                      key={idx} 
+                                      variant="secondary" 
+                                      className="bg-amber-500/15 dark:bg-amber-500/25 text-amber-700 dark:text-amber-300 border border-amber-500/30 dark:border-amber-500/40 hover:bg-amber-500/25 dark:hover:bg-amber-500/35 transition-colors px-3 py-1.5 text-sm font-medium"
+                                    >
                                       {entity.entity}
                                     </Badge>
                                   ))}
@@ -606,14 +642,18 @@ export function TabbedTranscriptDisplay({ transcription, summary, isLoading, onN
                           {transcription.result.named_entities.filter(e => 
                             !['person_name', 'person_age', 'organization', 'location', 'date', 'date_interval'].includes(e.type)
                           ).length > 0 && (
-                            <div className="space-y-2">
+                            <div className="space-y-3">
                               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Other</p>
-                              <div className="flex flex-wrap gap-2">
+                              <div className="flex flex-wrap gap-2.5">
                                 {transcription.result.named_entities
                                   .filter(e => !['person_name', 'person_age', 'organization', 'location', 'date', 'date_interval'].includes(e.type))
                                   .slice(0, 6)
                                   .map((entity, idx) => (
-                                    <Badge key={idx} variant="outline" className="bg-gray-500/10 text-gray-600 border-gray-200">
+                                    <Badge 
+                                      key={idx} 
+                                      variant="secondary" 
+                                      className="bg-slate-500/15 dark:bg-slate-500/25 text-slate-700 dark:text-slate-300 border border-slate-500/30 dark:border-slate-500/40 hover:bg-slate-500/25 dark:hover:bg-slate-500/35 transition-colors px-3 py-1.5 text-sm font-medium"
+                                    >
                                       {entity.entity}
                                     </Badge>
                                   ))}

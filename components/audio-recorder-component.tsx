@@ -4,6 +4,9 @@ import { useState, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Mic, Square, Pause, Play, Upload, Trash2 } from "lucide-react"
 import { AudioRecorder } from "@/lib/audio-recorder"
+import { useUsageLimits } from "@/hooks/use-usage-limits"
+import { UpgradePrompt } from "@/components/billing/UpgradePrompt"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
 interface AudioRecorderComponentProps {
   onRecordingComplete: (audioBlob: Blob, filename: string) => void
@@ -16,6 +19,7 @@ export function AudioRecorderComponent({
   onRecordingStart,
   onRecordingStop,
 }: AudioRecorderComponentProps) {
+  const { usage, canTranscribe } = useUsageLimits()
   const [isRecording, setIsRecording] = useState(false)
   const [isPaused, setIsPaused] = useState(false)
   const [recordingTime, setRecordingTime] = useState(0)
@@ -176,35 +180,12 @@ export function AudioRecorderComponent({
           </div>
         )}
 
-        {!isInitialized && !error && (
-          <div className="p-4 bg-primary/10 border border-primary/20 rounded-lg">
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 bg-primary rounded-full animate-pulse" />
-              <span className="text-sm font-medium text-primary">Initializing recorder...</span>
-            </div>
-          </div>
-        )}
-
         {/* Recording Interface */}
         <div className="text-center space-y-6">
           {/* Timer Display */}
           <div className="space-y-4">
-            <div className="text-5xl font-mono font-bold text-primary">
+            <div className="text-5xl font-medium tracking-[-1.44px] md:tracking-[-2.16px] text-primary">
               {formatTime(recordingTime)}
-            </div>
-
-            {/* Status Indicator */}
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-muted rounded-full border">
-              <div className={`w-2 h-2 rounded-full ${
-                recordedAudio
-                  ? "bg-chart-1"
-                  : isRecording
-                    ? (isPaused ? "bg-chart-4" : "bg-destructive animate-pulse")
-                    : "bg-muted-foreground"
-              }`} />
-              <span className="text-sm font-medium text-foreground">
-                {getRecordingStatus()}
-              </span>
             </div>
           </div>
 
@@ -212,36 +193,84 @@ export function AudioRecorderComponent({
           <div className="flex justify-center items-center">
             {recordedAudio ? (
               /* Recording completed - show main action button */
-              <div className="flex items-center gap-4">
-                <Button
-                  onClick={handleUploadAndTranscribe}
-                  size="lg"
-                  className="gap-2"
-                >
-                  <Upload className="h-5 w-5" />
-                  Transcribe
-                </Button>
+              <div className="flex flex-col items-center gap-4">
+                {!canTranscribe && usage && (
+                  <UpgradePrompt
+                    type="transcription"
+                    used={usage.transcriptionMinutes.used}
+                    limit={usage.transcriptionMinutes.limit}
+                    className="mb-2"
+                  />
+                )}
+                <div className="flex items-center gap-4">
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span>
+                          <Button
+                            onClick={handleUploadAndTranscribe}
+                            disabled={!canTranscribe}
+                            size="lg"
+                            className="!h-[56px] rounded-none !text-base gap-2 px-8 min-w-[140px] flex items-center justify-center"
+                          >
+                            <Upload className="h-5 w-5" />
+                            Transcribe
+                          </Button>
+                        </span>
+                      </TooltipTrigger>
+                      {!canTranscribe && usage && (
+                        <TooltipContent>
+                          <p>You've reached your transcription limit ({usage.transcriptionMinutes.used.toFixed(1)}/{usage.transcriptionMinutes.limit} min)</p>
+                        </TooltipContent>
+                      )}
+                    </Tooltip>
+                  </TooltipProvider>
 
-                <Button
-                  onClick={handleDiscardRecording}
-                  variant="outline"
-                  size="lg"
-                  className="gap-2"
-                >
-                  <Trash2 className="h-5 w-5" />
-                  Discard
-                </Button>
+                  <Button
+                    onClick={handleDiscardRecording}
+                    variant="outline"
+                    size="lg"
+                    className="!h-[56px] rounded-none !text-base gap-2 px-8 min-w-[140px] flex items-center justify-center box-border"
+                  >
+                    <Trash2 className="h-5 w-5" />
+                    Discard
+                  </Button>
+                </div>
               </div>
             ) : !isRecording ? (
-              /* Ready to start recording - show circular mic button */
-              <Button
-                onClick={startRecording}
-                disabled={!isInitialized}
-                size="lg"
-                className="h-20 w-20 rounded-full p-0"
-              >
-                <Mic className="h-8 w-8" />
-              </Button>
+              /* Ready to start recording - show button matching landing page style */
+              <div className="flex flex-col items-center gap-4">
+                {!canTranscribe && usage && (
+                  <UpgradePrompt
+                    type="transcription"
+                    used={usage.transcriptionMinutes.used}
+                    limit={usage.transcriptionMinutes.limit}
+                    className="mb-2"
+                  />
+                )}
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span>
+                        <Button
+                          onClick={startRecording}
+                          disabled={!isInitialized || !canTranscribe}
+                          size="lg"
+                          className="!h-14 rounded-none !text-base gap-2 px-8"
+                        >
+                          <Mic className="h-5 w-5" />
+                          Start Recording
+                        </Button>
+                      </span>
+                    </TooltipTrigger>
+                    {!canTranscribe && usage && (
+                      <TooltipContent>
+                        <p>You've reached your transcription limit ({usage.transcriptionMinutes.used.toFixed(1)}/{usage.transcriptionMinutes.limit} min)</p>
+                      </TooltipContent>
+                    )}
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
             ) : (
               /* Currently recording - show control buttons */
               <div className="flex items-center gap-4">
@@ -249,12 +278,18 @@ export function AudioRecorderComponent({
                   onClick={pauseRecording}
                   size="lg"
                   variant={isPaused ? "secondary" : "default"}
-                  className="h-20 w-20 rounded-full p-0"
+                  className="!h-[56px] rounded-none !text-base gap-2 px-8 min-w-[140px] flex items-center justify-center"
                 >
                   {isPaused ? (
-                    <Play className="h-8 w-8" />
+                    <>
+                      <Play className="h-5 w-5" />
+                      Resume
+                    </>
                   ) : (
-                    <Pause className="h-8 w-8" />
+                    <>
+                      <Pause className="h-5 w-5" />
+                      Pause
+                    </>
                   )}
                 </Button>
 
@@ -262,9 +297,10 @@ export function AudioRecorderComponent({
                   onClick={stopRecording}
                   variant="destructive"
                   size="lg"
-                  className="h-20 w-20 rounded-full p-0"
+                  className="!h-[56px] rounded-none !text-base gap-2 px-8 min-w-[140px] flex items-center justify-center"
                 >
-                  <Square className="h-8 w-8" />
+                  <Square className="h-5 w-5" />
+                  Stop
                 </Button>
               </div>
             )}

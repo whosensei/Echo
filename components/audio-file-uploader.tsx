@@ -4,6 +4,9 @@ import { useRef, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Upload, File, X } from "lucide-react"
+import { useUsageLimits } from "@/hooks/use-usage-limits"
+import { UpgradePrompt } from "@/components/billing/UpgradePrompt"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
 interface AudioFileUploaderProps {
   onFileSelected: (file: File) => void
@@ -11,6 +14,7 @@ interface AudioFileUploaderProps {
 }
 
 export function AudioFileUploader({ onFileSelected, isProcessing }: AudioFileUploaderProps) {
+  const { usage, canTranscribe } = useUsageLimits()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [isDragging, setIsDragging] = useState(false)
@@ -164,23 +168,45 @@ export function AudioFileUploader({ onFileSelected, isProcessing }: AudioFileUpl
           </div>
 
           {/* Action Buttons */}
-          <div className="flex gap-3 w-full">
-            <Button
-              variant="outline"
-              className="flex-1"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={isProcessing}
-            >
-              <Upload className="mr-2 h-4 w-4" />
-              Choose File
-            </Button>
-            <Button
-              className="flex-1"
-              onClick={handleUploadClick}
-              disabled={!selectedFile || isProcessing}
-            >
-              {isProcessing ? 'Processing...' : 'Upload & Transcribe'}
-            </Button>
+          <div className="flex flex-col gap-3 w-full">
+            {!canTranscribe && usage && (
+              <UpgradePrompt
+                type="transcription"
+                used={usage.transcriptionMinutes.used}
+                limit={usage.transcriptionMinutes.limit}
+              />
+            )}
+            <div className="flex gap-3 w-full">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isProcessing || !canTranscribe}
+              >
+                <Upload className="mr-2 h-4 w-4" />
+                Choose File
+              </Button>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="flex-1">
+                      <Button
+                        className="flex-1 w-full"
+                        onClick={handleUploadClick}
+                        disabled={!selectedFile || isProcessing || !canTranscribe}
+                      >
+                        {isProcessing ? 'Processing...' : 'Upload & Transcribe'}
+                      </Button>
+                    </span>
+                  </TooltipTrigger>
+                  {!canTranscribe && usage && (
+                    <TooltipContent>
+                      <p>You've reached your transcription limit ({usage.transcriptionMinutes.used.toFixed(1)}/{usage.transcriptionMinutes.limit} min)</p>
+                    </TooltipContent>
+                  )}
+                </Tooltip>
+              </TooltipProvider>
+            </div>
           </div>
         </div>
       </CardContent>

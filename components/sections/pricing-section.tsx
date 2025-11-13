@@ -1,9 +1,13 @@
-import { Check } from "lucide-react"
-import { type SVGProps } from "react"
+"use client"
+
+import { Check, Loader2 } from "lucide-react"
+import { type SVGProps, useState } from "react"
+import { useRouter } from "next/navigation"
 import clsx from "clsx"
 import { Section } from "@/components/common/section-wrapper"
 import { Heading } from "@/components/common/heading"
-import { ButtonLinkCustom } from "@/components/common/button-custom"
+import { ButtonCustom } from "@/components/common/button-custom"
+import { useSession } from "@/lib/auth-client"
 
 interface PricingPlan {
   id: string
@@ -11,6 +15,7 @@ interface PricingPlan {
   price: string
   billed: string
   isMostPopular: boolean
+  planType: "free" | "pro" | "enterprise"
   features: Array<{
     id: string
     title: string
@@ -39,6 +44,59 @@ export function PricingSection({ heading, plans }: PricingSectionProps) {
 }
 
 function PricingCard(item: PricingPlan) {
+  const { data: session } = useSession()
+  const router = useRouter()
+  const [isLoading, setIsLoading] = useState(false)
+
+  const handleCheckout = async () => {
+    // If not authenticated, redirect to signup
+    if (!session?.user) {
+      router.push("/signup")
+      return
+    }
+
+    // Free plan - just redirect to dashboard
+    if (item.planType === "free") {
+      router.push("/dashboard")
+      return
+    }
+
+    // Pro or Enterprise - create checkout session
+    setIsLoading(true)
+    try {
+      const response = await fetch("/api/billing/checkout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          plan: item.planType,
+          returnUrl: `${window.location.origin}/dashboard`,
+        }),
+      })
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ error: "Failed to create checkout session" }))
+        console.error("Checkout error:", error)
+        alert(error.error || "Failed to start checkout. Please try again.")
+        setIsLoading(false)
+        return
+      }
+
+      const data = await response.json()
+      if (data.url) {
+        // Redirect to Dodo hosted checkout
+        window.location.href = data.url
+      } else {
+        throw new Error("No checkout URL received")
+      }
+    } catch (error) {
+      console.error("Checkout failed:", error)
+      alert("Failed to start checkout. Please try again.")
+      setIsLoading(false)
+    }
+  }
+
   return (
     <article
       className={clsx(
@@ -90,14 +148,22 @@ function PricingCard(item: PricingPlan) {
               <Shadow className="pointer-events-none absolute left-0 top-0 h-full w-full origin-bottom scale-[2.0] text-primary" />
             </>
           )}
-          <ButtonLinkCustom
+          <ButtonCustom
             className="z-10 w-full relative"
-            href="/signup"
+            onClick={handleCheckout}
+            disabled={isLoading}
             intent={item.isMostPopular ? "primary" : "secondary"}
             size="lg"
           >
-            Get started
-          </ButtonLinkCustom>
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Processing...
+              </>
+            ) : (
+              item.planType === "free" ? "Get started" : "Upgrade now"
+            )}
+          </ButtonCustom>
         </div>
       </div>
     </article>

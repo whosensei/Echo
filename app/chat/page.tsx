@@ -5,6 +5,7 @@ import { ChatSidebar } from '@/components/chat/ChatSidebar';
 import { ChatMessage } from '@/components/chat/ChatMessage';
 import { ChatInput } from '@/components/chat/ChatInput';
 import { TranscriptSelector } from '@/components/chat/TranscriptSelector';
+import { UsageLimits } from '@/components/billing/UsageLimits';
 
 import { useState, useEffect, useRef, useCallback, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -616,6 +617,11 @@ function ChatPageContent() {
 
         {/* Main Chat Area */}
         <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden relative">
+          {/* Usage Limits - Top Right Corner */}
+          <div className="absolute top-4 right-4 z-10 bg-card border border-border rounded-lg p-3 shadow-sm">
+            <UsageLimits compact />
+          </div>
+          
           {/* Sidebar toggle button when collapsed */}
           {isSidebarCollapsed && (
             <Button
