@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { OAuthButtons } from "@/components/auth/oauth-buttons";
 import { Divider } from "@/components/auth/divider";
 import { EmailFieldSignIn, PasswordField } from "@/components/auth/form-fields";
+import { Loader2 } from "lucide-react";
 import Link from "next/link";
 
 export function LoginForm() {
@@ -40,7 +41,7 @@ export function LoginForm() {
       <div className="space-y-6">
         {/* Header */}
         <div className="space-y-2 text-center">
-          <h1 className="text-3xl font-medium tracking-tight">Welcome to MeetingAI</h1>
+          <h1 className="text-3xl font-medium tracking-tight">Welcome to Echo</h1>
           <p className="text-sm text-muted-foreground">Sign in to your account to continue</p>
         </div>
 
@@ -75,7 +76,14 @@ export function LoginForm() {
               type="submit"
               disabled={isLoading}
             >
-              {isLoading ? "Signing in..." : "Sign in"}
+              {isLoading ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Signing in...
+                </>
+              ) : (
+                "Sign in"
+              )}
             </Button>
           </form>
         </div>

@@ -163,7 +163,7 @@ export function UsageDisplay() {
             <div className="flex-1">
               <p className="text-sm font-medium text-blue-800">Free Plan Limits</p>
               <p className="text-xs text-blue-700 mt-1">
-                Upgrade to Pro for higher limits and overage billing
+                Upgrade to Pro for higher limits
               </p>
             </div>
           </div>

@@ -21,8 +21,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useToast } from '@/components/ui/toaster';
-import { getDefaultModel } from '@/lib/ai-models';
 import { useSession, authClient } from '@/lib/auth-client';
+import { config } from '@/config/env';
 import {
   Loader2,
   MessageSquare,
@@ -68,8 +68,9 @@ function ChatPageContent() {
   const [sessions, setSessions] = useState<ChatSessionItem[]>([]);
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
-  const [selectedModel, setSelectedModel] = useState(getDefaultModel());
   const [attachments, setAttachments] = useState<Attachment[]>([]);
+  // Use model from environment configuration
+  const selectedModel = config.app.defaultAiModel;
   const [showTranscriptSelector, setShowTranscriptSelector] = useState(false);
   const [isLoadingSessions, setIsLoadingSessions] = useState(true);
   const [isLoadingSession, setIsLoadingSession] = useState(false);
@@ -113,7 +114,7 @@ function ChatPageContent() {
             recording: attachment.recording ?? null,
           }))
         );
-        setSelectedModel(data.session.model || getDefaultModel());
+        // Model is set from environment config, no need to update
       }
     } catch (error) {
       console.error('Failed to load session:', error);
@@ -145,14 +146,23 @@ function ChatPageContent() {
     }
 
     const data = await response.json();
-    return data.session as { id: string; title: string; model: string };
+    const sessionData = data.session as { id: string; title: string; model: string };
+    const attachmentData: Attachment[] = (data.attachments || []).map((attachment: any) => ({
+      id: attachment.id,
+      recordingId: attachment.recordingId,
+      recording: attachment.recording ?? null,
+    }));
+
+    return { session: sessionData, attachments: attachmentData };
   }, [selectedModel]);
 
   const handleNewChat = useCallback(async (preAttachedRecordingIds: string[] = []) => {
     try {
-      const newSession = await createChatSession(preAttachedRecordingIds);
+      const { session: newSession, attachments: newAttachments } = await createChatSession(preAttachedRecordingIds);
       await loadSessions();
-      await loadSession(newSession.id);
+      setCurrentSessionId(newSession.id);
+      setMessages([]);
+      setAttachments(newAttachments);
       toast({
         title: 'Success',
         description: 'New chat created',
@@ -167,7 +177,7 @@ function ChatPageContent() {
       });
       return false;
     }
-  }, [createChatSession, loadSession, loadSessions, toast]);
+  }, [createChatSession, loadSessions, toast]);
 
   // Load sessions on mount
   useEffect(() => {
@@ -203,10 +213,24 @@ function ChatPageContent() {
     void openChatWithRecording();
   }, [searchParams, router, handleNewChat]);
 
-  // Auto-scroll to bottom when messages change
+  // Track previous message count to only scroll when messages are added
+  const prevMessageCountRef = useRef(0);
+  
+  // Auto-scroll to bottom when new messages are added (not on other state changes)
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+    const currentCount = messages.length;
+    const prevCount = prevMessageCountRef.current;
+    
+    // Only scroll if messages were added (not removed or unchanged)
+    if (currentCount > prevCount && currentCount > 0) {
+      // Use requestAnimationFrame to ensure DOM has updated after layout changes
+      requestAnimationFrame(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      });
+    }
+    
+    prevMessageCountRef.current = currentCount;
+  }, [messages.length]); // Only depend on length, not the entire array
 
   // Keyboard shortcut for toggling sidebar (Cmd+B / Ctrl+B)
   useEffect(() => {
@@ -294,11 +318,12 @@ function ChatPageContent() {
       let sessionId = currentSessionId;
 
       if (!sessionId) {
-        const newSession = await createChatSession(recordingIds);
+        const { session: newSession, attachments: newAttachments } = await createChatSession(recordingIds);
         sessionId = newSession.id;
         setCurrentSessionId(sessionId);
+        setMessages([]);
+        setAttachments(newAttachments);
         await loadSessions();
-        await loadSession(sessionId);
         toast({
           title: 'Transcripts attached',
           description:
@@ -511,8 +536,6 @@ function ChatPageContent() {
       attachments={attachments}
       onRemoveAttachment={handleRemoveAttachment}
       disabled={isLoadingResponse}
-      selectedModel={selectedModel}
-      onModelChange={setSelectedModel}
       placeholder={chatInputPlaceholder}
     />
   );
@@ -525,8 +548,6 @@ function ChatPageContent() {
       attachments={attachments}
       onRemoveAttachment={handleRemoveAttachment}
       disabled={isLoadingResponse}
-      selectedModel={selectedModel}
-      onModelChange={setSelectedModel}
       placeholder={chatInputPlaceholder}
     />
   );

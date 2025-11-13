@@ -34,5 +34,7 @@ export const config = {
   },
   app: {
     audioStoragePath: process.env.AUDIO_STORAGE_PATH || './audio-recordings',
+    // Default AI model for chat (ChatGPT)
+    defaultAiModel: process.env.AI_MODEL || 'gpt-4o-mini',
   },
 } as const;

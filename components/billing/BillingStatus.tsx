@@ -67,7 +67,10 @@ export function BillingStatus() {
     }
   }
 
+  const [isUpgrading, setIsUpgrading] = useState<"pro" | "enterprise" | null>(null)
+
   const handleUpgrade = async (plan: "pro" | "enterprise") => {
+    setIsUpgrading(plan)
     try {
       const response = await fetch("/api/billing/checkout", {
         method: "POST",
@@ -94,6 +97,7 @@ export function BillingStatus() {
         description: error instanceof Error ? error.message : "An error occurred",
         variant: "destructive",
       })
+      setIsUpgrading(null)
     }
   }
 
@@ -126,7 +130,7 @@ export function BillingStatus() {
   const planLabels = {
     free: "Free",
     pro: "Pro",
-    enterprise: "Enterprise",
+    enterprise: "Max",
   }
 
   const statusColors = {
@@ -219,15 +223,31 @@ export function BillingStatus() {
               <Button
                 onClick={() => handleUpgrade("pro")}
                 className="flex-1"
+                disabled={isUpgrading !== null}
               >
-                Upgrade to Pro
+                {isUpgrading === "pro" ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  "Upgrade to Pro"
+                )}
               </Button>
               <Button
                 onClick={() => handleUpgrade("enterprise")}
                 variant="outline"
                 className="flex-1"
+                disabled={isUpgrading !== null}
               >
-                Enterprise
+                {isUpgrading === "enterprise" ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  "Max"
+                )}
               </Button>
             </>
           ) : (

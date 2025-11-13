@@ -7,7 +7,6 @@
 import { useState, useRef, KeyboardEvent } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { ArrowUpIcon, Plus, X } from 'lucide-react';
-import { ModelSelector } from '@/components/chat/ModelSelector';
 import { cn } from '@/lib/utils';
 import { useUsageLimits } from '@/hooks/use-usage-limits';
 import { UpgradePrompt } from '@/components/billing/UpgradePrompt';
@@ -34,8 +33,6 @@ interface ChatInputProps {
   onRemoveAttachment?: (id: string) => void;
   disabled?: boolean;
   placeholder?: string;
-  selectedModel: string;
-  onModelChange: (model: string) => void;
   className?: string;
 }
 
@@ -46,8 +43,6 @@ export function ChatInput({
   onRemoveAttachment,
   disabled, 
   placeholder = 'Ask, Search or Chat...',
-  selectedModel,
-  onModelChange,
   className,
 }: ChatInputProps) {
   const { usage, canChat } = useUsageLimits();
@@ -118,21 +113,14 @@ export function ChatInput({
             </InputGroupButton>
           )}
 
-          {/* Model Selector */}
-          <ModelSelector
-            selectedModel={selectedModel}
-            onModelChange={onModelChange}
-            disabled={disabled || !canChat}
-          />
-
-          {/* Attachments - Inline with model selector */}
+          {/* Attachments */}
           {attachments && attachments.length > 0 && (
             <div className="ml-2 flex flex-wrap gap-1.5 items-center">
               {attachments.map((attachment) => (
                 <Badge
                   key={attachment.id}
                   variant="secondary"
-                  className="flex items-center gap-1.5 rounded-full px-2.5 py-1 h-7 text-xs"
+                  className="flex items-center gap-1.5 rounded-full px-3 py-1.5 h-9 text-xs"
                 >
                   <span className="truncate max-w-[120px]">
                     {attachment.recording?.title ?? 'Untitled recording'}
@@ -143,7 +131,7 @@ export function ChatInput({
                       onClick={() => onRemoveAttachment(attachment.recordingId)}
                       className="hover:text-foreground transition-colors flex-shrink-0"
                     >
-                      <X className="h-3 w-3" />
+                      <X className="h-3.5 w-3.5" />
                     </button>
                   )}
                 </Badge>
