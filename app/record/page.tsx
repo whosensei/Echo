@@ -15,7 +15,7 @@ import { toast } from "sonner"
 import { type StoredTranscription } from "@/lib/transcription-types"
 import { useSession } from "@/lib/auth-client"
 import type { TranscriptionResult } from "@/lib/assemblyai-service"
-import type { MeetingSummary } from "@/lib/gemini-service"
+import type { MeetingSummary } from "@/lib/openai-summary-service"
 
 export default function RecordPage() {
   const { data: session } = useSession()
@@ -562,7 +562,7 @@ export default function RecordPage() {
                       <div className="h-9 w-9 rounded-xl bg-primary/10 ring-1 ring-primary/20 flex items-center justify-center">
                         <Mic className="h-5 w-5 text-primary" strokeWidth={2.5} />
                       </div>
-                      <span className="text-xl font-medium tracking-tight">MeetingAI</span>
+                      <span className="text-xl font-medium tracking-tight">Echo</span>
                     </div>
                   </Link>
                   

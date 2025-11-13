@@ -11,6 +11,7 @@ import { chatMessage, chatAttachment, recording, transcript as transcriptTable, 
 import { headers } from 'next/headers';
 import { auth } from '@/lib/auth';
 import { ingestChatTokens, checkTokenLimit } from '@/lib/billing/usage';
+import { config } from '@/config/env';
 
 export const maxDuration = 30; // Allow up to 30 seconds for streaming
 
@@ -29,7 +30,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { messages = [], sessionId, model = 'gemini-2.5-flash', attachedRecordingIds = [] } = body;
+    const { messages = [], sessionId, model = config.app.defaultAiModel, attachedRecordingIds = [] } = body;
 
     if (!Array.isArray(messages)) {
       return new Response(

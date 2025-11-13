@@ -4,10 +4,11 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { chatSession, chatMessage, chatAttachment, recording } from '@/lib/db/schema';
+import { chatSession, chatMessage, chatAttachment, recording, transcript, summary } from '@/lib/db/schema';
 import { eq, desc } from 'drizzle-orm';
 import { auth } from '@/lib/auth';
 import { headers } from 'next/headers';
+import { config } from '@/config/env';
 
 /**
  * GET /api/chat/sessions - List all sessions for the current user
@@ -85,7 +86,7 @@ export async function POST(req: NextRequest) {
 
     const userId = session.user.id;
     const body = await req.json();
-    const { title, model = 'gemini-2.5-flash', attachedRecordingIds = [] } = body;
+    const { title, model = config.app.defaultAiModel, attachedRecordingIds = [] } = body;
 
     if (!title) {
       return NextResponse.json(
@@ -114,7 +115,26 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    return NextResponse.json({ session: newSession });
+    // Return attachments with details
+    const attachments =
+      attachedRecordingIds.length > 0
+        ? await db
+            .select({
+              id: chatAttachment.id,
+              recordingId: chatAttachment.recordingId,
+              attachedAt: chatAttachment.attachedAt,
+              recording,
+              transcript,
+              summary,
+            })
+            .from(chatAttachment)
+            .leftJoin(recording, eq(chatAttachment.recordingId, recording.id))
+            .leftJoin(transcript, eq(recording.id, transcript.recordingId))
+            .leftJoin(summary, eq(recording.id, summary.recordingId))
+            .where(eq(chatAttachment.sessionId, newSession.id))
+        : [];
+
+    return NextResponse.json({ session: newSession, attachments });
   } catch (error) {
     console.error('Error creating session:', error);
     return NextResponse.json(

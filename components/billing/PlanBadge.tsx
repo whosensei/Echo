@@ -21,7 +21,7 @@ export function PlanBadge({ plan, className }: PlanBadgeProps) {
       icon: Zap,
     },
     enterprise: {
-      label: "Enterprise",
+      label: "Max",
       variant: "default" as const,
       icon: Crown,
     },

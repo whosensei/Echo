@@ -1,10 +1,10 @@
 /**
  * API Route: Generate Summary
- * Handles meeting summary generation using Gemini API
+ * Handles meeting summary generation using OpenAI API
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { GeminiService } from '@/lib/gemini-service';
+import { OpenAISummaryService } from '@/lib/openai-summary-service';
 
 export async function POST(request: NextRequest) {
   try {
@@ -17,12 +17,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Initialize Gemini service
-    const geminiService = new GeminiService();
+    // Initialize OpenAI service
+    const openAIService = new OpenAISummaryService();
 
     // Generate meeting summary
     console.log('Generating meeting summary...');
-    const summary = await geminiService.generateMeetingSummary({
+    const summary = await openAIService.generateMeetingSummary({
       transcript,
       rawTranscript,
       speakers,
@@ -38,8 +38,9 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('Error generating summary:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
     return NextResponse.json(
-      { error: `Failed to generate summary: ${error}` },
+      { error: `Failed to generate summary: ${errorMessage}` },
       { status: 500 }
     );
   }
@@ -58,11 +59,11 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Initialize Gemini service
-    const geminiService = new GeminiService();
+    // Initialize OpenAI service
+    const openAIService = new OpenAISummaryService();
 
     // Generate quick summary
-    const quickSummary = await geminiService.generateQuickSummary(transcript);
+    const quickSummary = await openAIService.generateQuickSummary(transcript);
 
     return NextResponse.json({
       success: true,
@@ -71,8 +72,9 @@ export async function GET(request: NextRequest) {
 
   } catch (error) {
     console.error('Error generating quick summary:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
     return NextResponse.json(
-      { error: `Failed to generate quick summary: ${error}` },
+      { error: `Failed to generate quick summary: ${errorMessage}` },
       { status: 500 }
     );
   }

@@ -62,7 +62,7 @@ export function PlanStatusButton() {
   const planLabels = {
     free: "Free",
     pro: "Pro",
-    enterprise: "Enterprise",
+    enterprise: "Max",
   }
 
   const isActive = status.status === "active" || status.status === "trialing"

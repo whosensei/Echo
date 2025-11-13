@@ -1,7 +1,7 @@
 "use client"
 
-import { Check, Loader2 } from "lucide-react"
-import { type SVGProps, useState } from "react"
+import { Check, Loader2, CheckCircle2 } from "lucide-react"
+import { type SVGProps, useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import clsx from "clsx"
 import { Section } from "@/components/common/section-wrapper"
@@ -47,11 +47,41 @@ function PricingCard(item: PricingPlan) {
   const { data: session } = useSession()
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
+  const [currentPlan, setCurrentPlan] = useState<"free" | "pro" | "enterprise" | null>(null)
+  const [planStatus, setPlanStatus] = useState<string | null>(null)
+
+  const fetchPlanStatus = async () => {
+    try {
+      const response = await fetch("/api/billing/status")
+      if (response.ok) {
+        const data = await response.json()
+        setCurrentPlan(data.plan)
+        setPlanStatus(data.status)
+      }
+    } catch (error) {
+      console.error("Failed to fetch plan status:", error)
+    }
+  }
+
+  useEffect(() => {
+    if (session?.user) {
+      fetchPlanStatus()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session?.user])
+
+  const isCurrentPlan = currentPlan === item.planType
+  const isActive = planStatus === "active" || planStatus === "trialing"
 
   const handleCheckout = async () => {
     // If not authenticated, redirect to signup
     if (!session?.user) {
       router.push("/signup")
+      return
+    }
+
+    // If already on this plan, do nothing
+    if (isCurrentPlan && isActive) {
       return
     }
 
@@ -151,7 +181,7 @@ function PricingCard(item: PricingPlan) {
           <ButtonCustom
             className="z-10 w-full relative"
             onClick={handleCheckout}
-            disabled={isLoading}
+            disabled={isLoading || (isCurrentPlan && isActive)}
             intent={item.isMostPopular ? "primary" : "secondary"}
             size="lg"
           >
@@ -160,8 +190,15 @@ function PricingCard(item: PricingPlan) {
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Processing...
               </>
+            ) : isCurrentPlan && isActive ? (
+              <>
+                <CheckCircle2 className="mr-2 h-4 w-4" />
+                Active
+              </>
+            ) : item.planType === "free" ? (
+              "Get started"
             ) : (
-              item.planType === "free" ? "Get started" : "Upgrade now"
+              "Upgrade now"
             )}
           </ButtonCustom>
         </div>

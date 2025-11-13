@@ -3,7 +3,7 @@
  */
 
 import { TranscriptionResult } from './assemblyai-service';
-import { MeetingSummary } from './gemini-service';
+import { MeetingSummary } from './openai-summary-service';
 
 export interface StoredTranscription {
   id: string;

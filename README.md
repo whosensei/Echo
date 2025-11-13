@@ -75,7 +75,7 @@ Create a `.env.local` file in the root directory:
 ASSEMBLYAI_API_KEY=your_assemblyai_api_key_here
 ASSEMBLYAI_BASE_URL=https://api.assemblyai.com/v2
 
-# Google Gemini API Configuration (optional - for additional summaries)
+# Google Gemini API Configuration (optional - for AI chat models)
 GEMINI_API_KEY=your_gemini_api_key_here
 
 # OpenAI API Configuration (optional - for AI chat)
@@ -101,7 +101,7 @@ AUDIO_STORAGE_PATH=./audio-recordings
 - Sign up for an account
 - Navigate to your dashboard to get your API key
 
-**Google Gemini API Key (Optional):**
+**Google Gemini API Key (Optional - for chat models):**
 - Go to [Google AI Studio](https://aistudio.google.com)
 - Create a new project or select existing one
 - Generate an API key for Gemini
@@ -146,7 +146,7 @@ Open [http://localhost:3000](http://localhost:3000) to use the application.
 │   ├── audio-recorder.ts      # Web Audio API implementation
 │   ├── assemblyai-service.ts  # AssemblyAI API integration
 │   ├── s3-service.ts          # AWS S3 integration
-│   └── gemini-service.ts      # Optional Gemini AI integration
+│   └── openai-summary-service.ts  # OpenAI summary generation
 ├── config/
 │   └── env.ts              # Environment configuration
 └── audio-recordings/       # Local audio storage directory
@@ -166,9 +166,10 @@ Open [http://localhost:3000](http://localhost:3000) to use the application.
 - Transcription status polling
 - Multi-language support with auto-detection
 
-### Optional: Gemini AI Features
-- Additional summary generation
-- Custom analysis and insights
+### AI Chat Features
+- Multi-model support (OpenAI, Anthropic, Google Gemini)
+- Context-aware conversations
+- Attach transcripts for context
 
 ## Technical Specifications
 

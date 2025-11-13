@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { OAuthButtons } from "@/components/auth/oauth-buttons";
 import { Divider } from "@/components/auth/divider";
 import { EmailFieldSignUp, PasswordFieldWithValidation } from "@/components/auth/form-fields";
+import { Loader2 } from "lucide-react";
 import Link from "next/link";
 
 export function SignupForm() {
@@ -73,7 +74,14 @@ export function SignupForm() {
               type="submit"
               disabled={isLoading}
             >
-              {isLoading ? "Creating account..." : "Create account"}
+              {isLoading ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Creating account...
+                </>
+              ) : (
+                "Create account"
+              )}
             </Button>
           </form>
         </div>

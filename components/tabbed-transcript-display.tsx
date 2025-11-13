@@ -15,7 +15,7 @@ import { useSession } from "@/lib/auth-client"
 import { UsageLimits } from "@/components/billing/UsageLimits"
 import { AudioPlayer } from "@/components/audio-player"
 import type { TranscriptionResult } from "@/lib/assemblyai-service"
-import type { MeetingSummary } from "@/lib/gemini-service"
+import type { MeetingSummary } from "@/lib/openai-summary-service"
 
 interface TabbedTranscriptDisplayProps {
   transcription: TranscriptionResult | null
@@ -222,9 +222,8 @@ export function TabbedTranscriptDisplay({ transcription, summary, isLoading, onN
                   <Button
                     key={item.id}
                     variant="ghost"
-                    size="sm"
                     onClick={() => setActiveTab(item.id)}
-                    className={`flex items-center gap-2 text-sm rounded-md transition-all ${
+                    className={`flex items-center gap-2 text-sm rounded-md transition-all h-9 px-4 ${
                       isActive 
                         ? 'bg-background shadow-sm font-semibold' 
                         : 'hover:bg-background/50 font-medium'
@@ -239,15 +238,14 @@ export function TabbedTranscriptDisplay({ transcription, summary, isLoading, onN
             {/* Right side: Usage Limits in pill and New Recording Button */}
             <div className="flex items-center gap-4">
               {!hideUsageLimits && (
-                <div className="bg-card border border-border rounded-lg px-3 py-2 shadow-sm">
+                <div className="bg-card border border-border rounded-lg px-3 shadow-sm h-9 flex items-center">
                   <UsageLimits compact />
                 </div>
               )}
               {onNewRecording && (
                 <Button
                   onClick={onNewRecording}
-                  size="sm"
-                  className="flex items-center gap-2 shadow-sm"
+                  className="flex items-center gap-2 shadow-sm h-9 px-4 text-sm"
                 >
                   <Plus className="h-4 w-4" />
                   <span>New Recording</span>
@@ -353,13 +351,13 @@ export function TabbedTranscriptDisplay({ transcription, summary, isLoading, onN
                   </Card>
                 )}
 
-                {/* Key Moments Section */}
+                {/* Moments of Meeting Section */}
                 {summary?.keyMoments && summary.keyMoments.length > 0 && (
                   <Card className="border border-border/40 dark:border-2 dark:border-border dark:shadow-md">
                     <CardContent className="p-8">
                       <div className="flex items-center gap-2 mb-6">
                         <Zap className="h-5 w-5 text-primary" />
-                        <h3 className="text-2xl font-medium text-foreground tracking-tight">Key Moments</h3>
+                        <h3 className="text-2xl font-medium text-foreground tracking-tight">Moments of Meeting</h3>
                       </div>
                       <ul className="space-y-3">
                         {summary.keyMoments.map((moment, index) => (
@@ -373,109 +371,42 @@ export function TabbedTranscriptDisplay({ transcription, summary, isLoading, onN
                   </Card>
                 )}
 
-                {/* Decisions Made Section */}
+                {/* Action Points Section */}
                 {summary?.structuredDecisions && summary.structuredDecisions.length > 0 && (
                   <Card className="border border-border/40 dark:border-2 dark:border-border dark:shadow-md">
                     <CardContent className="p-8">
                       <div className="flex items-center gap-2 mb-6">
                         <CheckCircle2 className="h-5 w-5 text-primary" />
-                        <h3 className="text-2xl font-medium text-foreground tracking-tight">Decisions Made</h3>
+                        <h3 className="text-2xl font-medium text-foreground tracking-tight">Action Points</h3>
                       </div>
-                      <div className="space-y-4">
+                      <ul className="space-y-3">
                         {summary.structuredDecisions.map((decision, index) => (
-                          <Card key={index} className="border border-border/60 bg-muted/30">
-                            <CardContent className="p-5">
-                              <div className="space-y-3">
-                                <div className="flex items-start justify-between gap-4">
-                                  <p className="text-foreground font-medium flex-1">{decision.description}</p>
-                                  <Badge className={`flex-shrink-0 border ${
-                                    decision.impact === 'high' ? 'bg-purple-500/15 dark:bg-purple-500/25 text-purple-700 dark:text-purple-300 border-purple-500/30 dark:border-purple-500/40' :
-                                    decision.impact === 'medium' ? 'bg-blue-500/15 dark:bg-blue-500/25 text-blue-700 dark:text-blue-300 border-blue-500/30 dark:border-blue-500/40' :
-                                    'bg-slate-500/15 dark:bg-slate-500/25 text-slate-700 dark:text-slate-300 border-slate-500/30 dark:border-slate-500/40'
-                                  }`}>
-                                    {decision.impact} impact
-                                  </Badge>
-                                </div>
-                                
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-                                  <div className="flex items-center gap-2 text-muted-foreground">
-                                    <User className="h-3 w-3" />
-                                    <span><span className="font-medium">Decided by:</span> {decision.decisionMaker}</span>
-                                  </div>
-                                  <div className="flex items-center gap-2 text-muted-foreground">
-                                    <Clock className="h-3 w-3" />
-                                    <span>{decision.timestamp}</span>
-                                  </div>
-                                </div>
-                                
-                                {decision.context && (
-                                  <p className="text-sm text-muted-foreground italic border-l-2 border-primary/30 pl-3">
-                                    {decision.context}
-                                  </p>
-                                )}
-                              </div>
-                            </CardContent>
-                          </Card>
+                          <li key={index} className="flex gap-3">
+                            <span className="text-primary font-medium flex-shrink-0">•</span>
+                            <p className="text-foreground leading-relaxed">{decision.description}</p>
+                          </li>
                         ))}
-                      </div>
+                      </ul>
                     </CardContent>
                   </Card>
                 )}
 
-                {/* Action Items / TODOs Section */}
+                {/* To-Dos Section */}
                 {summary?.structuredTodos && summary.structuredTodos.length > 0 && (
                   <Card className="border border-border/40 dark:border-2 dark:border-border dark:shadow-md">
                     <CardContent className="p-8">
                       <div className="flex items-center gap-2 mb-6">
                         <ListTodo className="h-5 w-5 text-primary" />
-                        <h3 className="text-2xl font-medium text-foreground tracking-tight">Action Items</h3>
+                        <h3 className="text-2xl font-medium text-foreground tracking-tight">To-Dos</h3>
                       </div>
-                      <div className="space-y-3">
+                      <ul className="space-y-3">
                         {summary.structuredTodos.map((todo, index) => (
-                          <Card key={index} className="border border-border/60 bg-muted/20 hover:bg-muted/40 transition-colors">
-                            <CardContent className="p-5">
-                              <div className="space-y-3">
-                                <div className="flex items-start gap-3">
-                                  <div className="mt-1">
-                                    <div className="w-5 h-5 rounded border-2 border-muted-foreground/30 hover:border-primary transition-colors cursor-pointer" />
-                                  </div>
-                                  <div className="flex-1 space-y-2">
-                                    <p className="text-foreground font-medium">{todo.task}</p>
-                                    
-                                    <div className="flex flex-wrap items-center gap-3">
-                                      <Badge variant="outline" className="text-xs">
-                                        <User className="h-3 w-3 mr-1" />
-                                        {todo.assignee}
-                                      </Badge>
-                                      
-                                      {todo.dueDate !== 'Not specified' && (
-                                        <Badge variant="outline" className="text-xs">
-                                          <Clock className="h-3 w-3 mr-1" />
-                                          {todo.dueDate}
-                                        </Badge>
-                                      )}
-                                      
-                                      <Badge className={`text-xs border ${
-                                        todo.priority === 'high' ? 'bg-red-500/15 dark:bg-red-500/25 text-red-700 dark:text-red-300 border-red-500/30 dark:border-red-500/40' :
-                                        todo.priority === 'medium' ? 'bg-amber-500/15 dark:bg-amber-500/25 text-amber-700 dark:text-amber-300 border-amber-500/30 dark:border-amber-500/40' :
-                                        'bg-emerald-500/15 dark:bg-emerald-500/25 text-emerald-700 dark:text-emerald-300 border-emerald-500/30 dark:border-emerald-500/40'
-                                      }`}>
-                                        {todo.priority} priority
-                                      </Badge>
-                                    </div>
-                                    
-                                    {todo.relatedTo && (
-                                      <p className="text-xs text-muted-foreground">
-                                        Related to: {todo.relatedTo}
-                                      </p>
-                                    )}
-                                  </div>
-                                </div>
-                              </div>
-                            </CardContent>
-                          </Card>
+                          <li key={index} className="flex gap-3">
+                            <span className="text-primary font-medium flex-shrink-0">•</span>
+                            <p className="text-foreground leading-relaxed">{todo.task}</p>
+                          </li>
                         ))}
-                      </div>
+                      </ul>
                     </CardContent>
                   </Card>
                 )}

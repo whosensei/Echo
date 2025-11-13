@@ -40,7 +40,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import type { TranscriptionResult } from "@/lib/assemblyai-service";
-import type { MeetingSummary } from "@/lib/gemini-service";
+import type { MeetingSummary } from "@/lib/openai-summary-service";
 import { exportMeetingToPDF } from "@/lib/pdf-export";
 
 interface Recording {
@@ -183,6 +183,11 @@ export default function MeetingDetailsPage() {
           topics: metadata.topics || [],
           duration: formatDuration(transcriptDurationSeconds),
           sentiment: (recordingData.summary.sentiment as "positive" | "neutral" | "negative") || null,
+          nextSteps: metadata.nextSteps || [],
+          // Core structured data
+          keyMoments: metadata.keyMoments || [],
+          structuredDecisions: metadata.structuredDecisions || [],
+          structuredTodos: metadata.structuredTodos || [],
         };
         setSummaryResult(transformedSummary);
       }

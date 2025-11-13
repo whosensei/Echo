@@ -19,18 +19,21 @@ export default function LandingPage() {
     <div className="min-h-screen bg-background landing-page-dark">
       <nav className="sticky left-0 top-0 z-[110] flex w-full flex-col border-b border-border bg-background">
         <div className="flex h-16 bg-background">
-          <div className="container mx-auto flex w-full items-center justify-between px-6">
-            <Link href="/" className="flex items-center ring-offset-2">
-              <div className="flex items-center gap-2.5">
-                <div className="h-9 w-9 rounded-xl bg-primary/10 ring-1 ring-primary/20 flex items-center justify-center">
-                  <Mic className="h-5 w-5 text-primary" strokeWidth={2.5} />
+          <div className="container mx-auto grid w-full grid-cols-3 items-center px-6">
+            {/* Left: Logo */}
+            <div className="flex items-center">
+              <Link href="/" className="flex items-center ring-offset-2">
+                <div className="flex items-center gap-2.5">
+                  <div className="h-9 w-9 rounded-xl bg-primary/10 ring-1 ring-primary/20 flex items-center justify-center">
+                    <Mic className="h-5 w-5 text-primary" strokeWidth={2.5} />
+                  </div>
+                  <span className="text-xl font-medium tracking-tight">Echo</span>
                 </div>
-                <span className="text-xl font-medium tracking-tight">MeetingAI</span>
-              </div>
-            </Link>
+              </Link>
+            </div>
             
-            {/* Center Navigation Links */}
-            <div className="hidden md:flex items-center gap-1">
+            {/* Center: Navigation Links */}
+            <div className="hidden md:flex items-center justify-center gap-1">
               <Link href="#features">
                 <Button variant="ghost" size="sm" className="font-medium">
                   Features
@@ -48,7 +51,8 @@ export default function LandingPage() {
               </Link>
             </div>
             
-            <div className="flex items-center gap-3">
+            {/* Right: Auth Buttons */}
+            <div className="flex items-center justify-end gap-3">
               {session?.user ? (
                 <>
                   <Link href="/dashboard">
@@ -180,13 +184,13 @@ export default function LandingPage() {
       <TestimonialsSection
         heading={{
           title: "Loved by teams everywhere",
-          subtitle: "See what our customers have to say about MeetingAI",
+          subtitle: "See what our customers have to say about Echo",
           tag: "Testimonials"
         }}
         testimonials={[
           {
             id: "1",
-            quote: "MeetingAI has completely transformed how we handle our team meetings. The transcription accuracy is incredible, and the AI summaries save us hours every week.",
+            quote: "Echo has completely transformed how we handle our team meetings. The transcription accuracy is incredible, and the AI summaries save us hours every week.",
             author: "Sarah Johnson",
             role: "VP of Operations",
             company: "TechCorp"
@@ -200,7 +204,7 @@ export default function LandingPage() {
           },
           {
             id: "3",
-            quote: "As a remote-first company, MeetingAI helps us stay aligned. The action items extraction is spot-on and ensures nothing falls through the cracks.",
+            quote: "As a remote-first company, Echo helps us stay aligned. The action items extraction is spot-on and ensures nothing falls through the cracks.",
             author: "Emma Rodriguez",
             role: "CEO",
             company: "RemoteWorks"
@@ -214,7 +218,7 @@ export default function LandingPage() {
           },
           {
             id: "5",
-            quote: "We've tried several meeting tools, but MeetingAI's accuracy and ease of use are unmatched. It's become an essential part of our workflow.",
+            quote: "We've tried several meeting tools, but Echo's accuracy and ease of use are unmatched. It's become an essential part of our workflow.",
             author: "Lisa Anderson",
             role: "Head of Marketing",
             company: "GrowthHub"
@@ -246,10 +250,10 @@ export default function LandingPage() {
             planType: "free",
             features: [
               { id: "1", title: "Basic AI model access" },
-              { id: "2", title: "Limited usage quota per month" },
-              { id: "3", title: "Standard email support" },
-              { id: "4", title: "Basic analytics dashboard" },
-              { id: "5", title: "Entry-level integration options" }
+              { id: "2", title: "600 transcription minutes per month" },
+              { id: "3", title: "200,000 AI tokens per month" },
+              { id: "4", title: "Standard email support" },
+              { id: "5", title: "Basic analytics dashboard" }
             ]
           },
           {
@@ -261,27 +265,25 @@ export default function LandingPage() {
             planType: "pro",
             features: [
               { id: "1", title: "Advanced AI model access" },
-              { id: "2", title: "300 transcription minutes included" },
-              { id: "3", title: "300,000 AI tokens included" },
-              { id: "4", title: "Overage: $0.06/min, $0.30 per 1K tokens" },
-              { id: "5", title: "Priority email and chat support" },
-              { id: "6", title: "Enhanced analytics dashboard" }
+              { id: "2", title: "2,000 transcription minutes per month" },
+              { id: "3", title: "1,000,000 AI tokens per month" },
+              { id: "4", title: "Priority email support" },
+              { id: "5", title: "Enhanced analytics dashboard" }
             ]
           },
           {
             id: "3",
-            title: "Enterprise",
-            price: "Custom",
-            billed: "Contact sales",
+            title: "Max",
+            price: "$59/mo",
+            billed: "Billed monthly",
             isMostPopular: false,
             planType: "enterprise",
             features: [
               { id: "1", title: "Premium AI models with customization" },
-              { id: "2", title: "Higher usage quotas" },
-              { id: "3", title: "Dedicated account manager" },
-              { id: "4", title: "Custom integrations and APIs" },
-              { id: "5", title: "SLA and enterprise support" },
-              { id: "6", title: "Volume discounts available" }
+              { id: "2", title: "5,000 transcription minutes per month" },
+              { id: "3", title: "5,000,000 AI tokens per month" },
+              { id: "4", title: "Dedicated account manager" },
+              { id: "5", title: "Volume discounts available" }
             ]
           }
         ]}
@@ -292,7 +294,7 @@ export default function LandingPage() {
       <FAQSection
         heading={{
           title: "Frequently asked questions",
-          subtitle: "Everything you need to know about MeetingAI",
+          subtitle: "Everything you need to know about Echo",
           tag: "FAQ"
         }}
         questions={[
@@ -303,8 +305,8 @@ export default function LandingPage() {
           },
           {
             id: "2",
-            question: "Can I use MeetingAI for free?",
-            answer: "Yes! Our free plan includes up to 100 minutes of transcription per month, along with basic AI summaries and speaker identification. No credit card required."
+            question: "Can I use Echo for free?",
+            answer: "Yes! Our free plan includes up to 600 minutes of transcription per month and 200,000 AI tokens per month, along with basic AI summaries and speaker identification. No credit card required."
           },
           {
             id: "3",
@@ -347,7 +349,7 @@ export default function LandingPage() {
             <span className="block">your meetings?</span>
           </h2>
           <p className="text-lg md:text-xl mb-12 opacity-90 font-normal max-w-2xl mx-auto">
-            Join thousands of teams using MeetingAI to capture every important conversation
+            Join thousands of teams using Echo to capture every important conversation
           </p>
           {session?.user ? (
             <Link href="/record">
@@ -375,7 +377,7 @@ export default function LandingPage() {
             <div className="h-9 w-9 rounded-xl bg-primary/10 ring-1 ring-primary/20 flex items-center justify-center">
               <Mic className="h-5 w-5 text-primary" strokeWidth={2.5} />
             </div>
-            <span className="text-xl font-medium tracking-tight">MeetingAI</span>
+            <span className="text-xl font-medium tracking-tight">Echo</span>
           </Link>
 
           {/* Navigation */}
@@ -404,7 +406,7 @@ export default function LandingPage() {
 
           {/* Copyright */}
           <p className="col-span-2 text-pretty text-sm text-muted-foreground sm:col-span-1">
-            © 2025 MeetingAI. All rights reserved.
+            © 2025 Echo. All rights reserved.
           </p>
 
           {/* Social Links */}

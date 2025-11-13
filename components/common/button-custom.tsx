@@ -2,7 +2,7 @@ import { type VariantProps, cva } from "class-variance-authority";
 import Link, { type LinkProps } from "next/link";
 
 export const $button = cva(
-  "gap-1 font-normal shrink-0 rounded-full ring-primary focus-visible:ring-2 outline-hidden outline-0 transition-all duration-150",
+  "gap-1 font-normal shrink-0 rounded-full ring-primary focus-visible:ring-2 outline-hidden outline-0 transition-all duration-150 cursor-pointer",
   {
     variants: {
       intent: {
@@ -14,7 +14,7 @@ export const $button = cva(
           "bg-foreground text-background border border-border hover:bg-foreground/90",
       },
       disabled: {
-        true: "opacity-30 pointer-events-none",
+        true: "opacity-30 pointer-events-none cursor-not-allowed",
       },
       onlyButton: {
         true: "rounded-xs",
