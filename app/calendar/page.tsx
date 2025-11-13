@@ -196,10 +196,10 @@ export default function CalendarPage() {
         </div>
 
         {/* Split View: Calendar + Detail Panel */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:h-[calc(100vh-20rem)]">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:h-[calc(100vh-20rem)] max-w-full">
           {/* Left: Calendar */}
-          <div className="lg:col-span-2 flex flex-col">
-            <Card className="flex-1 flex flex-col h-full">
+          <div className="lg:col-span-2 flex flex-col min-h-0">
+            <Card className="flex-1 flex flex-col h-full min-h-0">
               <CardHeader className="pb-3 flex-shrink-0">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-xl font-medium">
@@ -233,13 +233,13 @@ export default function CalendarPage() {
                   </div>
                 </div>
               </CardHeader>
-              <CardContent className="pb-4 flex-1 overflow-auto">
+              <CardContent className="pb-4 flex-1 overflow-auto min-h-0">
                 {loading ? (
                   <div className="flex items-center justify-center py-12">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-7 gap-px bg-border rounded-lg overflow-hidden h-full">
+                  <div className="grid grid-cols-7 gap-px bg-border rounded-lg overflow-hidden">
                     {/* Day Headers */}
                     {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
                       <div
@@ -313,8 +313,8 @@ export default function CalendarPage() {
           </div>
 
           {/* Right: Detail Panel for Selected Date */}
-          <div className="lg:col-span-1 flex flex-col">
-            <Card className="flex-1 flex flex-col h-full">
+          <div className="lg:col-span-1 flex flex-col min-h-0">
+            <Card className="flex-1 flex flex-col h-full min-h-0">
               <CardHeader className="pb-3 flex-shrink-0">
                 <CardTitle className="text-base font-medium">
                   {format(selectedDate, "EEEE, MMM d")}
@@ -325,7 +325,7 @@ export default function CalendarPage() {
                     : `${selectedDayEvents.length + selectedDayRecordings.length} item${selectedDayEvents.length + selectedDayRecordings.length !== 1 ? "s" : ""}`}
                 </p>
               </CardHeader>
-              <CardContent className="flex-1 overflow-y-auto pb-4">
+              <CardContent className="flex-1 overflow-y-auto pb-4 min-h-0 max-h-full">
                 {selectedDayEvents.length === 0 && selectedDayRecordings.length === 0 ? (
                   /* Empty State - Centered */
                   <div className="flex items-center justify-center h-full">

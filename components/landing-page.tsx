@@ -404,10 +404,20 @@ export default function LandingPage() {
             <ThemeSwitcher />
           </div>
 
-          {/* Copyright */}
-          <p className="col-span-2 text-pretty text-sm text-muted-foreground sm:col-span-1">
-            © 2025 Echo. All rights reserved.
-          </p>
+          {/* Copyright and Legal Links */}
+          <div className="col-span-2 flex flex-col gap-2 sm:col-span-1">
+            <p className="text-pretty text-sm text-muted-foreground">
+              © 2025 Echo. All rights reserved.
+            </p>
+            <div className="flex gap-4 text-sm">
+              <Link href="/privacy" className="text-muted-foreground hover:text-foreground transition-colors">
+                Privacy Policy
+              </Link>
+              <Link href="/terms" className="text-muted-foreground hover:text-foreground transition-colors">
+                Terms of Service
+              </Link>
+            </div>
+          </div>
 
           {/* Social Links */}
           <ul className="col-span-2 col-start-1 row-start-3 flex w-full items-center gap-x-3.5 gap-y-4 sm:col-span-1 sm:col-start-3 sm:row-start-2 sm:w-auto sm:flex-wrap sm:justify-self-end">
