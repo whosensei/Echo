@@ -80,7 +80,7 @@ export default function LandingPage() {
       <HeroSection
         customerSatisfactionText="Trusted by thousands of teams worldwide"
         title="Turn conversations into actionable insights"
-        subtitle="Record, transcribe, and analyze your meetings with cutting-edge AI. Get speaker identification, smart summaries, and action items—automatically."
+        subtitle="Record, transcribe, and analyze your meetings with cutting edge AI. Get speaker identification, smart summaries, and action items automatically."
         primaryAction={{
           label: session?.user ? "Start Recording Now" : "Get Started Free",
           href: session?.user ? "/record" : "/signup"
