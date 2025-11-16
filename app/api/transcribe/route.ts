@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
 
     if (!fileKey && !s3Url) {
       return NextResponse.json(
-        { error: 'File key or S3 URL is required' },
+        { error: 'Audio file information is required' },
         { status: 400 }
       );
     }
@@ -132,7 +132,7 @@ export async function POST(request: NextRequest) {
         rec = recordings[0];
       } else {
         return NextResponse.json(
-          { error: 'Recording ID or S3 URL required for encrypted files' },
+          { error: 'Recording information required for encrypted files' },
           { status: 400 }
         );
       }

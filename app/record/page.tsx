@@ -130,38 +130,60 @@ export default function RecordPage() {
     let recordingId: string | null = null
 
     try {
-      toast.info("Uploading audio...", {
+      toast.info("Preparing upload...", {
         description: encryptionData?.isEncrypted
-          ? "Uploading encrypted recording..."
-          : "Saving your recording and preparing for transcription."
+          ? "Preparing encrypted recording for upload..."
+          : "Preparing your recording for upload..."
       })
 
-      const formData = new FormData()
-      formData.append("audio", audioBlob, filename)
+      // Step 1: Get presigned URL from backend
+      const contentType = encryptionData?.isEncrypted 
+        ? 'application/octet-stream' 
+        : audioBlob.type || 'audio/wav'
 
-      // Add encryption metadata if file is encrypted
-      if (encryptionData?.isEncrypted) {
-        formData.append("isEncrypted", "true")
-        formData.append("encryptionIV", encryptionData.encryptionIV!)
-        formData.append("encryptionSalt", encryptionData.encryptionSalt!)
-        formData.append("encryptionPassword", encryptionData.password!)
-      }
-
-      const uploadResponse = await fetch("/api/upload-audio", {
+      const presignedResponse = await fetch("/api/s3-presigned-url", {
         method: "POST",
-        body: formData,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          filename,
+          contentType,
+          isEncrypted: encryptionData?.isEncrypted || false,
+        }),
       })
 
-      if (!uploadResponse.ok) {
-        const errorData = await uploadResponse.json().catch(() => ({}))
-        const errorMessage = errorData.error || errorData.message || "Failed to upload audio"
-        console.error("Upload error:", errorMessage, errorData)
+      if (!presignedResponse.ok) {
+        const errorData = await presignedResponse.json().catch(() => ({}))
+        const errorMessage = errorData.error || errorData.message || "Failed to prepare upload"
+        console.error("Presigned URL error:", errorMessage, errorData)
         throw new Error(errorMessage)
       }
 
-      const uploadData = await uploadResponse.json()
+      const presignedData = await presignedResponse.json()
+      const { uploadUrl, fileKey, publicUrl: s3Url } = presignedData
 
-      const { fileKey, s3Url, filename: uploadedFilename } = uploadData
+      // Step 2: Upload directly to S3 using presigned URL
+      toast.info("Uploading audio...", {
+        description: encryptionData?.isEncrypted
+          ? "Uploading encrypted recording..."
+          : "Uploading your recording..."
+      })
+
+      const uploadResponse = await fetch(uploadUrl, {
+        method: "PUT",
+        headers: {
+          "Content-Type": contentType,
+          "x-amz-server-side-encryption": "AES256", // Must match what's in the presigned URL signature
+        },
+        body: audioBlob,
+      })
+
+      if (!uploadResponse.ok) {
+        const errorText = await uploadResponse.text().catch(() => "Upload failed")
+        console.error("S3 upload error:", errorText, uploadResponse.status)
+        throw new Error(`Failed to upload file. Please try again.`)
+      }
+
+      const uploadedFilename = filename
 
       // Create recording in backend first
       if (session?.user) {
@@ -172,7 +194,7 @@ export default function RecordPage() {
             body: JSON.stringify({
               title: `Recording ${new Date().toLocaleString()}`,
               recordedAt: new Date().toISOString(),
-              audioFileUrl: s3Url || uploadData.filename,
+              audioFileUrl: s3Url || uploadedFilename,
               status: "processing",
               // Add encryption metadata
               isEncrypted: encryptionData?.isEncrypted || false,

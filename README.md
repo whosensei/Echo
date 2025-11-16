@@ -117,7 +117,7 @@ Open [http://localhost:3000](http://localhost:3000) to use the application.
 ## How It Works
 
 1. **Record Audio**: Click "Start Recording" to begin capturing lossless WAV audio
-2. **Upload & Process**: Audio is uploaded to AWS S3 and sent to AssemblyAI
+2. **Encrypt & Upload**: Audio is encrypted client-side and uploaded directly to AWS S3 via presigned URLs
 3. **Transcription**: AssemblyAI provides:
    - Transcription with speaker diarization
    - Entity detection (people, organizations, locations)
@@ -131,7 +131,7 @@ Open [http://localhost:3000](http://localhost:3000) to use the application.
 ```
 ├── app/
 │   ├── api/                 # Backend API routes
-│   │   ├── upload-audio/    # Audio file upload to S3
+│   │   ├── s3-presigned-url/  # Generate presigned URLs for direct S3 uploads
 │   │   ├── transcribe/      # AssemblyAI transcription
 │   │   ├── summarize/       # Optional Gemini summary
 │   │   └── transcriptions/  # List all transcriptions

@@ -5,10 +5,24 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { S3Service } from '@/lib/s3-service';
+import { headers } from 'next/headers';
+import { auth } from '@/lib/auth';
 
 export async function POST(request: NextRequest) {
   try {
-    const { filename, contentType } = await request.json();
+    // Authenticate user
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
+
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
+    const { filename, contentType, isEncrypted } = await request.json();
     
     if (!filename) {
       return NextResponse.json(
@@ -17,9 +31,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate content type (allow audio files)
-    const validContentTypes = ['audio/wav', 'audio/mpeg', 'audio/mp3', 'audio/webm', 'audio/ogg'];
-    const finalContentType = contentType || 'audio/wav';
+    // Validate content type (allow audio files and encrypted files)
+    const validContentTypes = [
+      'audio/wav',
+      'audio/mpeg',
+      'audio/mp3',
+      'audio/webm',
+      'audio/ogg',
+      'audio/m4a',
+      'audio/flac',
+      'audio/aac',
+      'application/octet-stream', // For encrypted files
+    ];
+    const finalContentType = contentType || (isEncrypted ? 'application/octet-stream' : 'audio/wav');
     
     if (!validContentTypes.includes(finalContentType)) {
       return NextResponse.json(
@@ -49,7 +73,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Error generating presigned URL:', error);
     return NextResponse.json(
-      { error: 'Failed to generate presigned URL' },
+      { error: 'Failed to prepare upload. Please try again.' },
       { status: 500 }
     );
   }
