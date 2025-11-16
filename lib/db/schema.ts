@@ -82,6 +82,11 @@ export const recording = pgTable("recording", {
   description: text("description"),
   audioFileUrl: text("audioFileUrl").notNull(), // Path to audio file
   status: text("status").notNull().default("pending"), // pending, processing, completed, failed
+  // Client-side encryption fields
+  isEncrypted: boolean("isEncrypted").notNull().default(false), // Flag to indicate if file is client-encrypted
+  encryptionIV: text("encryptionIV"), // Base64-encoded initialization vector (12 bytes for AES-GCM)
+  encryptionSalt: text("encryptionSalt"), // Base64-encoded salt for PBKDF2 key derivation (16 bytes)
+  encryptedPassword: text("encryptedPassword"), // Server-side encrypted password (encrypted with master key)
   recordedAt: timestamp("recordedAt").notNull().defaultNow(),
   createdAt: timestamp("createdAt").notNull().defaultNow(),
   updatedAt: timestamp("updatedAt").notNull().defaultNow(),
