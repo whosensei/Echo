@@ -5,9 +5,49 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { S3Service } from '@/lib/s3-service';
+import { headers } from 'next/headers';
+import { auth } from '@/lib/auth';
+import { rateLimit, RATE_LIMITS, formatResetTime } from '@/lib/redis-rate-limit';
+import { validateAudioFile, isSupportedMimeType } from '@/lib/file-validator';
 
 export async function POST(request: NextRequest) {
   try {
+    // Authenticate user
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
+
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
+    // Apply rate limiting (10 uploads per hour per user)
+    const rateLimitResult = await rateLimit(
+      `upload:${session.user.id}`,
+      RATE_LIMITS.UPLOAD
+    );
+
+    if (!rateLimitResult.success) {
+      return NextResponse.json(
+        {
+          error: 'Rate limit exceeded',
+          message: `Too many upload requests. Please try again after ${formatResetTime(rateLimitResult.resetTime)}`,
+          resetTime: rateLimitResult.resetTime,
+        },
+        {
+          status: 429,
+          headers: {
+            'X-RateLimit-Limit': RATE_LIMITS.UPLOAD.limit.toString(),
+            'X-RateLimit-Remaining': '0',
+            'X-RateLimit-Reset': rateLimitResult.resetTime.toString(),
+          },
+        }
+      );
+    }
+
     const formData = await request.formData();
     const audioFile = formData.get('audio') as File;
     
@@ -18,10 +58,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate file type
-    if (!audioFile.type.includes('audio/')) {
+    // Validate file size (max 2GB)
+    const MAX_FILE_SIZE = 2 * 1024 * 1024 * 1024; // 2GB in bytes
+    if (audioFile.size > MAX_FILE_SIZE) {
       return NextResponse.json(
-        { error: 'Invalid file type. Only audio files are allowed.' },
+        { error: 'File size exceeds 2GB limit' },
+        { status: 413 }
+      );
+    }
+
+    // Validate MIME type is supported
+    if (!isSupportedMimeType(audioFile.type)) {
+      return NextResponse.json(
+        { error: 'Invalid file type. Only audio files are allowed (WAV, MP3, M4A, OGG, WebM, FLAC, AAC).' },
         { status: 400 }
       );
     }
@@ -29,6 +78,19 @@ export async function POST(request: NextRequest) {
     // Convert file to buffer
     const bytes = await audioFile.arrayBuffer();
     const buffer = Buffer.from(bytes);
+
+    // Validate file signature (magic numbers) to prevent file type spoofing
+    const validationResult = validateAudioFile(buffer, audioFile.type);
+    if (!validationResult.valid) {
+      console.error('File validation failed:', validationResult.error);
+      return NextResponse.json(
+        {
+          error: 'File validation failed',
+          message: validationResult.error,
+        },
+        { status: 400 }
+      );
+    }
     
     // Initialize S3 service
     const s3Service = new S3Service();

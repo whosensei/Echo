@@ -46,10 +46,10 @@ export function AudioFileUploader({ onFileSelected, isProcessing }: AudioFileUpl
       return
     }
 
-    // Validate file size (max 100MB)
-    const maxSize = 100 * 1024 * 1024 // 100MB
+    // Validate file size (max 2GB)
+    const maxSize = 2 * 1024 * 1024 * 1024 // 2GB
     if (file.size > maxSize) {
-      alert('File size must be less than 100MB')
+      alert('File size must be less than 2GB')
       return
     }
 
@@ -151,7 +151,7 @@ export function AudioFileUploader({ onFileSelected, isProcessing }: AudioFileUpl
                   </p>
                 </div>
                 <div className="text-xs text-muted-foreground">
-                  Supports WAV, MP3, MP4, M4A, OGG, WebM, FLAC (max 100MB)
+                  Supports WAV, MP3, MP4, M4A, OGG, WebM, FLAC (max 2GB)
                 </div>
               </div>
             )}

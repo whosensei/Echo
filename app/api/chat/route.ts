@@ -12,6 +12,7 @@ import { headers } from 'next/headers';
 import { auth } from '@/lib/auth';
 import { ingestChatTokens, checkTokenLimit } from '@/lib/billing/usage';
 import { config } from '@/config/env';
+import { rateLimit, RATE_LIMITS, formatResetTime } from '@/lib/redis-rate-limit';
 
 export const maxDuration = 30; // Allow up to 30 seconds for streaming
 
@@ -26,6 +27,31 @@ export async function POST(req: NextRequest) {
       return new Response(
         JSON.stringify({ error: 'Unauthorized' }),
         { status: 401, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Apply rate limiting (100 chat requests per 15 minutes per user)
+    const rateLimitResult = await rateLimit(
+      `chat:${session.user.id}`,
+      RATE_LIMITS.API_DEFAULT
+    );
+
+    if (!rateLimitResult.success) {
+      return new Response(
+        JSON.stringify({
+          error: 'Rate limit exceeded',
+          message: `Too many chat requests. Please try again after ${formatResetTime(rateLimitResult.resetTime)}`,
+          resetTime: rateLimitResult.resetTime,
+        }),
+        {
+          status: 429,
+          headers: {
+            'Content-Type': 'application/json',
+            'X-RateLimit-Limit': RATE_LIMITS.API_DEFAULT.limit.toString(),
+            'X-RateLimit-Remaining': '0',
+            'X-RateLimit-Reset': rateLimitResult.resetTime.toString(),
+          },
+        }
       );
     }
 

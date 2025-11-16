@@ -17,6 +17,7 @@ import { headers } from 'next/headers';
 import { auth } from '@/lib/auth';
 import { config } from '@/config/env';
 import { getDodoClient, extractCheckoutUrl } from '@/lib/billing/client';
+import { rateLimit, RATE_LIMITS, formatResetTime } from '@/lib/redis-rate-limit';
 
 type Plan = 'pro' | 'enterprise';
 
@@ -39,6 +40,31 @@ export async function POST(req: NextRequest) {
     });
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Apply rate limiting (100 checkout requests per 15 minutes per user)
+    // This prevents abuse of the checkout creation endpoint
+    const rateLimitResult = await rateLimit(
+      `checkout:${session.user.id}`,
+      RATE_LIMITS.API_DEFAULT
+    );
+
+    if (!rateLimitResult.success) {
+      return NextResponse.json(
+        {
+          error: 'Rate limit exceeded',
+          message: `Too many checkout requests. Please try again after ${formatResetTime(rateLimitResult.resetTime)}`,
+          resetTime: rateLimitResult.resetTime,
+        },
+        {
+          status: 429,
+          headers: {
+            'X-RateLimit-Limit': RATE_LIMITS.API_DEFAULT.limit.toString(),
+            'X-RateLimit-Remaining': '0',
+            'X-RateLimit-Reset': rateLimitResult.resetTime.toString(),
+          },
+        }
+      );
     }
 
     const body = await req.json().catch(() => ({}));

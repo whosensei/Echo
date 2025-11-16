@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { recording, transcript } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 import { headers } from "next/headers";
+import { rateLimit, RATE_LIMITS, formatResetTime } from "@/lib/redis-rate-limit";
 
 // POST /api/gmail/send-transcript - Send transcript via email
 export async function POST(request: NextRequest) {
@@ -15,6 +16,31 @@ export async function POST(request: NextRequest) {
 
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Apply rate limiting (100 email sends per 15 minutes per user)
+    // This prevents abuse of the email sending feature
+    const rateLimitResult = await rateLimit(
+      `email:${session.user.id}`,
+      RATE_LIMITS.API_DEFAULT
+    );
+
+    if (!rateLimitResult.success) {
+      return NextResponse.json(
+        {
+          error: "Rate limit exceeded",
+          message: `Too many email requests. Please try again after ${formatResetTime(rateLimitResult.resetTime)}`,
+          resetTime: rateLimitResult.resetTime,
+        },
+        {
+          status: 429,
+          headers: {
+            "X-RateLimit-Limit": RATE_LIMITS.API_DEFAULT.limit.toString(),
+            "X-RateLimit-Remaining": "0",
+            "X-RateLimit-Reset": rateLimitResult.resetTime.toString(),
+          },
+        }
+      );
     }
 
     const body = await request.json();

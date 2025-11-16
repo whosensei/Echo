@@ -11,6 +11,7 @@ import { AssemblyAIService } from '@/lib/assemblyai-service';
 import { ingestTranscriptionMinutes, checkTranscriptionLimit } from '@/lib/billing/usage';
 import { headers } from 'next/headers';
 import { auth } from '@/lib/auth';
+import { rateLimit, RATE_LIMITS, formatResetTime } from '@/lib/redis-rate-limit';
 
 export async function POST(request: NextRequest) {
   try {
@@ -23,6 +24,30 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
+      );
+    }
+
+    // Apply rate limiting (20 transcriptions per hour per user)
+    const rateLimitResult = await rateLimit(
+      `transcribe:${session.user.id}`,
+      RATE_LIMITS.TRANSCRIBE
+    );
+
+    if (!rateLimitResult.success) {
+      return NextResponse.json(
+        {
+          error: 'Rate limit exceeded',
+          message: `Too many transcription requests. Please try again after ${formatResetTime(rateLimitResult.resetTime)}`,
+          resetTime: rateLimitResult.resetTime,
+        },
+        {
+          status: 429,
+          headers: {
+            'X-RateLimit-Limit': RATE_LIMITS.TRANSCRIBE.limit.toString(),
+            'X-RateLimit-Remaining': '0',
+            'X-RateLimit-Reset': rateLimitResult.resetTime.toString(),
+          },
+        }
       );
     }
 
