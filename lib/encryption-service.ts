@@ -48,10 +48,13 @@ export async function deriveKeyFromPassword(
   );
 
   // Derive AES-GCM key from password
+  // Ensure salt is compatible with BufferSource (Web Crypto API requirement)
+  const saltBuffer: BufferSource = new Uint8Array(salt);
+  
   return await crypto.subtle.deriveKey(
     {
       name: 'PBKDF2',
-      salt: salt,
+      salt: saltBuffer,
       iterations: iterations,
       hash: 'SHA-256'
     },
@@ -85,10 +88,12 @@ export async function encryptAudioFile(
   const fileBuffer = await file.arrayBuffer();
 
   // Encrypt file data
+  // Ensure iv is compatible with BufferSource (Web Crypto API requirement)
+  const ivBuffer: BufferSource = new Uint8Array(iv);
   const encryptedData = await crypto.subtle.encrypt(
     {
       name: 'AES-GCM',
-      iv: iv
+      iv: ivBuffer
     },
     key,
     fileBuffer
@@ -128,10 +133,12 @@ export async function decryptAudioFile(
 
   // Decrypt data
   try {
+    // Ensure iv is compatible with BufferSource (Web Crypto API requirement)
+    const ivBuffer: BufferSource = new Uint8Array(iv);
     const decryptedData = await crypto.subtle.decrypt(
       {
         name: 'AES-GCM',
-        iv: iv
+        iv: ivBuffer
       },
       key,
       encryptedData
@@ -171,7 +178,11 @@ export function base64ToUint8Array(base64: string): Uint8Array {
  * Convert Base64 string to ArrayBuffer
  */
 export function base64ToArrayBuffer(base64: string): ArrayBuffer {
-  return base64ToUint8Array(base64).buffer;
+  const uint8Array = base64ToUint8Array(base64);
+  // Create a new ArrayBuffer to ensure proper type compatibility (not SharedArrayBuffer)
+  const arrayBuffer = new ArrayBuffer(uint8Array.byteLength);
+  new Uint8Array(arrayBuffer).set(uint8Array);
+  return arrayBuffer;
 }
 
 /**

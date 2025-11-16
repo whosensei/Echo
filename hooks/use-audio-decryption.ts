@@ -71,11 +71,11 @@ export function useAudioDecryption(recordingId?: string) {
       let decryptionPassword = password;
 
       if (!decryptionPassword && recordingId) {
-        decryptionPassword = getEncryptionPassword(recordingId);
+        decryptionPassword = getEncryptionPassword(recordingId) || undefined;
       }
 
       if (!decryptionPassword) {
-        decryptionPassword = getGlobalPassword();
+        decryptionPassword = getGlobalPassword() || undefined;
       }
 
       if (!decryptionPassword) {
