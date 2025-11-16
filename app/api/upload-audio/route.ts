@@ -50,13 +50,18 @@ export async function POST(request: NextRequest) {
 
     const formData = await request.formData();
     const audioFile = formData.get('audio') as File;
-    
+
     if (!audioFile) {
       return NextResponse.json(
         { error: 'No audio file provided' },
         { status: 400 }
       );
     }
+
+    // Check if file is encrypted
+    const isEncrypted = formData.get('isEncrypted') === 'true';
+    const encryptionIV = formData.get('encryptionIV') as string | null;
+    const encryptionSalt = formData.get('encryptionSalt') as string | null;
 
     // Validate file size (max 2GB)
     const MAX_FILE_SIZE = 2 * 1024 * 1024 * 1024; // 2GB in bytes
@@ -67,29 +72,34 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate MIME type is supported
-    if (!isSupportedMimeType(audioFile.type)) {
-      return NextResponse.json(
-        { error: 'Invalid file type. Only audio files are allowed (WAV, MP3, M4A, OGG, WebM, FLAC, AAC).' },
-        { status: 400 }
-      );
+    // For encrypted files, skip MIME type and signature validation (file is binary ciphertext)
+    if (!isEncrypted) {
+      // Validate MIME type is supported
+      if (!isSupportedMimeType(audioFile.type)) {
+        return NextResponse.json(
+          { error: 'Invalid file type. Only audio files are allowed (WAV, MP3, M4A, OGG, WebM, FLAC, AAC).' },
+          { status: 400 }
+        );
+      }
     }
 
     // Convert file to buffer
     const bytes = await audioFile.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    // Validate file signature (magic numbers) to prevent file type spoofing
-    const validationResult = validateAudioFile(buffer, audioFile.type);
-    if (!validationResult.valid) {
-      console.error('File validation failed:', validationResult.error);
-      return NextResponse.json(
-        {
-          error: 'File validation failed',
-          message: validationResult.error,
-        },
-        { status: 400 }
-      );
+    // For unencrypted files, validate file signature (magic numbers) to prevent file type spoofing
+    if (!isEncrypted) {
+      const validationResult = validateAudioFile(buffer, audioFile.type);
+      if (!validationResult.valid) {
+        console.error('File validation failed:', validationResult.error);
+        return NextResponse.json(
+          {
+            error: 'File validation failed',
+            message: validationResult.error,
+          },
+          { status: 400 }
+        );
+      }
     }
     
     // Initialize S3 service
@@ -102,7 +112,7 @@ export async function POST(request: NextRequest) {
       audioFile.type
     );
 
-    // Return file information with S3 URL
+    // Return file information with S3 URL and encryption metadata
     return NextResponse.json({
       success: true,
       filename: audioFile.name,
@@ -111,6 +121,10 @@ export async function POST(request: NextRequest) {
       size: audioFile.size,
       type: audioFile.type,
       timestamp: new Date().toISOString(),
+      // Include encryption metadata
+      isEncrypted,
+      encryptionIV,
+      encryptionSalt,
     });
 
   } catch (error) {

@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { recording } from "@/lib/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { headers } from "next/headers";
+import { encryptPassword } from "@/lib/password-encryption";
 
 // GET /api/recordings - List all recordings for the authenticated user
 export async function GET(request: NextRequest) {
@@ -78,6 +79,11 @@ export async function POST(request: NextRequest) {
       meetingId,
       recordedAt,
       status = "pending",
+      // Encryption metadata
+      isEncrypted = false,
+      encryptionIV = null,
+      encryptionSalt = null,
+      encryptionPassword = null,
     } = body;
 
     // Validate required fields
@@ -86,6 +92,28 @@ export async function POST(request: NextRequest) {
         { error: "Title and audio file URL are required" },
         { status: 400 }
       );
+    }
+
+    // Validate encryption metadata if file is marked as encrypted
+    if (isEncrypted && (!encryptionIV || !encryptionSalt)) {
+      return NextResponse.json(
+        { error: "Encryption IV and Salt are required when isEncrypted is true" },
+        { status: 400 }
+      );
+    }
+
+    // Encrypt password if provided
+    let encryptedPasswordValue = null;
+    if (isEncrypted && encryptionPassword) {
+      try {
+        encryptedPasswordValue = encryptPassword(encryptionPassword);
+      } catch (error) {
+        console.error('Failed to encrypt password:', error);
+        return NextResponse.json(
+          { error: 'Failed to encrypt password' },
+          { status: 500 }
+        );
+      }
     }
 
     // Create the recording
@@ -99,6 +127,11 @@ export async function POST(request: NextRequest) {
         meetingId: meetingId || null,
         recordedAt: recordedAt ? new Date(recordedAt) : new Date(),
         status,
+        // Encryption metadata
+        isEncrypted: isEncrypted || false,
+        encryptionIV: encryptionIV || null,
+        encryptionSalt: encryptionSalt || null,
+        encryptedPassword: encryptedPasswordValue,
       })
       .returning();
 

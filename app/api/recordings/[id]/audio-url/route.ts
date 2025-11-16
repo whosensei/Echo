@@ -5,6 +5,7 @@ import { recording } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 import { headers } from "next/headers";
 import { S3Service } from "@/lib/s3-service";
+import { decryptPassword } from "@/lib/password-encryption";
 
 // GET /api/recordings/[id]/audio-url - Get presigned URL for audio file
 export async function GET(
@@ -149,9 +150,26 @@ export async function GET(
     const presignedUrl = await s3Service.generatePresignedDownloadUrl(fileKey, 3600);
     console.log("[AudioURL API] Generated presigned URL:", presignedUrl ? "Success" : "Failed");
 
+    // Decrypt password if encrypted file
+    let decryptedPassword = null;
+    if (recordingData.isEncrypted && recordingData.encryptedPassword) {
+      try {
+        decryptedPassword = decryptPassword(recordingData.encryptedPassword);
+      } catch (error) {
+        console.error("[AudioURL API] Failed to decrypt password:", error);
+        // Continue without password - client will handle error
+      }
+    }
+
     return NextResponse.json({
       audioUrl: presignedUrl,
       expiresIn: 3600,
+      // Include encryption metadata for client-side decryption
+      isEncrypted: recordingData.isEncrypted || false,
+      encryptionIV: recordingData.encryptionIV || null,
+      encryptionSalt: recordingData.encryptionSalt || null,
+      // Include decrypted password for client (only if encrypted)
+      encryptionPassword: decryptedPassword,
     });
   } catch (error) {
     console.error("[AudioURL API] Error generating presigned audio URL:", error);
