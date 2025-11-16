@@ -326,8 +326,7 @@ export default function TermsOfServicePage() {
               If you have questions about these Terms, please contact us:
             </p>
             <ul className="list-none mb-4 space-y-2">
-              <li><strong>Email:</strong> <a href="mailto:legal@echoai.com" className="text-primary hover:underline">legal@echoai.com</a></li>
-              <li><strong>Support:</strong> <a href="mailto:support@echoai.com" className="text-primary hover:underline">support@echoai.com</a></li>
+              <li><strong>Help:</strong> <a href="mailto:legal@echoai.com" className="text-primary hover:underline">legal@echoai.com</a></li>
             </ul>
           </section>
         </div>

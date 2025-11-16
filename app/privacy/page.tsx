@@ -148,7 +148,7 @@ export default function PrivacyPolicyPage() {
               <li><strong>Cookie Preferences:</strong> Manage cookies through your browser settings</li>
             </ul>
             <p className="mb-4">
-              To exercise these rights, contact us at <a href="mailto:privacy@echoai.com" className="text-primary hover:underline">privacy@echoai.com</a> or use the settings page in your account.
+              To exercise these rights, contact us at <a href="mailto:echoai.help@gmail.com" className="text-primary hover:underline">echoai.help@gmail.com</a> or use the settings page in your account.
             </p>
           </section>
 
@@ -216,8 +216,7 @@ export default function PrivacyPolicyPage() {
               If you have questions, concerns, or requests regarding this Privacy Policy or our data practices, please contact us:
             </p>
             <ul className="list-none mb-4 space-y-2">
-              <li><strong>Email:</strong> <a href="mailto:privacy@echoai.com" className="text-primary hover:underline">privacy@echoai.com</a></li>
-              <li><strong>Support:</strong> <a href="mailto:support@echoai.com" className="text-primary hover:underline">support@echoai.com</a></li>
+              <li><strong>Help:</strong> <a href="mailto:echoai.help@gmail.com" className="text-primary hover:underline">echoai.help@gmail.com</a></li>
             </ul>
           </section>
 
@@ -234,7 +233,7 @@ export default function PrivacyPolicyPage() {
               <li>Right to lodge a complaint with a supervisory authority</li>
             </ul>
             <p className="mb-4">
-              To exercise these rights, contact us at <a href="mailto:privacy@echoai.com" className="text-primary hover:underline">privacy@echoai.com</a>.
+              To exercise these rights, contact us at <a href="mailto:echoai.help@gmail.com" className="text-primary hover:underline">echoai.help@gmail.com</a>.
             </p>
           </section>
         </div>
