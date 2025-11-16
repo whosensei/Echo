@@ -56,6 +56,7 @@ export class S3Service {
         Bucket: this.bucketName,
         Key: fileKey,
         ContentType: contentType,
+        ServerSideEncryption: 'AES256', // Enable server-side encryption at rest
       });
 
       const uploadUrl = await getSignedUrl(this.s3Client, command, { expiresIn });
@@ -117,6 +118,7 @@ export class S3Service {
         Key: fileKey,
         Body: buffer,
         ContentType: contentType,
+        ServerSideEncryption: 'AES256', // Enable server-side encryption at rest
       });
 
       await this.s3Client.send(command);
