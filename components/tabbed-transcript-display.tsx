@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label"
 import { useToast } from "@/components/ui/toaster"
 import { useSession } from "@/lib/auth-client"
 import { UsageLimits } from "@/components/billing/UsageLimits"
-import { AudioPlayer } from "@/components/audio-player"
+import { EncryptedAudioDownloadButton } from "@/components/encrypted-audio-download-button"
 import type { TranscriptionResult } from "@/lib/assemblyai-service"
 import type { MeetingSummary } from "@/lib/openai-summary-service"
 
@@ -235,12 +235,15 @@ export function TabbedTranscriptDisplay({ transcription, summary, isLoading, onN
                 )
               })}
             </div>
-            {/* Right side: Usage Limits in pill and New Recording Button */}
+            {/* Right side: Usage Limits, Download Button, and New Recording Button */}
             <div className="flex items-center gap-4">
               {!hideUsageLimits && (
                 <div className="bg-card border border-border rounded-lg px-3 shadow-sm h-9 flex items-center">
                   <UsageLimits compact />
                 </div>
+              )}
+              {meetingId && (
+                <EncryptedAudioDownloadButton recordingId={meetingId} className="h-9 px-4 text-sm" />
               )}
               {onNewRecording && (
                 <Button
@@ -255,15 +258,6 @@ export function TabbedTranscriptDisplay({ transcription, summary, isLoading, onN
           </div>
         </div>
       </div>
-
-      {/* Audio Player - Below tabs, above content */}
-      {audioUrl && (
-        <div className="py-4">
-          <div className="max-w-7xl mx-auto px-6 lg:px-12">
-            <AudioPlayer audioUrl={audioUrl} recordingId={meetingId || undefined} />
-          </div>
-        </div>
-      )}
 
       {/* Content - Spacious and clean */}
       <ScrollArea className="flex-1">

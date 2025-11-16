@@ -3,13 +3,27 @@
 import { useRef, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { Upload, File, X } from "lucide-react"
+import { Upload, File as FileIcon, X, Lock } from "lucide-react"
 import { useUsageLimits } from "@/hooks/use-usage-limits"
 import { UpgradePrompt } from "@/components/billing/UpgradePrompt"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import {
+  encryptAudioFile,
+  generateRandomPassword,
+  isWebCryptoAvailable
+} from "@/lib/encryption-service"
+import { storeGlobalPassword } from "@/lib/key-storage"
+
+export interface EncryptedFileData {
+  file: File;
+  isEncrypted: boolean;
+  encryptionIV?: string;
+  encryptionSalt?: string;
+  password?: string;
+}
 
 interface AudioFileUploaderProps {
-  onFileSelected: (file: File) => void
+  onFileSelected: (data: EncryptedFileData) => void
   isProcessing?: boolean
 }
 
@@ -18,6 +32,7 @@ export function AudioFileUploader({ onFileSelected, isProcessing }: AudioFileUpl
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [isDragging, setIsDragging] = useState(false)
+  const [isEncrypting, setIsEncrypting] = useState(false)
 
   const acceptedFormats = [
     'audio/wav',
@@ -76,9 +91,49 @@ export function AudioFileUploader({ onFileSelected, isProcessing }: AudioFileUpl
     }
   }
 
-  const handleUploadClick = () => {
-    if (selectedFile) {
-      onFileSelected(selectedFile)
+  const handleUploadClick = async () => {
+    if (!selectedFile) return
+
+    // Check if Web Crypto API is available
+    if (!isWebCryptoAvailable()) {
+      alert('Your browser does not support encryption. Please use a modern browser.')
+      return
+    }
+
+    try {
+      setIsEncrypting(true)
+
+      // Always encrypt with automatically generated random password
+      const password = generateRandomPassword()
+      console.log('Generated encryption password for file:', selectedFile.name)
+
+      // Encrypt the file
+      const encrypted = await encryptAudioFile(selectedFile, password)
+
+      // Create a new File from encrypted data
+      const encryptedFile = new File(
+        [encrypted.encryptedData],
+        `encrypted_${selectedFile.name}`,
+        { type: 'application/octet-stream' }
+      )
+
+      // Store password in session for later use
+      storeGlobalPassword(password)
+
+      // Pass encrypted file data to parent
+      onFileSelected({
+        file: encryptedFile,
+        isEncrypted: true,
+        encryptionIV: encrypted.ivBase64,
+        encryptionSalt: encrypted.saltBase64,
+        password: password
+      })
+    } catch (error) {
+      console.error('Encryption failed:', error)
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+      alert(`Failed to encrypt file: ${errorMessage}. Please try again.`)
+    } finally {
+      setIsEncrypting(false)
     }
   }
 
@@ -117,7 +172,7 @@ export function AudioFileUploader({ onFileSelected, isProcessing }: AudioFileUpl
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-3 flex-1 min-w-0">
                   <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                    <File className="w-5 h-5 text-primary" />
+                    <FileIcon className="w-5 h-5 text-primary" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-sm truncate">{selectedFile.name}</p>
@@ -156,7 +211,6 @@ export function AudioFileUploader({ onFileSelected, isProcessing }: AudioFileUpl
               </div>
             )}
 
-            {/* Hidden File Input */}
             <input
               ref={fileInputRef}
               type="file"
@@ -193,9 +247,9 @@ export function AudioFileUploader({ onFileSelected, isProcessing }: AudioFileUpl
                       <Button
                         className="flex-1 w-full"
                         onClick={handleUploadClick}
-                        disabled={!selectedFile || isProcessing || !canTranscribe}
+                        disabled={!selectedFile || isProcessing || isEncrypting || !canTranscribe}
                       >
-                        {isProcessing ? 'Processing...' : 'Upload & Transcribe'}
+                        {isEncrypting ? 'Encrypting...' : isProcessing ? 'Processing...' : 'Upload & Transcribe'}
                       </Button>
                     </span>
                   </TooltipTrigger>

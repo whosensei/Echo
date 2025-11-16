@@ -2,14 +2,21 @@
 
 import { useState, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { Mic, Square, Pause, Play, Upload, Trash2 } from "lucide-react"
+import { Mic, Square, Pause, Play, Upload, Trash2, Lock } from "lucide-react"
 import { AudioRecorder } from "@/lib/audio-recorder"
 import { useUsageLimits } from "@/hooks/use-usage-limits"
 import { UpgradePrompt } from "@/components/billing/UpgradePrompt"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import {
+  encryptAudioFile,
+  generateRandomPassword,
+  isWebCryptoAvailable
+} from "@/lib/encryption-service"
+import { storeGlobalPassword } from "@/lib/key-storage"
+import type { EncryptedFileData } from "@/components/audio-file-uploader"
 
 interface AudioRecorderComponentProps {
-  onRecordingComplete: (audioBlob: Blob, filename: string) => void
+  onRecordingComplete: (data: EncryptedFileData) => void
   onRecordingStart?: () => void
   onRecordingStop?: () => void
 }
@@ -26,6 +33,7 @@ export function AudioRecorderComponent({
   const [isInitialized, setIsInitialized] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [recordedAudio, setRecordedAudio] = useState<{ blob: Blob; filename: string } | null>(null)
+  const [isEncrypting, setIsEncrypting] = useState(false)
 
   const audioRecorderRef = useRef<AudioRecorder | null>(null)
   const timerRef = useRef<NodeJS.Timeout | null>(null)
@@ -141,11 +149,57 @@ export function AudioRecorderComponent({
     }
   }
 
-  const handleUploadAndTranscribe = () => {
-    if (recordedAudio) {
-      onRecordingComplete(recordedAudio.blob, recordedAudio.filename)
+  const handleUploadAndTranscribe = async () => {
+    if (!recordedAudio) return
+
+    // Check if Web Crypto API is available
+    if (!isWebCryptoAvailable()) {
+      setError('Your browser does not support encryption. Please use a modern browser.')
+      return
+    }
+
+    try {
+      setIsEncrypting(true)
+
+      // Convert Blob to File for encryption
+      const audioFile = new File([recordedAudio.blob], recordedAudio.filename, {
+        type: recordedAudio.blob.type
+      })
+
+      // Always encrypt with automatically generated random password
+      const password = generateRandomPassword()
+      console.log('Generated encryption password for recording:', recordedAudio.filename)
+
+      // Encrypt the audio file
+      const encrypted = await encryptAudioFile(audioFile, password)
+
+      // Create encrypted file
+      const encryptedFile = new File(
+        [encrypted.encryptedData],
+        `encrypted_${recordedAudio.filename}`,
+        { type: 'application/octet-stream' }
+      )
+
+      // Store password in session for later use
+      storeGlobalPassword(password)
+
+      // Pass encrypted file data to parent
+      onRecordingComplete({
+        file: encryptedFile,
+        isEncrypted: true,
+        encryptionIV: encrypted.ivBase64,
+        encryptionSalt: encrypted.saltBase64,
+        password: password
+      })
+
       setRecordedAudio(null) // Clear the stored recording
       setRecordingTime(0) // Reset timer when uploading
+    } catch (error) {
+      console.error('Encryption failed:', error)
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+      setError(`Failed to encrypt recording: ${errorMessage}. Please try again.`)
+    } finally {
+      setIsEncrypting(false)
     }
   }
 
@@ -209,12 +263,21 @@ export function AudioRecorderComponent({
                         <span>
                           <Button
                             onClick={handleUploadAndTranscribe}
-                            disabled={!canTranscribe}
+                            disabled={!canTranscribe || isEncrypting}
                             size="lg"
                             className="!h-[56px] rounded-none !text-base gap-2 px-8 min-w-[140px] flex items-center justify-center"
                           >
-                            <Upload className="h-5 w-5" />
-                            Transcribe
+                            {isEncrypting ? (
+                              <>
+                                <Lock className="h-5 w-5 animate-pulse" />
+                                Encrypting...
+                              </>
+                            ) : (
+                              <>
+                                <Upload className="h-5 w-5" />
+                                Transcribe
+                              </>
+                            )}
                           </Button>
                         </span>
                       </TooltipTrigger>

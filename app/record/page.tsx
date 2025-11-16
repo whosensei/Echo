@@ -16,6 +16,7 @@ import { type StoredTranscription } from "@/lib/transcription-types"
 import { useSession } from "@/lib/auth-client"
 import type { TranscriptionResult } from "@/lib/assemblyai-service"
 import type { MeetingSummary } from "@/lib/openai-summary-service"
+import { storeEncryptionPassword } from "@/lib/key-storage"
 
 export default function RecordPage() {
   const { data: session } = useSession()
@@ -102,13 +103,26 @@ export default function RecordPage() {
     return { labeledTranscript, speakerMapping, groups }
   }
 
-  const handleFileUpload = async (file: File) => {
-    // Convert File to Blob and process
-    const blob = new Blob([file], { type: file.type })
-    await handleRecordingComplete(blob, file.name)
+  const handleFileUpload = async (data: import('@/components/audio-file-uploader').EncryptedFileData) => {
+    // File can be passed directly to FormData, but we'll convert to Blob for consistency
+    const fileContent = await data.file.arrayBuffer()
+    const blob = new Blob([fileContent], { type: data.file.type })
+    await handleRecordingComplete(blob, data.file.name, data)
   }
 
-  const handleRecordingComplete = async (audioBlob: Blob, filename: string) => {
+  // Wrapper for AudioRecorderComponent - it passes EncryptedFileData directly
+  const handleRecordingCompleteFromRecorder = async (data: import('@/components/audio-file-uploader').EncryptedFileData) => {
+    // Convert File to Blob and process
+    const fileContent = await data.file.arrayBuffer()
+    const blob = new Blob([fileContent], { type: data.file.type })
+    await handleRecordingComplete(blob, data.file.name, data)
+  }
+
+  const handleRecordingComplete = async (
+    audioBlob: Blob,
+    filename: string,
+    encryptionData?: import('@/components/audio-file-uploader').EncryptedFileData
+  ) => {
     setIsProcessing(true)
     setCurrentTranscription(null)
     setCurrentSummary(null)
@@ -117,11 +131,21 @@ export default function RecordPage() {
 
     try {
       toast.info("Uploading audio...", {
-        description: "Saving your recording and preparing for transcription."
+        description: encryptionData?.isEncrypted
+          ? "Uploading encrypted recording..."
+          : "Saving your recording and preparing for transcription."
       })
 
       const formData = new FormData()
       formData.append("audio", audioBlob, filename)
+
+      // Add encryption metadata if file is encrypted
+      if (encryptionData?.isEncrypted) {
+        formData.append("isEncrypted", "true")
+        formData.append("encryptionIV", encryptionData.encryptionIV!)
+        formData.append("encryptionSalt", encryptionData.encryptionSalt!)
+        formData.append("encryptionPassword", encryptionData.password!)
+      }
 
       const uploadResponse = await fetch("/api/upload-audio", {
         method: "POST",
@@ -129,7 +153,10 @@ export default function RecordPage() {
       })
 
       if (!uploadResponse.ok) {
-        throw new Error("Failed to upload audio")
+        const errorData = await uploadResponse.json().catch(() => ({}))
+        const errorMessage = errorData.error || errorData.message || "Failed to upload audio"
+        console.error("Upload error:", errorMessage, errorData)
+        throw new Error(errorMessage)
       }
 
       const uploadData = await uploadResponse.json()
@@ -147,6 +174,11 @@ export default function RecordPage() {
               recordedAt: new Date().toISOString(),
               audioFileUrl: s3Url || uploadData.filename,
               status: "processing",
+              // Add encryption metadata
+              isEncrypted: encryptionData?.isEncrypted || false,
+              encryptionIV: encryptionData?.encryptionIV || null,
+              encryptionSalt: encryptionData?.encryptionSalt || null,
+              encryptionPassword: encryptionData?.password || null,
             }),
           })
 
@@ -155,6 +187,10 @@ export default function RecordPage() {
             recordingId = recording.id
             if (recordingId) {
               setSelectedTranscriptionId(recordingId)
+              // Password is now stored server-side, but also cache in sessionStorage for faster access
+              if (encryptionData?.isEncrypted && encryptionData?.password) {
+                storeEncryptionPassword(recordingId, encryptionData.password)
+              }
             }
           }
         } catch (dbError) {
@@ -172,11 +208,22 @@ export default function RecordPage() {
       const transcribeResponse = await fetch("/api/transcribe", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ fileKey, s3Url }),
+        body: JSON.stringify({
+          fileKey,
+          s3Url,
+          // Add encryption metadata for decryption
+          isEncrypted: encryptionData?.isEncrypted || false,
+          encryptionPassword: encryptionData?.password || null,
+          // Pass recordingId if available for more reliable lookup
+          recordingId: recordingId || null,
+        }),
       })
 
       if (!transcribeResponse.ok) {
-        throw new Error("Failed to start transcription")
+        const errorData = await transcribeResponse.json().catch(() => ({}))
+        const errorMessage = errorData.error || errorData.message || "Failed to start transcription"
+        console.error("Transcribe error:", errorMessage, errorData)
+        throw new Error(errorMessage)
       }
 
       const transcribeData = await transcribeResponse.json()
@@ -639,7 +686,7 @@ export default function RecordPage() {
                         
                         <TabsContent value="record" className="mt-0">
                           <AudioRecorderComponent
-                            onRecordingComplete={handleRecordingComplete}
+                            onRecordingComplete={handleRecordingCompleteFromRecorder}
                             onRecordingStart={() => {
                               setCurrentTranscription(null)
                               setCurrentSummary(null)
