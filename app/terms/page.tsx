@@ -266,18 +266,13 @@ export default function TermsOfServicePage() {
 
           <section className="mb-8">
             <h2 className="text-2xl font-semibold mt-8 mb-4">12. Dispute Resolution</h2>
-            <h3 className="text-xl font-semibold mt-6 mb-3">12.1 Governing Law</h3>
-            <p className="mb-4">
-              These Terms shall be governed by and construed in accordance with the laws of [Your Jurisdiction], without regard to its conflict of law provisions.
-            </p>
 
-            <h3 className="text-xl font-semibold mt-6 mb-3">12.2 Dispute Resolution Process</h3>
+            <h3 className="text-xl font-semibold mt-6 mb-3">12.1 Dispute Resolution Process</h3>
             <p className="mb-4">
               Any disputes arising out of or relating to these Terms or the Service shall be resolved through:
             </p>
             <ol className="list-decimal pl-6 mb-4 space-y-2">
               <li>Good faith negotiation between the parties</li>
-              <li>If negotiation fails, binding arbitration in accordance with [Arbitration Rules]</li>
               <li>Class action waiver: You agree to resolve disputes individually and waive any right to participate in class actions</li>
             </ol>
           </section>
@@ -326,7 +321,7 @@ export default function TermsOfServicePage() {
               If you have questions about these Terms, please contact us:
             </p>
             <ul className="list-none mb-4 space-y-2">
-              <li><strong>Help:</strong> <a href="mailto:legal@echoai.com" className="text-primary hover:underline">legal@echoai.com</a></li>
+              <li><strong>Help:</strong> <a href="mailto:legal@echoai.com" className="text-primary hover:underline">echoai.help@gmail.com</a></li>
             </ul>
           </section>
         </div>
