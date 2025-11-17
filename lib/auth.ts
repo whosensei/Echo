@@ -18,6 +18,12 @@ export const auth = betterAuth({
     requireEmailVerification: false, // Set to true in production
     autoSignIn: true,
   },
+  account: {
+    accountLinking: {
+      allowDifferentEmails: true, // Allow linking Google account with different email
+      updateUserInfoOnLink: false, // Don't update user info when linking
+    },
+  },
   socialProviders: {
     google: {
       clientId: process.env.GOOGLE_CLIENT_ID as string,
