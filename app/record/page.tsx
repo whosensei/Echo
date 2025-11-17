@@ -624,18 +624,18 @@ export default function RecordPage() {
           <div className="min-h-screen flex flex-col">
             {/* Navigation Bar - Matching Landing Page */}
             <nav className="sticky left-0 top-0 z-[110] flex w-full flex-col border-b border-border bg-background">
-              <div className="flex h-16 bg-background">
-                <div className="container mx-auto flex w-full items-center justify-between px-6">
+              <div className="flex h-14 sm:h-16 bg-background">
+                <div className="container mx-auto flex w-full items-center justify-between px-4 sm:px-6">
                   <Link href="/" className="flex items-center ring-offset-2">
-                    <div className="flex items-center gap-2.5">
-                      <div className="h-9 w-9 rounded-xl bg-primary/10 ring-1 ring-primary/20 flex items-center justify-center">
-                        <Mic className="h-5 w-5 text-primary" strokeWidth={2.5} />
+                    <div className="flex items-center gap-2 sm:gap-2.5">
+                      <div className="h-8 w-8 sm:h-9 sm:w-9 rounded-xl bg-primary/10 ring-1 ring-primary/20 flex items-center justify-center">
+                        <Mic className="h-4 w-4 sm:h-5 sm:w-5 text-primary" strokeWidth={2.5} />
                       </div>
-                      <span className="text-xl font-medium tracking-tight">Echo</span>
+                      <span className="text-lg sm:text-xl font-medium tracking-tight">Echo</span>
                     </div>
                   </Link>
                   
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2 sm:gap-3">
                     {session?.user ? (
                       <div className="hidden sm:block">
                         <UsageLimits compact />
@@ -643,10 +643,10 @@ export default function RecordPage() {
                     ) : (
                       <>
                         <Link href="/login">
-                          <Button variant="ghost" size="sm" className="font-medium">Sign In</Button>
+                          <Button variant="ghost" size="sm" className="font-medium text-xs sm:text-sm">Sign In</Button>
                         </Link>
                         <Link href="/signup">
-                          <Button size="sm" className="bg-primary hover:bg-primary/90 font-medium">Get Started</Button>
+                          <Button size="sm" className="bg-primary hover:bg-primary/90 font-medium text-xs sm:text-sm">Get Started</Button>
                         </Link>
                       </>
                     )}
@@ -656,7 +656,7 @@ export default function RecordPage() {
             </nav>
 
             {/* Hero Section - Matching Landing Page */}
-            <section className="relative min-h-[calc(630px-64px)] overflow-hidden pb-10">
+            <section className="relative min-h-[calc(630px-64px)] overflow-hidden pb-6 sm:pb-10">
               {/* Grid decoration */}
               <div className="absolute left-0 top-0 z-0 grid h-full w-full grid-cols-[clamp(28px,10vw,120px)_auto_clamp(28px,10vw,120px)] border-b border-border dark:border-border/50 dark:border-[oklch(0.20_0_0)]">
                 <div className="col-span-1 flex h-full items-center justify-center" />
@@ -670,15 +670,15 @@ export default function RecordPage() {
               <figure className="pointer-events-none absolute bottom-[-50px] right-[7vw] z-0 hidden aspect-square w-[38vw] rounded-full bg-white/20 opacity-20 blur-[180px] dark:bg-background dark:opacity-60 md:block" />
               
               {/* Content */}
-              <div className="relative z-10 flex flex-col divide-y divide-border dark:divide-[oklch(0.30_0_0)] pt-[35px]">
+              <div className="relative z-10 flex flex-col divide-y divide-border dark:divide-[oklch(0.30_0_0)] pt-4 sm:pt-6 md:pt-[35px]">
                 {/* Main hero content */}
                 <div>
-                  <div className="mx-auto flex min-h-[288px] max-w-[80vw] shrink-0 flex-col items-center justify-center gap-2 px-2 py-4 sm:px-16 lg:px-24">
-                    <h1 className="!max-w-screen-lg text-pretty text-center text-[clamp(32px,7vw,64px)] font-medium leading-none tracking-[-1.44px] text-foreground md:tracking-[-2.16px]">
+                  <div className="mx-auto flex min-h-[200px] sm:min-h-[288px] max-w-[95vw] sm:max-w-[80vw] shrink-0 flex-col items-center justify-center gap-2 px-4 py-4 sm:px-8 md:px-16 lg:px-24">
+                    <h1 className="!max-w-screen-lg text-pretty text-center text-[clamp(28px,6vw,64px)] font-medium leading-none tracking-[-1.2px] sm:tracking-[-1.44px] text-foreground md:tracking-[-2.16px]">
                       Effortless audio recording
                       <span className="block text-muted-foreground mt-2">powered by AI</span>
                     </h1>
-                    <h2 className="text-md max-w-2xl text-pretty text-center text-muted-foreground md:text-lg">
+                    <h2 className="text-sm sm:text-base md:text-lg max-w-2xl text-pretty text-center text-muted-foreground px-2">
                       Capture conversations with automatic transcription,
                       speaker identification, and intelligent summaries
                     </h2>
@@ -686,23 +686,25 @@ export default function RecordPage() {
                 </div>
                 
                 {/* Recording Interface */}
-                <div className="flex items-start justify-center px-8 sm:px-24 py-8">
-                  <div className="flex w-full max-w-[80vw] flex-col items-center justify-start md:!max-w-[600px]">
+                <div className="flex items-start justify-center px-4 sm:px-8 md:px-24 py-6 sm:py-8">
+                  <div className="flex w-full max-w-[95vw] sm:max-w-[80vw] flex-col items-center justify-start md:!max-w-[600px]">
                     {/* Recorder & Upload Tabs */}
                     <div className="w-full">
                       <Tabs value={activeInputTab} onValueChange={(v) => setActiveInputTab(v as "record" | "upload")} className="w-full">
-                        <TabsList className="grid w-full grid-cols-2 mb-6 bg-muted/30 border border-border">
-                          <TabsTrigger value="record" className="gap-2 font-medium">
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <TabsList className="grid w-full grid-cols-2 mb-4 sm:mb-6 bg-muted/30 border border-border">
+                          <TabsTrigger value="record" className="gap-1 sm:gap-2 font-medium text-xs sm:text-sm">
+                            <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
                             </svg>
-                            Record Audio
+                            <span className="hidden xs:inline">Record Audio</span>
+                            <span className="xs:hidden">Record</span>
                           </TabsTrigger>
-                          <TabsTrigger value="upload" className="gap-2 font-medium">
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <TabsTrigger value="upload" className="gap-1 sm:gap-2 font-medium text-xs sm:text-sm">
+                            <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                             </svg>
-                            Upload File
+                            <span className="hidden xs:inline">Upload File</span>
+                            <span className="xs:hidden">Upload</span>
                           </TabsTrigger>
                         </TabsList>
                         
@@ -731,60 +733,60 @@ export default function RecordPage() {
             </section>
 
             {/* Features List */}
-            <section className="py-16 md:py-24 border-t border-border">
-              <div className="container mx-auto px-6">
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-6xl mx-auto">
-                  <article className="flex flex-col items-center gap-4 rounded-lg border border-border p-6 dark:[box-shadow:_70px_-20px_130px_0px_rgba(255,255,255,0.05)_inset] hover:border-primary/30 transition-all duration-300">
-                    <figure className="flex size-14 items-center justify-center rounded-lg border border-border bg-muted/50 p-3">
-                      <svg className="w-7 h-7 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <section className="py-12 sm:py-16 md:py-24 border-t border-border">
+              <div className="container mx-auto px-4 sm:px-6">
+                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 max-w-6xl mx-auto">
+                  <article className="flex flex-col items-center gap-3 sm:gap-4 rounded-lg border border-border p-4 sm:p-6 dark:[box-shadow:_70px_-20px_130px_0px_rgba(255,255,255,0.05)_inset] hover:border-primary/30 transition-all duration-300">
+                    <figure className="flex size-12 sm:size-14 items-center justify-center rounded-lg border border-border bg-muted/50 p-2 sm:p-3">
+                      <svg className="w-6 h-6 sm:w-7 sm:h-7 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
                       </svg>
                     </figure>
-                    <div className="flex flex-col items-center gap-2 text-center">
-                      <h3 className="text-base font-medium">Lossless Quality</h3>
-                      <p className="text-sm text-muted-foreground">
+                    <div className="flex flex-col items-center gap-1 sm:gap-2 text-center">
+                      <h3 className="text-sm sm:text-base font-medium">Lossless Quality</h3>
+                      <p className="text-xs sm:text-sm text-muted-foreground">
                         High-fidelity WAV
                       </p>
                     </div>
                   </article>
 
-                  <article className="flex flex-col items-center gap-4 rounded-lg border border-border p-6 dark:[box-shadow:_70px_-20px_130px_0px_rgba(255,255,255,0.05)_inset] hover:border-primary/30 transition-all duration-300">
-                    <figure className="flex size-14 items-center justify-center rounded-lg border border-border bg-muted/50 p-3">
-                      <svg className="w-7 h-7 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <article className="flex flex-col items-center gap-3 sm:gap-4 rounded-lg border border-border p-4 sm:p-6 dark:[box-shadow:_70px_-20px_130px_0px_rgba(255,255,255,0.05)_inset] hover:border-primary/30 transition-all duration-300">
+                    <figure className="flex size-12 sm:size-14 items-center justify-center rounded-lg border border-border bg-muted/50 p-2 sm:p-3">
+                      <svg className="w-6 h-6 sm:w-7 sm:h-7 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                       </svg>
                     </figure>
-                    <div className="flex flex-col items-center gap-2 text-center">
-                      <h3 className="text-base font-medium">Speaker Detection</h3>
-                      <p className="text-sm text-muted-foreground">
+                    <div className="flex flex-col items-center gap-1 sm:gap-2 text-center">
+                      <h3 className="text-sm sm:text-base font-medium">Speaker Detection</h3>
+                      <p className="text-xs sm:text-sm text-muted-foreground">
                         Auto identify
                       </p>
                     </div>
                   </article>
 
-                  <article className="flex flex-col items-center gap-4 rounded-lg border border-border p-6 dark:[box-shadow:_70px_-20px_130px_0px_rgba(255,255,255,0.05)_inset] hover:border-primary/30 transition-all duration-300">
-                    <figure className="flex size-14 items-center justify-center rounded-lg border border-border bg-muted/50 p-3">
-                      <svg className="w-7 h-7 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <article className="flex flex-col items-center gap-3 sm:gap-4 rounded-lg border border-border p-4 sm:p-6 dark:[box-shadow:_70px_-20px_130px_0px_rgba(255,255,255,0.05)_inset] hover:border-primary/30 transition-all duration-300">
+                    <figure className="flex size-12 sm:size-14 items-center justify-center rounded-lg border border-border bg-muted/50 p-2 sm:p-3">
+                      <svg className="w-6 h-6 sm:w-7 sm:h-7 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                       </svg>
                     </figure>
-                    <div className="flex flex-col items-center gap-2 text-center">
-                      <h3 className="text-base font-medium">AI Transcription</h3>
-                      <p className="text-sm text-muted-foreground">
+                    <div className="flex flex-col items-center gap-1 sm:gap-2 text-center">
+                      <h3 className="text-sm sm:text-base font-medium">AI Transcription</h3>
+                      <p className="text-xs sm:text-sm text-muted-foreground">
                         Real-time text
                       </p>
                     </div>
                   </article>
 
-                  <article className="flex flex-col items-center gap-4 rounded-lg border border-border p-6 dark:[box-shadow:_70px_-20px_130px_0px_rgba(255,255,255,0.05)_inset] hover:border-primary/30 transition-all duration-300">
-                    <figure className="flex size-14 items-center justify-center rounded-lg border border-border bg-muted/50 p-3">
-                      <svg className="w-7 h-7 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <article className="flex flex-col items-center gap-3 sm:gap-4 rounded-lg border border-border p-4 sm:p-6 dark:[box-shadow:_70px_-20px_130px_0px_rgba(255,255,255,0.05)_inset] hover:border-primary/30 transition-all duration-300">
+                    <figure className="flex size-12 sm:size-14 items-center justify-center rounded-lg border border-border bg-muted/50 p-2 sm:p-3">
+                      <svg className="w-6 h-6 sm:w-7 sm:h-7 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                       </svg>
                     </figure>
-                    <div className="flex flex-col items-center gap-2 text-center">
-                      <h3 className="text-base font-medium">Smart Summaries</h3>
-                      <p className="text-sm text-muted-foreground">
+                    <div className="flex flex-col items-center gap-1 sm:gap-2 text-center">
+                      <h3 className="text-sm sm:text-base font-medium">Smart Summaries</h3>
+                      <p className="text-xs sm:text-sm text-muted-foreground">
                         Key insights
                       </p>
                     </div>

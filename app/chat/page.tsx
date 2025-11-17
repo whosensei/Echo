@@ -31,7 +31,14 @@ import {
   LogOut,
   Settings,
   User,
+  Menu,
 } from 'lucide-react';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet';
 
 interface ChatSessionItem {
   id: string;
@@ -76,6 +83,7 @@ function ChatPageContent() {
   const [isLoadingSession, setIsLoadingSession] = useState(false);
   const [isLoadingResponse, setIsLoadingResponse] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [hasShownShortcutHint, setHasShownShortcutHint] = useState(false);
   const processedRecordingIdsRef = useRef<Set<string>>(new Set());
 
@@ -558,7 +566,7 @@ function ChatPageContent() {
     <ProtectedRoute>
       <div className="flex h-screen bg-background">
         {/* Chat Sidebar */}
-        <aside className={`flex-shrink-0 bg-card border-r border-border flex flex-col transition-all duration-300 ${
+        <aside className={`hidden md:flex flex-shrink-0 bg-card border-r border-border flex flex-col transition-all duration-300 ${
           isSidebarCollapsed ? 'w-0 overflow-hidden' : 'w-80'
         }`}>
           {/* Header with Back Button */}
@@ -639,17 +647,30 @@ function ChatPageContent() {
         {/* Main Chat Area */}
         <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden relative">
           {/* Usage Limits - Top Right Corner */}
-          <div className="absolute top-4 right-4 z-10 bg-card border border-border rounded-lg p-3 shadow-sm">
+          <div className="absolute top-4 right-2 sm:right-4 z-10 bg-card border border-border rounded-lg p-2 sm:p-3 shadow-sm">
             <UsageLimits compact />
           </div>
           
-          {/* Sidebar toggle button when collapsed */}
+          {/* Mobile menu button */}
+          <div className="md:hidden absolute top-4 left-4 z-10">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setIsMobileMenuOpen(true)}
+              className="h-10 w-10 rounded-lg border bg-background shadow-sm hover:bg-accent"
+              title="Show sidebar"
+            >
+              <Menu className="h-5 w-5" />
+            </Button>
+          </div>
+
+          {/* Sidebar toggle button when collapsed (desktop) */}
           {isSidebarCollapsed && (
             <Button
               variant="ghost"
               size="icon"
               onClick={() => setIsSidebarCollapsed(false)}
-              className="absolute top-4 left-4 z-10 h-10 w-10 rounded-lg border bg-background shadow-sm hover:bg-accent"
+              className="hidden md:flex absolute top-4 left-4 z-10 h-10 w-10 rounded-lg border bg-background shadow-sm hover:bg-accent"
               title="Show sidebar (⌘B)"
             >
               <MessageSquare className="h-5 w-5" />
@@ -685,7 +706,7 @@ function ChatPageContent() {
                     <div className="w-full relative z-10">{activeChatInput}</div>
                   </div>
                 ) : (
-                  <div className="p-6">
+                  <div className="p-4 sm:p-6">
                     <div className="space-y-4 max-w-3xl mx-auto pb-4">
                       {messages.map((message: any) => (
                         <ChatMessage key={message.id} message={message} />
@@ -697,7 +718,7 @@ function ChatPageContent() {
               </div>
 
               {!showCenteredInput && (
-                <div className="p-4 flex-shrink-0 bg-background">
+                <div className="p-3 sm:p-4 flex-shrink-0 bg-background">
                   <div className="max-w-3xl mx-auto">
                     {activeChatInput}
                   </div>
@@ -721,6 +742,78 @@ function ChatPageContent() {
             </div>
           )}
         </div>
+
+        {/* Mobile Sidebar Sheet */}
+        <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+          <SheetContent side="left" className="w-80 p-0">
+            <SheetHeader className="p-4 border-b">
+              <SheetTitle className="flex items-center gap-2">
+                <MessageSquare className="h-6 w-6 text-primary" />
+                <span>AI Chat</span>
+              </SheetTitle>
+            </SheetHeader>
+            <div className="flex flex-col h-full">
+              <div className="flex-1 overflow-hidden">
+                <ChatSidebar
+                  sessions={sessions}
+                  selectedSessionId={currentSessionId}
+                  onSessionSelect={(id) => {
+                    loadSession(id);
+                    setIsMobileMenuOpen(false);
+                  }}
+                  onNewChat={() => {
+                    handleNewChat();
+                    setIsMobileMenuOpen(false);
+                  }}
+                  onDeleteSession={handleDeleteSession}
+                  onRenameSession={handleRenameSession}
+                  isLoading={isLoadingSessions}
+                />
+              </div>
+              <div className="flex-shrink-0 border-t border-border p-4">
+                <div className="flex items-center justify-between mb-3 px-3">
+                  <span className="text-xs font-medium text-muted-foreground">
+                    Appearance
+                  </span>
+                  <ThemeToggle />
+                </div>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="w-full justify-start px-3 h-auto py-2">
+                      <Avatar className="h-8 w-8 mr-3">
+                        <AvatarImage src={session?.user?.image || undefined} />
+                        <AvatarFallback>
+                          <User className="h-4 w-4" />
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex flex-col items-start flex-1 min-w-0">
+                        <span className="text-sm font-medium truncate max-w-full">
+                          {session?.user?.name || 'User'}
+                        </span>
+                        <span className="text-xs text-muted-foreground truncate max-w-full">
+                          {session?.user?.email}
+                        </span>
+                      </div>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56">
+                    <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => router.push('/settings')}>
+                      <Settings className="mr-2 h-4 w-4" />
+                      Settings
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleSignOut}>
+                      <LogOut className="mr-2 h-4 w-4" />
+                      Sign out
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            </div>
+          </SheetContent>
+        </Sheet>
 
         {/* Transcript Selector Dialog */}
         <TranscriptSelector

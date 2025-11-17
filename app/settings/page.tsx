@@ -110,12 +110,12 @@ export default function SettingsPage() {
       <DashboardLayout>
         <div className="max-w-5xl mx-auto space-y-8 pb-16">
           {/* Page header with gradient */}
-          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border border-border/50 p-8">
+          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border border-border/50 p-4 sm:p-6 lg:p-8">
             <div className="absolute inset-0 bg-grid-white/5 [mask-image:linear-gradient(0deg,white,rgba(255,255,255,0.5))]" />
             <div className="relative">
               <div className="space-y-2">
-                <h1 className="text-4xl font-medium tracking-tight text-foreground">Settings</h1>
-                <p className="text-muted-foreground text-lg">
+                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-medium tracking-tight text-foreground">Settings</h1>
+                <p className="text-muted-foreground text-sm sm:text-base lg:text-lg">
                   Manage your account and integrations
                 </p>
               </div>
@@ -247,7 +247,7 @@ export default function SettingsPage() {
                       <Separator />
 
                       {/* Services Grid */}
-                      <div className="grid gap-4 md:grid-cols-2">
+                      <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2">
                         {/* Gmail Service */}
                         <div className="space-y-3 p-4 rounded-lg bg-muted/30 border border-border/50">
                           <div className="flex items-center gap-3">

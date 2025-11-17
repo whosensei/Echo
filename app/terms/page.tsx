@@ -41,13 +41,13 @@ export default function TermsOfServicePage() {
       </div>
 
       {/* Content */}
-      <div className="container mx-auto px-6 py-16 max-w-4xl">
-        <div className="prose prose-slate dark:prose-invert max-w-none">
-          <h1 className="text-4xl font-bold mb-2">Terms of Service</h1>
-          <p className="text-muted-foreground mb-8">Last updated: {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+      <div className="container mx-auto px-4 sm:px-6 py-8 sm:py-12 lg:py-16 max-w-4xl">
+        <div className="prose prose-slate dark:prose-invert max-w-none prose-sm sm:prose-base">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-2">Terms of Service</h1>
+          <p className="text-muted-foreground mb-6 sm:mb-8 text-sm sm:text-base">Last updated: {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
 
-          <section className="mb-8">
-            <h2 className="text-2xl font-semibold mt-8 mb-4">1. Acceptance of Terms</h2>
+          <section className="mb-6 sm:mb-8">
+            <h2 className="text-xl sm:text-2xl font-semibold mt-6 sm:mt-8 mb-3 sm:mb-4">1. Acceptance of Terms</h2>
             <p className="mb-4">
               By accessing or using Echo ("the Service"), you agree to be bound by these Terms of Service ("Terms"). If you disagree with any part of these terms, you may not access the Service.
             </p>

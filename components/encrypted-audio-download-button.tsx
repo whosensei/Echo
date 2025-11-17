@@ -234,13 +234,15 @@ export function EncryptedAudioDownloadButton({
       >
         {isDownloading ? (
           <>
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Downloading...
+            <Loader2 className="mr-1.5 sm:mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4 animate-spin" />
+            <span className="hidden sm:inline">Downloading...</span>
+            <span className="sm:hidden">Loading...</span>
           </>
         ) : (
           <>
-            <Download className="mr-2 h-4 w-4" />
-            Download Audio
+            <Download className="mr-1.5 sm:mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4" />
+            <span className="hidden sm:inline">Download Audio</span>
+            <span className="sm:hidden">Download</span>
           </>
         )}
       </Button>

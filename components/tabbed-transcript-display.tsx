@@ -211,47 +211,51 @@ export function TabbedTranscriptDisplay({ transcription, summary, isLoading, onN
     <div className="h-full flex flex-col">
       {/* Navigation Header - Modern SaaS Style */}
       <div className="border-b border-border/50">
-        <div className="max-w-7xl mx-auto px-6 lg:px-12 py-5">
-          <div className="flex items-center justify-between gap-4">
-            {/* Left side: Nav items - Pill style navigation */}
-            <div className="flex gap-1 bg-muted/50 p-1 rounded-lg">
-              {navItems.map((item) => {
-                const Icon = item.icon
-                const isActive = activeTab === item.id
-                return (
-                  <Button
-                    key={item.id}
-                    variant="ghost"
-                    onClick={() => setActiveTab(item.id)}
-                    className={`flex items-center gap-2 text-sm rounded-md transition-all h-9 px-4 ${
-                      isActive 
-                        ? 'bg-background shadow-sm font-semibold' 
-                        : 'hover:bg-background/50 font-medium'
-                    }`}
-                  >
-                    <Icon className="h-4 w-4" />
-                    <span>{item.label}</span>
-                  </Button>
-                )
-              })}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 py-3 sm:py-5">
+          <div className="flex flex-col gap-3 sm:gap-4">
+            {/* Top row: Nav items with Download button - Pill style navigation */}
+            <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0 w-full">
+              <div className="flex gap-1 bg-muted/50 p-1 rounded-lg overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                {navItems.map((item) => {
+                  const Icon = item.icon
+                  const isActive = activeTab === item.id
+                  return (
+                    <Button
+                      key={item.id}
+                      variant="ghost"
+                      onClick={() => setActiveTab(item.id)}
+                      className={`flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm rounded-md transition-all h-8 sm:h-9 px-2 sm:px-4 flex-shrink-0 ${
+                        isActive 
+                          ? 'bg-background shadow-sm font-semibold' 
+                          : 'hover:bg-background/50 font-medium'
+                      }`}
+                    >
+                      <Icon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                      <span className="whitespace-nowrap">{item.label}</span>
+                    </Button>
+                  )
+                })}
+              </div>
+              {/* Download button right next to tabs */}
+              {meetingId && (
+                <EncryptedAudioDownloadButton recordingId={meetingId} className="h-8 sm:h-9 px-2 sm:px-4 text-xs sm:text-sm flex-shrink-0" />
+              )}
             </div>
-            {/* Right side: Usage Limits, Download Button, and New Recording Button */}
-            <div className="flex items-center gap-4">
+            {/* Bottom row: Usage Limits and New Recording Button */}
+            <div className="flex items-center gap-2 sm:gap-4 flex-wrap">
               {!hideUsageLimits && (
-                <div className="bg-card border border-border rounded-lg px-3 shadow-sm h-9 flex items-center">
+                <div className="bg-card border border-border rounded-lg px-2 sm:px-3 shadow-sm h-8 sm:h-9 flex items-center">
                   <UsageLimits compact />
                 </div>
-              )}
-              {meetingId && (
-                <EncryptedAudioDownloadButton recordingId={meetingId} className="h-9 px-4 text-sm" />
               )}
               {onNewRecording && (
                 <Button
                   onClick={onNewRecording}
-                  className="flex items-center gap-2 shadow-sm h-9 px-4 text-sm"
+                  className="flex items-center gap-1.5 sm:gap-2 shadow-sm h-8 sm:h-9 px-2 sm:px-4 text-xs sm:text-sm"
                 >
-                  <Plus className="h-4 w-4" />
-                  <span>New Recording</span>
+                  <Plus className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                  <span className="hidden sm:inline">New Recording</span>
+                  <span className="sm:hidden">New</span>
                 </Button>
               )}
             </div>
@@ -261,7 +265,7 @@ export function TabbedTranscriptDisplay({ transcription, summary, isLoading, onN
 
       {/* Content - Spacious and clean */}
       <ScrollArea className="flex-1">
-        <div className="max-w-7xl mx-auto px-6 lg:px-12 py-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 py-6 sm:py-8 lg:py-12">
           {/* Transcript Section - Conversation Style */}
           {activeTab === 'transcript' && transcription && (
             <section id="transcript" className="space-y-6">

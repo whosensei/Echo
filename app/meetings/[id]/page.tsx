@@ -412,20 +412,20 @@ export default function MeetingDetailsPage() {
   return (
     <ProtectedRoute>
       <div className="min-h-screen bg-background">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="space-y-6">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
+          <div className="space-y-4 sm:space-y-6">
             {/* Header */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <Link href="/meetings">
-                  <Button variant="ghost" size="icon">
-                    <ArrowLeft className="h-5 w-5" />
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div className="flex items-start gap-3 sm:gap-4 min-w-0 flex-1">
+                <Link href="/meetings" className="flex-shrink-0">
+                  <Button variant="ghost" size="icon" className="h-9 w-9 sm:h-10 sm:w-10">
+                    <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
                   </Button>
                 </Link>
-                <div>
-                  <h1 className="text-3xl font-medium text-foreground tracking-tight">{recording.title}</h1>
-                  <div className="flex items-center gap-2 mt-1">
-                    <p className="text-sm text-muted-foreground">
+                <div className="min-w-0 flex-1">
+                  <h1 className="text-xl sm:text-2xl lg:text-3xl font-medium text-foreground tracking-tight break-words">{recording.title}</h1>
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-2 mt-1">
+                    <p className="text-xs sm:text-sm text-muted-foreground">
                       {new Date(recording.recordedAt || recording.createdAt).toLocaleDateString("en-US", {
                         year: "numeric",
                         month: "long",
@@ -434,22 +434,24 @@ export default function MeetingDetailsPage() {
                         minute: "2-digit",
                       })}
                     </p>
-                    <Badge className={getStatusColor(recording.status)}>
+                    <Badge className={`${getStatusColor(recording.status)} text-xs w-fit`}>
                       {recording.status}
                     </Badge>
                   </div>
                 </div>
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                 {/* Chat with Transcript Button */}
                 <Button
                   variant="default"
                   size="sm"
                   disabled={!transcriptionResult}
                   onClick={() => router.push(`/chat?recordingId=${recording.id}`)}
+                  className="text-xs sm:text-sm flex-1 sm:flex-initial min-w-[140px] sm:min-w-0"
                 >
-                  <MessageSquare className="mr-2 h-4 w-4" />
-                  Chat with Transcript
+                  <MessageSquare className="mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                  <span className="hidden sm:inline">Chat with Transcript</span>
+                  <span className="sm:hidden">Chat</span>
                 </Button>
                 
                 {/* Action Buttons */}
@@ -459,9 +461,11 @@ export default function MeetingDetailsPage() {
                       variant="outline"
                       size="sm"
                       disabled={!transcriptionResult}
+                      className="text-xs sm:text-sm flex-1 sm:flex-initial min-w-[120px] sm:min-w-0"
                     >
-                      <Mail className="mr-2 h-4 w-4" />
-                      Send via Email
+                      <Mail className="mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                      <span className="hidden sm:inline">Send via Email</span>
+                      <span className="sm:hidden">Email</span>
                     </Button>
                   </DialogTrigger>
                   <DialogContent className="sm:max-w-[525px]">
@@ -539,15 +543,17 @@ export default function MeetingDetailsPage() {
                   size="sm"
                   onClick={handleExportPDF}
                   disabled={!transcriptionResult && !summaryResult}
+                  className="text-xs sm:text-sm flex-1 sm:flex-initial min-w-[110px] sm:min-w-0"
                 >
-                  <Download className="mr-2 h-4 w-4" />
-                  Export PDF
+                  <Download className="mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                  <span className="hidden sm:inline">Export PDF</span>
+                  <span className="sm:hidden">Export</span>
                 </Button>
                 
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
-                    <Button variant="destructive" size="sm">
-                      <Trash2 className="mr-2 h-4 w-4" />
+                    <Button variant="destructive" size="sm" className="text-xs sm:text-sm flex-1 sm:flex-initial min-w-[90px] sm:min-w-0">
+                      <Trash2 className="mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4" />
                       Delete
                     </Button>
                   </AlertDialogTrigger>

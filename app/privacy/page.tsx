@@ -12,8 +12,8 @@ export default function PrivacyPolicyPage() {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <div className="border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
+        <div className="container mx-auto px-4 sm:px-6 py-3 sm:py-4">
+          <div className="flex items-center justify-between gap-2">
             <Link href={session?.user ? "/dashboard" : "/"}>
               <Button variant="ghost" size="sm">
                 <ArrowLeft className="h-4 w-4 mr-2" />
@@ -41,13 +41,13 @@ export default function PrivacyPolicyPage() {
       </div>
 
       {/* Content */}
-      <div className="container mx-auto px-6 py-16 max-w-4xl">
-        <div className="prose prose-slate dark:prose-invert max-w-none">
-          <h1 className="text-4xl font-bold mb-2">Privacy Policy</h1>
-          <p className="text-muted-foreground mb-8">Last updated: {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+      <div className="container mx-auto px-4 sm:px-6 py-8 sm:py-12 lg:py-16 max-w-4xl">
+        <div className="prose prose-slate dark:prose-invert max-w-none prose-sm sm:prose-base">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-2">Privacy Policy</h1>
+          <p className="text-muted-foreground mb-6 sm:mb-8 text-sm sm:text-base">Last updated: {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
 
-          <section className="mb-8">
-            <h2 className="text-2xl font-semibold mt-8 mb-4">1. Introduction</h2>
+          <section className="mb-6 sm:mb-8">
+            <h2 className="text-xl sm:text-2xl font-semibold mt-6 sm:mt-8 mb-3 sm:mb-4">1. Introduction</h2>
             <p className="mb-4">
               Welcome to Echo ("we," "our," or "us"). We are committed to protecting your privacy and ensuring you have a positive experience when using our services. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our AI-powered meeting transcription and analysis platform.
             </p>

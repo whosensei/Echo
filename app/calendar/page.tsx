@@ -179,26 +179,26 @@ export default function CalendarPage() {
   return (
     <DashboardLayout>
       <div className="space-y-4 pb-8">
-        {/* Header with gradient - same size as dashboard */}
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border border-border/50 p-8">
-          <div className="absolute inset-0 bg-grid-white/5 [mask-image:linear-gradient(0deg,white,rgba(255,255,255,0.5))]" />
-          <div className="relative">
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <CalendarIcon className="h-6 w-6 text-primary" />
-                <h1 className="text-4xl font-medium tracking-tight text-foreground">Calendar</h1>
+          {/* Header with gradient - same size as dashboard */}
+          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border border-border/50 p-4 sm:p-6 lg:p-8">
+            <div className="absolute inset-0 bg-grid-white/5 [mask-image:linear-gradient(0deg,white,rgba(255,255,255,0.5))]" />
+            <div className="relative">
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <CalendarIcon className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
+                  <h1 className="text-2xl sm:text-3xl lg:text-4xl font-medium tracking-tight text-foreground">Calendar</h1>
+                </div>
+                <p className="text-muted-foreground text-sm sm:text-base lg:text-lg max-w-2xl">
+                  View your meetings and recordings organized by date with AI-powered insights.
+                </p>
               </div>
-              <p className="text-muted-foreground text-lg max-w-2xl">
-                View your meetings and recordings organized by date with AI-powered insights.
-              </p>
             </div>
           </div>
-        </div>
 
         {/* Split View: Calendar + Detail Panel */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:h-[calc(100vh-20rem)] max-w-full">
           {/* Left: Calendar */}
-          <div className="lg:col-span-2 flex flex-col min-h-0">
+          <div className="lg:col-span-2 flex flex-col min-h-0 order-2 lg:order-1">
             <Card className="flex-1 flex flex-col h-full min-h-0">
               <CardHeader className="pb-3 flex-shrink-0">
                 <div className="flex items-center justify-between">
@@ -313,7 +313,7 @@ export default function CalendarPage() {
           </div>
 
           {/* Right: Detail Panel for Selected Date */}
-          <div className="lg:col-span-1 flex flex-col min-h-0">
+          <div className="lg:col-span-1 flex flex-col min-h-0 order-1 lg:order-2">
             <Card className="flex-1 flex flex-col h-full min-h-0">
               <CardHeader className="pb-3 flex-shrink-0">
                 <CardTitle className="text-base font-medium">

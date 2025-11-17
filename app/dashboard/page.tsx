@@ -240,21 +240,21 @@ export default function DashboardPage() {
       <DashboardLayout>
         <div className="space-y-8 pb-8">
           {/* Page header with gradient */}
-          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border border-border/50 p-8">
+          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border border-border/50 p-4 sm:p-6 lg:p-8">
             <div className="absolute inset-0 bg-grid-white/5 [mask-image:linear-gradient(0deg,white,rgba(255,255,255,0.5))]" />
             <div className="relative">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
-                    <LayoutDashboard className="h-6 w-6 text-primary" />
-                    <h1 className="text-4xl font-medium tracking-tight text-foreground">Dashboard</h1>
+                    <LayoutDashboard className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
+                    <h1 className="text-2xl sm:text-3xl lg:text-4xl font-medium tracking-tight text-foreground">Dashboard</h1>
                   </div>
-                  <p className="text-muted-foreground text-lg max-w-2xl">
+                  <p className="text-muted-foreground text-sm sm:text-base lg:text-lg max-w-2xl">
                     Welcome back! Your AI-powered meeting insights at a glance.
                   </p>
                 </div>
-                <Link href="/record">
-                  <Button size="lg" className="shadow-lg">
+                <Link href="/record" className="w-full sm:w-auto">
+                  <Button size="lg" className="shadow-lg w-full sm:w-auto">
                     <Plus className="mr-2 h-5 w-5" />
                     New Recording
                   </Button>
@@ -335,7 +335,7 @@ export default function DashboardPage() {
           </div>
 
           {/* Recent activity and upcoming meetings */}
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-4 lg:grid-cols-2">
             {/* Upcoming Calendar Events */}
             <Card className="border-border/50 bg-gradient-to-br from-card to-card/50">
               <CardHeader className="flex flex-row items-center justify-between pb-3">

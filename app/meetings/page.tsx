@@ -126,21 +126,21 @@ export default function MeetingsPage() {
       <DashboardLayout>
         <div className="space-y-8">
           {/* Header with gradient */}
-          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border border-border/50 p-8">
+          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border border-border/50 p-4 sm:p-6 lg:p-8">
             <div className="absolute inset-0 bg-grid-white/5 [mask-image:linear-gradient(0deg,white,rgba(255,255,255,0.5))]" />
             <div className="relative">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
-                    <FileText className="h-6 w-6 text-primary" />
-                    <h1 className="text-4xl font-medium text-foreground tracking-tight">All Recordings</h1>
+                    <FileText className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
+                    <h1 className="text-2xl sm:text-3xl lg:text-4xl font-medium text-foreground tracking-tight">All Recordings</h1>
                   </div>
-                  <p className="text-muted-foreground text-lg max-w-2xl">
+                  <p className="text-muted-foreground text-sm sm:text-base lg:text-lg max-w-2xl">
                     Your meeting archive. Search, filter, and access transcriptions instantly.
                   </p>
                 </div>
-                <Link href="/record">
-                  <Button className="shadow-lg !h-12 px-6">
+                <Link href="/record" className="w-full sm:w-auto">
+                  <Button className="shadow-lg !h-12 px-6 w-full sm:w-auto">
                     <Plus className="mr-2 h-5 w-5" />
                     New Recording
                   </Button>
@@ -150,19 +150,19 @@ export default function MeetingsPage() {
           </div>
 
           {/* Search and Filter Bar */}
-          <div className="flex flex-col md:flex-row gap-4">
+          <div className="flex flex-col sm:flex-row gap-4">
             <div className="relative flex-1">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+              <Search className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />
               <Input
                 placeholder="Search recordings..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-12 h-12 text-base bg-card border-border/50"
+                className="pl-9 sm:pl-12 h-11 sm:h-12 text-sm sm:text-base bg-card border-border/50"
               />
             </div>
             
             <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className="w-full md:w-48 !h-12 bg-card border-border/50 text-base">
+              <SelectTrigger className="w-full sm:w-48 !h-11 sm:!h-12 bg-card border-border/50 text-sm sm:text-base">
                 <SelectValue placeholder="Sort by" />
               </SelectTrigger>
               <SelectContent>
@@ -226,19 +226,19 @@ export default function MeetingsPage() {
               filteredRecordings.map((recording) => (
                 <Link key={recording.id} href={`/meetings/${recording.id}`}>
                   <Card className="group hover:shadow-lg hover:border-primary/50 transition-all duration-300 border-border/50 bg-card/50 backdrop-blur">
-                    <CardContent className="p-6">
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="flex-1 min-w-0 space-y-3">
+                    <CardContent className="p-4 sm:p-6">
+                      <div className="flex items-start justify-between gap-3 sm:gap-4">
+                        <div className="flex-1 min-w-0 space-y-2 sm:space-y-3">
                           {/* Title and Status */}
-                          <div className="flex items-start gap-3">
-                            <div className="mt-1 p-2 rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
-                              <Mic className="h-4 w-4 text-primary" />
+                          <div className="flex items-start gap-2 sm:gap-3">
+                            <div className="mt-1 p-1.5 sm:p-2 rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors flex-shrink-0">
+                              <Mic className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary" />
                             </div>
                             <div className="flex-1 min-w-0">
-                              <h3 className="text-lg font-medium text-foreground truncate group-hover:text-primary transition-colors">
+                              <h3 className="text-base sm:text-lg font-medium text-foreground truncate group-hover:text-primary transition-colors">
                                 {recording.title}
                               </h3>
-                              <Badge className={`${getStatusColor(recording.status)} mt-1`}>
+                              <Badge className={`${getStatusColor(recording.status)} mt-1 text-xs`}>
                                 {recording.status}
                               </Badge>
                             </div>
@@ -246,15 +246,15 @@ export default function MeetingsPage() {
 
                           {/* Description */}
                           {recording.description && (
-                            <p className="text-sm text-muted-foreground line-clamp-2 ml-12">
+                            <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2 ml-8 sm:ml-12">
                               {recording.description}
                             </p>
                           )}
 
                           {/* Metadata */}
-                          <div className="flex items-center gap-4 text-sm text-muted-foreground ml-12">
+                          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-xs sm:text-sm text-muted-foreground ml-8 sm:ml-12">
                             <div className="flex items-center gap-1.5">
-                              <Calendar className="h-3.5 w-3.5" />
+                              <Calendar className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
                               <span>
                                 {recording.recordedAt
                                   ? formatDate(recording.recordedAt)
@@ -262,7 +262,7 @@ export default function MeetingsPage() {
                               </span>
                             </div>
                             <div className="flex items-center gap-1.5">
-                              <Clock className="h-3.5 w-3.5" />
+                              <Clock className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
                               <span>{formatDate(recording.createdAt)}</span>
                             </div>
                           </div>

@@ -18,16 +18,16 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen bg-background landing-page-dark">
       <nav className="sticky left-0 top-0 z-[110] flex w-full flex-col border-b border-border bg-background">
-        <div className="flex h-16 bg-background">
-          <div className="container mx-auto grid w-full grid-cols-3 items-center px-6">
+        <div className="flex h-14 sm:h-16 bg-background">
+          <div className="container mx-auto grid w-full grid-cols-3 items-center px-4 sm:px-6">
             {/* Left: Logo */}
             <div className="flex items-center">
               <Link href="/" className="flex items-center ring-offset-2">
-                <div className="flex items-center gap-2.5">
-                  <div className="h-9 w-9 rounded-xl bg-primary/10 ring-1 ring-primary/20 flex items-center justify-center">
-                    <Mic className="h-5 w-5 text-primary" strokeWidth={2.5} />
+                <div className="flex items-center gap-2 sm:gap-2.5">
+                  <div className="h-8 w-8 sm:h-9 sm:w-9 rounded-xl bg-primary/10 ring-1 ring-primary/20 flex items-center justify-center">
+                    <Mic className="h-4 w-4 sm:h-5 sm:w-5 text-primary" strokeWidth={2.5} />
                   </div>
-                  <span className="text-xl font-medium tracking-tight">Echo</span>
+                  <span className="text-lg sm:text-xl font-medium tracking-tight">Echo</span>
                 </div>
               </Link>
             </div>
@@ -52,23 +52,23 @@ export default function LandingPage() {
             </div>
             
             {/* Right: Auth Buttons */}
-            <div className="flex items-center justify-end gap-3">
+            <div className="flex items-center justify-end gap-2 sm:gap-3">
               {session?.user ? (
                 <>
                   <Link href="/dashboard">
-                    <Button variant="ghost" size="sm" className="font-medium">Dashboard</Button>
+                    <Button variant="ghost" size="sm" className="font-medium text-xs sm:text-sm hidden sm:inline-flex">Dashboard</Button>
                   </Link>
                   <Link href="/record">
-                    <Button size="sm" className="bg-primary hover:bg-primary/90 font-medium">Start Recording</Button>
+                    <Button size="sm" className="bg-primary hover:bg-primary/90 font-medium text-xs sm:text-sm">Start Recording</Button>
                   </Link>
                 </>
               ) : (
                 <>
                   <Link href="/login">
-                    <Button variant="ghost" size="sm" className="font-medium">Sign In</Button>
+                    <Button variant="ghost" size="sm" className="font-medium text-xs sm:text-sm">Sign In</Button>
                   </Link>
                   <Link href="/signup">
-                    <Button size="sm" className="bg-primary hover:bg-primary/90 font-medium">Get Started</Button>
+                    <Button size="sm" className="bg-primary hover:bg-primary/90 font-medium text-xs sm:text-sm">Get Started</Button>
                   </Link>
                 </>
               )}
