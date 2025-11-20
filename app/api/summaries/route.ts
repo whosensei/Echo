@@ -1,10 +1,11 @@
+//For saving summaries to database.
+
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { summary } from "@/lib/db/schema";
 import { headers } from "next/headers";
 
-// POST /api/summaries - Create a new summary
 export async function POST(request: NextRequest) {
   try {
     const session = await auth.api.getSession({
@@ -26,7 +27,6 @@ export async function POST(request: NextRequest) {
       metadata,
     } = body;
 
-    // Validate required fields
     if (!recordingId || !summaryText) {
       return NextResponse.json(
         { error: "Recording ID and summary are required" },
@@ -34,7 +34,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create the summary
     const [newSummary] = await db
       .insert(summary)
       .values({

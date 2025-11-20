@@ -10,12 +10,14 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/components/ui/toaster"
 import { useSession } from "@/lib/auth-client"
 import { UsageLimits } from "@/components/billing/UsageLimits"
 import { EncryptedAudioDownloadButton } from "@/components/encrypted-audio-download-button"
 import type { TranscriptionResult } from "@/lib/assemblyai-service"
 import type { MeetingSummary } from "@/lib/openai-summary-service"
+import { exportMeetingToPDF } from "@/lib/pdf-export"
 
 interface TabbedTranscriptDisplayProps {
   transcription: TranscriptionResult | null
@@ -31,9 +33,10 @@ interface TabbedTranscriptDisplayProps {
 export function TabbedTranscriptDisplay({ transcription, summary, isLoading, onNewRecording, isSidebarCollapsed, meetingId, audioUrl, hideUsageLimits = false }: TabbedTranscriptDisplayProps) {
   const { data: session } = useSession();
   const { toast } = useToast();
-  const [showTranscriptEmailDialog, setShowTranscriptEmailDialog] = useState(false);
-  const [showSummaryEmailDialog, setShowSummaryEmailDialog] = useState(false);
+  const [showEmailDialog, setShowEmailDialog] = useState(false);
   const [emailRecipients, setEmailRecipients] = useState("");
+  const [emailSubject, setEmailSubject] = useState("");
+  const [emailMessage, setEmailMessage] = useState("");
   const [isSendingEmail, setIsSendingEmail] = useState(false);
   const [activeTab, setActiveTab] = useState<'transcript' | 'fulltext' | 'summary'>('transcript');
   
@@ -101,71 +104,75 @@ export function TabbedTranscriptDisplay({ transcription, summary, isLoading, onN
     return groups
   }
 
-  const handleSendTranscript = async () => {
-    if (!emailRecipients.trim() || !meetingId) return;
-
-    setIsSendingEmail(true);
-    try {
-      const recipients = emailRecipients.split(',').map(e => e.trim()).filter(e => e);
-      
-      const response = await fetch("/api/gmail/send-transcript", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          meetingId,
-          recipients,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to send transcript email");
-      }
-
-      toast({
-        title: "Transcript sent!",
-        description: `Email sent to ${recipients.length} recipient(s)`,
-      });
-
-      setShowTranscriptEmailDialog(false);
-      setEmailRecipients("");
-    } catch (error) {
-      toast({
-        title: "Failed to send email",
-        description: error instanceof Error ? error.message : "An error occurred",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSendingEmail(false);
-    }
+  const formatDuration = (seconds: number | null | undefined): string => {
+    if (typeof seconds !== "number" || Number.isNaN(seconds)) return "N/A";
+    const safeSeconds = Math.max(0, seconds);
+    const minutes = Math.floor(safeSeconds / 60);
+    const secs = Math.floor(safeSeconds % 60);
+    return `${minutes}m ${secs.toString().padStart(2, "0")}s`;
   };
 
-  const handleSendSummary = async () => {
+  const handleSendPDF = async () => {
     if (!emailRecipients.trim() || !meetingId) return;
 
     setIsSendingEmail(true);
     try {
       const recipients = emailRecipients.split(',').map(e => e.trim()).filter(e => e);
       
-      const response = await fetch("/api/gmail/send-summary", {
+      // Fetch recording data to get title and date
+      const recordingResponse = await fetch(`/api/recordings/${meetingId}`);
+      if (!recordingResponse.ok) {
+        throw new Error("Failed to fetch recording data");
+      }
+      const recordingData = await recordingResponse.json();
+
+      // Prepare PDF data
+      const audioDuration = transcription?.result?.metadata?.audio_duration || 0;
+      const pdfData = {
+        title: recordingData.recording?.title || "Meeting Recording",
+        startTime: recordingData.recording?.recordedAt || null,
+        duration: formatDuration(audioDuration),
+        speakerCount: transcription?.result?.metadata?.number_of_distinct_speakers || null,
+        confidence: null,
+        content: transcription?.result?.transcription?.full_transcript || "",
+        summary: summary?.summary || transcription?.result?.summary,
+        actionPoints: summary?.structuredDecisions?.map((d: any) => d.description) || summary?.actionPoints || undefined,
+        keyTopics: summary?.keyTopics || undefined,
+        participants: summary?.participants || undefined,
+        sentiment: summary?.sentiment || undefined,
+      };
+
+      // Generate PDF as base64
+      const pdfBase64 = exportMeetingToPDF(pdfData, "full", true);
+      const filename = `${(recordingData.recording?.title || "Meeting").replace(/[^a-z0-9]/gi, "_")}_${new Date().toISOString().split("T")[0]}.pdf`;
+
+      // Send email with PDF
+      const response = await fetch("/api/gmail/send-pdf", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          meetingId,
+          recordingId: meetingId,
           recipients,
+          subject: emailSubject || `Meeting Transcript: ${recordingData.recording?.title || "Meeting"}`,
+          message: emailMessage || `Please find attached the transcript and summary for: ${recordingData.recording?.title || "Meeting"}`,
+          pdfBase64,
+          filename,
         }),
       });
 
       if (!response.ok) {
-        throw new Error("Failed to send summary email");
+        throw new Error("Failed to send email");
       }
 
       toast({
-        title: "Summary sent!",
-        description: `Email sent to ${recipients.length} recipient(s)`,
+        title: "Email sent!",
+        description: `PDF sent to ${recipients.length} recipient(s)`,
       });
 
-      setShowSummaryEmailDialog(false);
+      setShowEmailDialog(false);
       setEmailRecipients("");
+      setEmailSubject("");
+      setEmailMessage("");
     } catch (error) {
       toast({
         title: "Failed to send email",
@@ -601,78 +608,59 @@ export function TabbedTranscriptDisplay({ transcription, summary, isLoading, onN
         </div>
       </ScrollArea>
 
-      {/* Email Dialogs */}
-      <Dialog open={showTranscriptEmailDialog} onOpenChange={setShowTranscriptEmailDialog}>
+      {/* Email Dialog */}
+      <Dialog open={showEmailDialog} onOpenChange={setShowEmailDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Send Transcript via Email</DialogTitle>
+            <DialogTitle>Send PDF via Email</DialogTitle>
             <DialogDescription>
-              Enter recipient email addresses separated by commas
+              Enter recipient email addresses separated by commas. A PDF containing the transcript and summary will be attached.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="transcript-emails">Recipients</Label>
+              <Label htmlFor="email-recipients">Recipients</Label>
               <Input
-                id="transcript-emails"
+                id="email-recipients"
                 placeholder="email1@example.com, email2@example.com"
                 value={emailRecipients}
                 onChange={(e) => setEmailRecipients(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="email-subject">Subject (optional)</Label>
+              <Input
+                id="email-subject"
+                placeholder="Meeting Transcript"
+                value={emailSubject}
+                onChange={(e) => setEmailSubject(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="email-message">Message (optional)</Label>
+              <Textarea
+                id="email-message"
+                placeholder="Please find attached the transcript and summary..."
+                value={emailMessage}
+                onChange={(e) => setEmailMessage(e.target.value)}
+                rows={3}
               />
             </div>
           </div>
           <DialogFooter>
             <Button
               variant="outline"
-              onClick={() => setShowTranscriptEmailDialog(false)}
+              onClick={() => setShowEmailDialog(false)}
               disabled={isSendingEmail}
             >
               Cancel
             </Button>
             <Button
-              onClick={handleSendTranscript}
+              onClick={handleSendPDF}
               disabled={!emailRecipients.trim() || isSendingEmail}
             >
               {isSendingEmail && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Send
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={showSummaryEmailDialog} onOpenChange={setShowSummaryEmailDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Send Summary via Email</DialogTitle>
-            <DialogDescription>
-              Enter recipient email addresses separated by commas
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="summary-emails">Recipients</Label>
-              <Input
-                id="summary-emails"
-                placeholder="email1@example.com, email2@example.com"
-                value={emailRecipients}
-                onChange={(e) => setEmailRecipients(e.target.value)}
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setShowSummaryEmailDialog(false)}
-              disabled={isSendingEmail}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleSendSummary}
-              disabled={!emailRecipients.trim() || isSendingEmail}
-            >
-              {isSendingEmail && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Send
+              Send PDF
             </Button>
           </DialogFooter>
         </DialogContent>

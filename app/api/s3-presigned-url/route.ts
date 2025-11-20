@@ -1,8 +1,3 @@
-/**
- * API Route: Generate S3 Presigned URL
- * Generates presigned URLs for direct client-to-S3 uploads
- */
-
 import { NextRequest, NextResponse } from 'next/server';
 import { S3Service } from '@/lib/s3-service';
 import { headers } from 'next/headers';
@@ -10,7 +5,6 @@ import { auth } from '@/lib/auth';
 
 export async function POST(request: NextRequest) {
   try {
-    // Authenticate user
     const session = await auth.api.getSession({
       headers: await headers(),
     });
@@ -52,14 +46,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Initialize S3 service
     const s3Service = new S3Service();
 
-    // Generate presigned URL for upload (5 minutes expiration)
+    //valid for 5 mins
     const presignedData = await s3Service.generatePresignedUploadUrl(
       filename,
       finalContentType,
-      300 // 5 minutes
+      300 //seconds
     );
 
     return NextResponse.json({

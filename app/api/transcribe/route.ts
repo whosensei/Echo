@@ -1,10 +1,3 @@
-/**
- * API Route: Transcribe Audio
- * Handles audio transcription using AssemblyAI API with S3 storage
- * Features enabled: Speaker Diarization, Entity Detection, Sentiment Analysis,
- * Auto Chapters (Topic Detection), and Summarization
- */
-
 import { NextRequest, NextResponse } from 'next/server';
 import { S3Service } from '@/lib/s3-service';
 import { AssemblyAIService } from '@/lib/assemblyai-service';
@@ -32,7 +25,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Apply rate limiting (20 transcriptions per hour per user)
     const rateLimitResult = await rateLimit(
       `transcribe:${session.user.id}`,
       RATE_LIMITS.TRANSCRIBE
@@ -65,10 +57,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Estimate audio duration for limit check (rough estimate: 1MB ≈ 1 minute)
-    // We'll do a more accurate check after getting the actual duration
-    // For now, check with a conservative estimate
-    const estimatedMinutes = 1; // Conservative estimate
+    //to check if the usage are in limits before sending the request
+    const estimatedMinutes = 1;
     const limitCheck = await checkTranscriptionLimit(session.user.id, estimatedMinutes);
 
     if (!limitCheck.allowed) {
@@ -84,24 +74,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Initialize services
     const s3Service = new S3Service();
     const assemblyAIService = new AssemblyAIService();
 
-    // Download the audio file from S3
     console.log('Downloading audio from S3...');
     let audioBuffer = await s3Service.downloadFile(fileKey);
 
-    // If file is encrypted, decrypt it before sending to AssemblyAI
+    //decrypt the audio file if its encrypted, step1 - get the key.
     if (isEncrypted) {
       console.log('File is encrypted, fetching decryption params from database...');
 
-      // Fetch encryption metadata from database
-      // Try to find recording by ID first, then fall back to URL lookup
       let rec;
       
       if (recordingId) {
-        // Look up by recording ID (preferred method)
         const recordings = await db
           .select()
           .from(recording)
@@ -116,7 +101,6 @@ export async function POST(request: NextRequest) {
         }
         rec = recordings[0];
       } else if (s3Url) {
-        // Fall back to URL lookup
         const recordings = await db
           .select()
           .from(recording)
@@ -144,7 +128,6 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      // Get password from request or decrypt from database
       let decryptionPassword = encryptionPassword;
       
       if (!decryptionPassword && rec.encryptedPassword) {
@@ -166,6 +149,7 @@ export async function POST(request: NextRequest) {
         );
       }
 
+      //step-2 decrypting using the password found.
       try {
         console.log('Decrypting audio file...');
         const decryptionParams: DecryptionParams = {
@@ -192,30 +176,28 @@ export async function POST(request: NextRequest) {
     const uploadResponse = await assemblyAIService.uploadAudio(audioBlob);
     console.log('Upload response:', JSON.stringify(uploadResponse, null, 2));
     
-    // Initiate transcription with ALL features enabled in one request
     console.log('Initiating transcription with all features...');
     const transcriptionRequest = {
       audio_url: uploadResponse.upload_url,
-      summarization: true,                // Summarization
-      iab_categories: true,               // IAB Categories (Topic Classification)
-      sentiment_analysis: true,           // Sentiment Analysis
-      speaker_labels: true,               // Speaker Diarization
-      format_text: true,                  // Format text (proper casing, etc.)
-      punctuate: true,                    // Add punctuation
-      speech_model: 'universal' as const, // Universal speech model
-      language_detection: true,           // Auto-detect language
-      language_detection_options: {       // Code switching enabled
+      summarization: true,                
+      iab_categories: true,               
+      sentiment_analysis: true,           
+      speaker_labels: true,               
+      format_text: true,                  
+      punctuate: true,                    
+      speech_model: 'universal' as const, 
+      language_detection: true,           
+      language_detection_options: {       
         code_switching: true,
       },
-      entity_detection: true,             // Entity Detection
-      // auto_chapters: true,             // Disabled: Cannot be used with summarization
+      entity_detection: true,             
       summary_model: 'informative' as const,
       summary_type: 'bullets' as const,
       speech_understanding: {
         request: {
           speaker_identification: {
             speaker_type: 'name' as const,
-            known_values: [],             // Add known speaker names if available
+            known_values: [],            
           },
         },
       },
@@ -238,7 +220,6 @@ export async function POST(request: NextRequest) {
       success: true,
       requestId: transcriptionId,
       status: initResponse.status,
-      fullResponse: initResponse, // Include full response for debugging
     });
 
   } catch (error) {
@@ -250,6 +231,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
+// to check if the transcription is completed and fetch it if yes.
 export async function GET(request: NextRequest) {
   try {
     console.log('GET /api/transcribe called');
@@ -278,7 +260,6 @@ export async function GET(request: NextRequest) {
     console.log('Get transcription successful');
     console.log('Status:', result.status);
 
-    // Convert to standardized format
     const standardFormat = assemblyAIService.convertToStandardFormat(result);
 
     // Ingest usage only when transcription is completed
@@ -312,7 +293,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       success: true,
       result: standardFormat,
-      rawResult: result, // Include raw AssemblyAI result for debugging
     });
 
   } catch (error) {

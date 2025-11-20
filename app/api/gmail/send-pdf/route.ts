@@ -7,7 +7,6 @@ import { eq, and } from "drizzle-orm";
 import { headers } from "next/headers";
 import { rateLimit, RATE_LIMITS, formatResetTime } from "@/lib/redis-rate-limit";
 
-// POST /api/gmail/send-pdf - Send meeting PDF via email
 export async function POST(request: NextRequest) {
   try {
     const session = await auth.api.getSession({
@@ -19,7 +18,6 @@ export async function POST(request: NextRequest) {
     }
 
     // Apply rate limiting (100 email sends per 15 minutes per user)
-    // This prevents abuse of the email sending feature
     const rateLimitResult = await rateLimit(
       `email:${session.user.id}`,
       RATE_LIMITS.API_DEFAULT
@@ -72,7 +70,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Recording not found" }, { status: 404 });
     }
 
-    // Send emails to all recipients
     const results = [];
     for (const recipient of recipients) {
       try {

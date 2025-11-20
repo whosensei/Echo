@@ -1,19 +1,3 @@
-/**
- * POST /api/webhooks/dodo
- * Dodo Payments webhook endpoint with signature verification.
- *
- * Security:
- * - Verifies HMAC-SHA256 signature using Standard Webhooks spec
- * - Uses raw body for verification to prevent tampering
- *
- * Notes:
- * - Uses Standard Webhooks format: webhook-id.webhook-timestamp.payload
- * - Header name: 'webhook-signature'
- * - Ensure DODO_WEBHOOK_SECRET is set in environment
- * - Add this URL in Dodo dashboard or via API as your webhook endpoint
- * - All events are logged to webhook_event table for audit trail
- * - Subscription events update the subscription table
- */
 import { NextRequest, NextResponse } from 'next/server';
 import { config } from '@/config/env';
 import { db } from '@/lib/db';
@@ -57,11 +41,24 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Webhook not configured' }, { status: 500 });
     }
     
-    const dodoClient = new (DodoPayments as any)({
+    const environment = config.dodo?.environment || 'test_mode';
+    const clientConfig: any = {
       bearerToken: apiKey,
       webhookKey: secret,
-      environment: config.dodo?.environment || 'test_mode',
-    });
+      environment,
+    };
+
+    // Some SDK versions may require explicit baseUrl, especially in live mode
+    const baseUrl = process.env.DODO_BASE_URL;
+    if (baseUrl) {
+      clientConfig.baseUrl = baseUrl;
+    } else if (environment === 'live') {
+      // Default live API endpoint (adjust if DodoPayments uses different URL)
+      clientConfig.baseUrl = 'https://api.dodopayments.com';
+    }
+    // For test_mode, SDK usually handles baseUrl internally
+
+    const dodoClient = new (DodoPayments as any)(clientConfig);
 
     // Verify signature using SDK's unwrap method
     // This will throw if signature is invalid
@@ -72,7 +69,7 @@ export async function POST(req: NextRequest) {
     };
 
     const unwrappedWebhook = dodoClient.webhooks.unwrap(rawBody, { headers: webhookHeaders });
-    console.log('✅ Webhook signature verified successfully');
+    console.log('Webhook signature verified successfully');
     
     // The unwrapped webhook should contain the parsed event
     // If it's already parsed, use it; otherwise parse the raw body
@@ -85,7 +82,7 @@ export async function POST(req: NextRequest) {
       console.log('Parsed event from raw body:', event);
     }
   } catch (verifyError: any) {
-    console.error('❌ Webhook signature verification failed:', verifyError);
+    console.error('Webhook signature verification failed:', verifyError);
     console.error('Error details:', {
       message: verifyError?.message,
       stack: verifyError?.stack,
@@ -181,7 +178,6 @@ export async function POST(req: NextRequest) {
   } catch (err: any) {
     console.error('Webhook handler error:', err);
     
-    // Mark webhook as failed
     if (webhookLogId) {
       try {
         await db.update(webhookEvent)
@@ -193,15 +189,12 @@ export async function POST(req: NextRequest) {
         console.error('Failed to update webhook error status:', updateError);
       }
     }
-
-    // Return 500 to trigger retry from Dodo
     return NextResponse.json({ error: 'Handler error' }, { status: 500 });
   }
 }
 
-/**
- * Handle subscription-related webhook events
- */
+
+//Handle subscription-related webhook events
 async function handleSubscriptionEvent(
   eventType: string,
   subscriptionData: any,
@@ -268,8 +261,6 @@ async function handleSubscriptionEvent(
   if (!userId) {
     console.error(`Could not find user for Dodo customer ${customerId}, email: ${customerEmail}`);
     console.error('Subscription data:', JSON.stringify(subscriptionData, null, 2));
-    // Don't return early - log the event but continue to store webhook event
-    // The subscription can be linked later when user is found
     throw new Error(`User not found for customer ${customerId}. Email: ${customerEmail || 'N/A'}`);
   }
 
@@ -293,7 +284,6 @@ async function handleSubscriptionEvent(
   const parseDate = (value: any): Date | null => {
     if (!value) return null;
     if (typeof value === 'number') {
-      // Unix timestamp in seconds - convert to milliseconds
       return new Date(value * 1000);
     }
     if (typeof value === 'string') {
@@ -347,7 +337,7 @@ async function handleSubscriptionEvent(
       .where(eq(subscription.dodoSubscriptionId, subscriptionId))
       .returning();
     
-    console.log(`✅ Updated subscription ${subscriptionId} for user ${userId}, status: ${status}`, result[0]);
+    console.log(`Updated subscription ${subscriptionId} for user ${userId}, status: ${status}`, result[0]);
   } else {
     // Create new subscription
     const result = await db.insert(subscription).values({
@@ -364,14 +354,12 @@ async function handleSubscriptionEvent(
       metadata: subscriptionData,
     }).returning();
     
-    console.log(`✅ Created subscription ${subscriptionId} for user ${userId}, plan: ${plan}, status: ${status}`, result[0]);
+    console.log(`Created subscription ${subscriptionId} for user ${userId}, plan: ${plan}, status: ${status}`, result[0]);
   }
 
-  // Handle specific event types
   switch (eventType) {
     case 'subscription.active':
     case 'subscription.renewed': {
-      // Subscription is active - ensure status is set correctly
       await db.update(subscription)
         .set({ status: 'active' })
         .where(eq(subscription.dodoSubscriptionId, subscriptionId));
@@ -379,7 +367,6 @@ async function handleSubscriptionEvent(
     }
     case 'subscription.on_hold':
     case 'subscription.failed': {
-      // Subscription on hold - restrict overage usage
       await db.update(subscription)
         .set({ status: 'on_hold' })
         .where(eq(subscription.dodoSubscriptionId, subscriptionId));
@@ -387,7 +374,6 @@ async function handleSubscriptionEvent(
     }
     case 'subscription.cancelled':
     case 'subscription.expired': {
-      // Subscription cancelled/expired - mark as cancelled
       await db.update(subscription)
         .set({ 
           status: 'cancelled',
