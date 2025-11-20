@@ -1,7 +1,3 @@
-/**
- * Chat Attachments API - Attach recordings to a chat session
- */
-
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { headers } from 'next/headers';
@@ -14,6 +10,7 @@ import {
 	summary,
 } from '@/lib/db/schema';
 import { and, eq, inArray } from 'drizzle-orm';
+import { decryptChatContent } from '@/lib/chat-encryption';
 
 export async function POST(req: NextRequest) {
 	try {
@@ -97,7 +94,6 @@ export async function POST(req: NextRequest) {
 			);
 		}
 
-		// Return updated attachments list with details
 		const attachments = await db
 			.select({
 				id: chatAttachment.id,
@@ -113,7 +109,19 @@ export async function POST(req: NextRequest) {
 			.leftJoin(summary, eq(recording.id, summary.recordingId))
 			.where(eq(chatAttachment.sessionId, sessionId));
 
-		return NextResponse.json({ attachments });
+		const decryptedAttachments = attachments.map((attachment) => ({
+			...attachment,
+			transcript: attachment.transcript ? {
+				...attachment.transcript,
+				content: decryptChatContent(attachment.transcript.content),
+			} : null,
+			summary: attachment.summary ? {
+				...attachment.summary,
+				summary: decryptChatContent(attachment.summary.summary),
+			} : null,
+		}));
+
+		return NextResponse.json({ attachments: decryptedAttachments });
 	} catch (error) {
 		console.error('Attach transcripts API error:', error);
 		return NextResponse.json(

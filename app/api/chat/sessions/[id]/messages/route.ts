@@ -7,6 +7,7 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { chatMessage } from '@/lib/db/schema';
 import { headers } from 'next/headers';
+import { safeEncryptChatContent } from '@/lib/chat-encryption';
 
 export async function POST(
   req: NextRequest,
@@ -42,13 +43,22 @@ export async function POST(
       );
     }
 
+    // Encrypt message content before saving
+    const encryptedContent = safeEncryptChatContent(content);
+    if (!encryptedContent) {
+      return new Response(
+        JSON.stringify({ error: 'Failed to encrypt message content' }),
+        { status: 500, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
     // Save message
     const [message] = await db
       .insert(chatMessage)
       .values({
         sessionId,
         role,
-        content,
+        content: encryptedContent,
       })
       .returning();
 

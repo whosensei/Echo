@@ -1,16 +1,3 @@
-/**
- * POST /api/billing/portal
- * Creates a Dodo Payments Customer Portal session for the authenticated user.
- *
- * Body (optional):
- *  {
- *    "returnUrl": "https://your-app.com/account" // optional, defaults to /settings
- *  }
- *
- * Security:
- * - Requires authenticated user (Better Auth session)
- * - Server-side only; uses Dodo SDK
- */
 import { NextRequest, NextResponse } from 'next/server';
 import { headers } from 'next/headers';
 import { auth } from '@/lib/auth';

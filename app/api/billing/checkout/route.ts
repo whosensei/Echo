@@ -1,17 +1,3 @@
-/**
- * POST /api/billing/checkout
- * Creates a Dodo Payments hosted checkout session for Pro or Enterprise plan.
- *
- * Body:
- *  {
- *    "plan": "pro" | "enterprise",
- *    "returnUrl": "https://your-app.com/redirect" // optional, falls back to Origin/dashboard
- *  }
- *
- * Security:
- * - Requires authenticated user (Better Auth session)
- * - Uses Dodo SDK server-side
- */
 import { NextRequest, NextResponse } from 'next/server';
 import { headers } from 'next/headers';
 import { auth } from '@/lib/auth';

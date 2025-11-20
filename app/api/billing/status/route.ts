@@ -1,18 +1,3 @@
-/**
- * GET /api/billing/status
- * Returns the current user's subscription status and plan information from Dodo Payments.
- *
- * Returns:
- * {
- *   plan: "free" | "pro" | "enterprise",
- *   status: "active" | "inactive" | "on_hold" | "cancelled" | "expired",
- *   subscriptionId: string | null,
- *   customerId: string,
- *   currentPeriodStart: string | null,
- *   currentPeriodEnd: string | null,
- *   cancelAtPeriodEnd: boolean,
- * }
- */
 import { NextResponse } from 'next/server';
 import { headers } from 'next/headers';
 import { auth } from '@/lib/auth';

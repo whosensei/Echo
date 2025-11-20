@@ -74,7 +74,6 @@ export function TabbedTranscriptDisplay({ transcription, summary, isLoading, onN
     return colors[Math.abs(hash) % colors.length]
   }
 
-  // Group consecutive utterances by the same speaker
   const groupUtterancesBySpeaker = () => {
     if (!transcription?.result?.transcription?.utterances) {
       return []
@@ -126,8 +125,49 @@ export function TabbedTranscriptDisplay({ transcription, summary, isLoading, onN
       }
       const recordingData = await recordingResponse.json();
 
-      // Prepare PDF data
+      // Prepare PDF data with all available information
       const audioDuration = transcription?.result?.metadata?.audio_duration || 0;
+      
+      // Convert IAB categories to array format for PDF
+      const iabCategories = transcription?.result?.iab_categories?.summary
+        ? Object.entries(transcription.result.iab_categories.summary)
+            .map(([category, relevance]) => ({
+              category,
+              relevance: relevance as number,
+            }))
+            .sort((a, b) => b.relevance - a.relevance)
+        : undefined;
+
+      // Convert named entities to array format for PDF
+      const entities = transcription?.result?.named_entities
+        ? transcription.result.named_entities.map((entity: any) => ({
+            text: entity.entity,
+            type: entity.type,
+          }))
+        : undefined;
+
+      // Convert utterances to speaker breakdown for PDF
+      const speakers = transcription?.result?.transcription?.utterances
+        ? transcription.result.transcription.utterances.map((utterance: any) => ({
+            speaker: utterance.speaker,
+            text: utterance.transcription,
+          }))
+        : undefined;
+
+      // Convert key moments for PDF
+      const keyMoments = summary?.keyMoments
+        ? summary.keyMoments.map((moment: any) => ({
+            description: typeof moment === 'string' ? moment : moment.description || JSON.stringify(moment),
+          }))
+        : undefined;
+
+      // Convert structured todos for PDF
+      const todos = summary?.structuredTodos
+        ? summary.structuredTodos.map((todo: any) => ({
+            task: typeof todo === 'string' ? todo : todo.task || JSON.stringify(todo),
+          }))
+        : undefined;
+
       const pdfData = {
         title: recordingData.recording?.title || "Meeting Recording",
         startTime: recordingData.recording?.recordedAt || null,
@@ -135,11 +175,19 @@ export function TabbedTranscriptDisplay({ transcription, summary, isLoading, onN
         speakerCount: transcription?.result?.metadata?.number_of_distinct_speakers || null,
         confidence: null,
         content: transcription?.result?.transcription?.full_transcript || "",
-        summary: summary?.summary || transcription?.result?.summary,
-        actionPoints: summary?.structuredDecisions?.map((d: any) => d.description) || summary?.actionPoints || undefined,
-        keyTopics: summary?.keyTopics || undefined,
+        summary: (summary as any)?.summary || summary?.overview || transcription?.result?.summary,
+        actionPoints: summary?.structuredDecisions?.map((d: any) => d.description) || summary?.actionItems || (summary as any)?.actionPoints || undefined,
+        keyTopics: summary?.topics || (summary as any)?.keyTopics || undefined,
         participants: summary?.participants || undefined,
         sentiment: summary?.sentiment || undefined,
+        // AssemblyAI fields
+        aiSummary: transcription?.result?.summary || undefined,
+        iabCategories: iabCategories,
+        entities: entities,
+        speakers: speakers,
+        // Additional summary fields
+        keyMoments: keyMoments,
+        todos: todos,
       };
 
       // Generate PDF as base64

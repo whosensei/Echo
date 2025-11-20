@@ -18,6 +18,9 @@ interface MeetingPDFData {
   entities?: Array<{ text: string; type: string }>;
   sentimentAnalysis?: Array<{ text: string; sentiment: string; confidence: number }>;
   speakers?: Array<{ speaker: string; text: string }>;
+  // Additional summary fields
+  keyMoments?: Array<{ description: string }>;
+  todos?: Array<{ task: string }>;
 }
 
 export function exportMeetingToPDF(
@@ -149,6 +152,36 @@ export function exportMeetingToPDF(
         addText("OVERALL SENTIMENT", 14, true);
         yPosition += 5;
         addText(data.sentiment.toUpperCase(), 11, true);
+      }
+
+      // Key Moments
+      if (data.keyMoments && data.keyMoments.length > 0) {
+        if (yPosition > 240) {
+          doc.addPage();
+          yPosition = 20;
+        }
+        addText("KEY MOMENTS", 14, true);
+        yPosition += 5;
+        data.keyMoments.forEach((moment: any, index: number) => {
+          const momentText = typeof moment === "string" ? moment : moment.description || JSON.stringify(moment);
+          addText(`${index + 1}. ${momentText}`, 11);
+        });
+        yPosition += 10;
+      }
+
+      // To-Dos
+      if (data.todos && data.todos.length > 0) {
+        if (yPosition > 240) {
+          doc.addPage();
+          yPosition = 20;
+        }
+        addText("TO-DOS", 14, true);
+        yPosition += 5;
+        data.todos.forEach((todo: any, index: number) => {
+          const todoText = typeof todo === "string" ? todo : todo.task || JSON.stringify(todo);
+          addText(`${index + 1}. ${todoText}`, 11);
+        });
+        yPosition += 10;
       }
     }
 

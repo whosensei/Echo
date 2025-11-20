@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { recording, transcript, summary } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 import { headers } from "next/headers";
+import { decryptChatContent } from '@/lib/chat-encryption';
 
 // GET /api/recordings/[id] - Get a specific recording with its transcript and summary
 export async function GET(
@@ -33,22 +34,30 @@ export async function GET(
       return NextResponse.json({ error: "Recording not found" }, { status: 404 });
     }
 
-    // Fetch related transcript
     const [transcriptData] = await db
       .select()
       .from(transcript)
       .where(eq(transcript.recordingId, recordingId));
 
-    // Fetch related summary
     const [summaryData] = await db
       .select()
       .from(summary)
       .where(eq(summary.recordingId, recordingId));
 
+    const decryptedTranscript = transcriptData ? {
+      ...transcriptData,
+      content: decryptChatContent(transcriptData.content),
+    } : null;
+
+    const decryptedSummary = summaryData ? {
+      ...summaryData,
+      summary: decryptChatContent(summaryData.summary),
+    } : null;
+
     return NextResponse.json({
       recording: recordingData,
-      transcript: transcriptData || null,
-      summary: summaryData || null,
+      transcript: decryptedTranscript,
+      summary: decryptedSummary,
     });
   } catch (error) {
     console.error("Error fetching recording:", error);

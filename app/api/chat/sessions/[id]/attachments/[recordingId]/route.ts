@@ -1,7 +1,3 @@
-/**
- * Chat Attachment API Route - Remove attachment from session
- */
-
 import { NextRequest } from 'next/server';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';

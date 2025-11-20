@@ -3,11 +3,6 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { autoSyncNewMeetings } from "@/lib/calendar/client";
 
-/**
- * POST /api/calendar/auto-sync
- * Automatically syncs new calendar meetings to database (only ones not already stored)
- * Designed to run in the background when dashboard loads
- */
 export async function POST(request: NextRequest) {
   try {
     const session = await auth.api.getSession({

@@ -9,6 +9,7 @@ import { eq, desc } from 'drizzle-orm';
 import { auth } from '@/lib/auth';
 import { headers } from 'next/headers';
 import { config } from '@/config/env';
+import { safeEncryptChatContent, decryptChatContent } from '@/lib/chat-encryption';
 
 /**
  * GET /api/chat/sessions - List all sessions for the current user
@@ -39,7 +40,7 @@ export async function GET(req: NextRequest) {
       .where(eq(chatSession.userId, userId))
       .orderBy(desc(chatSession.updatedAt));
 
-    // Get message counts for each session
+    // Get message counts for each session and decrypt titles
     const sessionsWithCounts = await Promise.all(
       sessions.map(async (session) => {
         const messages = await db
@@ -54,6 +55,7 @@ export async function GET(req: NextRequest) {
 
         return {
           ...session,
+          title: decryptChatContent(session.title),
           messageCount: messages.length,
           attachmentCount: attachments.length,
         };
@@ -86,7 +88,7 @@ export async function POST(req: NextRequest) {
 
     const userId = session.user.id;
     const body = await req.json();
-    const { title, model = config.app.defaultAiModel, attachedRecordingIds = [] } = body;
+    const { title, model = config.app.defaultAiModel, attachedRecordingIds = [], systemPrompt } = body;
 
     if (!title) {
       return NextResponse.json(
@@ -95,13 +97,25 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Encrypt title and systemPrompt before saving
+    const encryptedTitle = safeEncryptChatContent(title);
+    const encryptedSystemPrompt = systemPrompt ? safeEncryptChatContent(systemPrompt) : null;
+
+    if (!encryptedTitle) {
+      return NextResponse.json(
+        { error: 'Failed to encrypt session title' },
+        { status: 500 }
+      );
+    }
+
     // Create new session
     const [newSession] = await db
       .insert(chatSession)
       .values({
         userId,
-        title,
+        title: encryptedTitle,
         model,
+        systemPrompt: encryptedSystemPrompt,
       })
       .returning();
 
@@ -134,7 +148,14 @@ export async function POST(req: NextRequest) {
             .where(eq(chatAttachment.sessionId, newSession.id))
         : [];
 
-    return NextResponse.json({ session: newSession, attachments });
+    // Decrypt session data before returning
+    const decryptedNewSession = {
+      ...newSession,
+      title: decryptChatContent(newSession.title),
+      systemPrompt: newSession.systemPrompt ? decryptChatContent(newSession.systemPrompt) : null,
+    };
+
+    return NextResponse.json({ session: decryptedNewSession, attachments });
   } catch (error) {
     console.error('Error creating session:', error);
     return NextResponse.json(

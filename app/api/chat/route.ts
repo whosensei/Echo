@@ -1,6 +1,5 @@
 /**
  * Chat API Route - Handles AI chat with streaming responses
- * Supports multiple models and transcript context
  */
 
 import { streamText } from 'ai';
@@ -13,6 +12,7 @@ import { auth } from '@/lib/auth';
 import { ingestChatTokens, checkTokenLimit } from '@/lib/billing/usage';
 import { config } from '@/config/env';
 import { rateLimit, RATE_LIMITS, formatResetTime } from '@/lib/redis-rate-limit';
+import { safeEncryptChatContent } from '@/lib/chat-encryption';
 
 export const maxDuration = 30; // Allow up to 30 seconds for streaming
 
@@ -92,7 +92,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Build context from attached transcripts
     let contextMessage = '';
     
     if (attachedRecordingIds.length > 0) {
@@ -106,7 +105,6 @@ export async function POST(req: NextRequest) {
           },
         });
 
-        // Normalize to existing shape expected by buildContextFromRecordings
         const recordings = recRows.map((rec) => ({
           recording: rec,
           transcript: rec.transcript,
@@ -118,7 +116,6 @@ export async function POST(req: NextRequest) {
         }
       } catch (error) {
         console.error('Error fetching attached recordings:', error);
-        // Continue without context if there's an error
       }
     }
 
@@ -147,16 +144,20 @@ export async function POST(req: NextRequest) {
         // Save assistant message to database if sessionId is provided
         if (sessionId && text) {
           try {
-            await db.insert(chatMessage).values({
-              sessionId,
-              role: 'assistant',
-              content: text,
-              metadata: {
-                model,
-                finishReason,
-                usage,
-              },
-            });
+            // Encrypt message content before saving
+            const encryptedContent = safeEncryptChatContent(text);
+            if (encryptedContent) {
+              await db.insert(chatMessage).values({
+                sessionId,
+                role: 'assistant',
+                content: encryptedContent,
+                metadata: {
+                  model,
+                  finishReason,
+                  usage,
+                },
+              });
+            }
           } catch (error) {
             console.error('Error saving assistant message:', error);
           }

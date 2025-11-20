@@ -6,6 +6,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { transcript } from "@/lib/db/schema";
 import { headers } from "next/headers";
+import { safeEncryptChatContent } from '@/lib/chat-encryption';
 
 //get latest 10 transcriptions from assembly
 export async function GET() {
@@ -57,11 +58,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const encryptedContent = safeEncryptChatContent(content);
+    if (!encryptedContent) {
+      return NextResponse.json(
+        { error: "Failed to encrypt transcript content" },
+        { status: 500 }
+      );
+    }
+
     const [newTranscript] = await db
       .insert(transcript)
       .values({
         recordingId,
-        content,
+        content: encryptedContent,
         language: language || null,
         speakerCount: speakerCount || null,
         duration: duration || null,

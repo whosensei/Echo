@@ -1,16 +1,3 @@
-/**
- * GET /api/billing/usage
- * Returns the current user's usage statistics and quota limits for the current billing period.
- *
- * Returns:
- * {
- *   transcriptionMinutes: { used: number, limit: number, included: number },
- *   aiTokens: { used: number, limit: number, included: number },
- *   periodStart: string,
- *   periodEnd: string,
- *   plan: string,
- * }
- */
 import { NextResponse } from 'next/server';
 import { headers } from 'next/headers';
 import { auth } from '@/lib/auth';

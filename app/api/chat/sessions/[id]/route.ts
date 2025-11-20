@@ -1,17 +1,11 @@
-/**
- * Individual Chat Session API - Get, update, delete specific session
- */
-
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { chatSession, chatMessage, chatAttachment, recording, transcript, summary } from '@/lib/db/schema';
 import { eq, and, desc } from 'drizzle-orm';
 import { auth } from '@/lib/auth';
 import { headers } from 'next/headers';
+import { safeEncryptChatContent, decryptChatContent } from '@/lib/chat-encryption';
 
-/**
- * GET /api/chat/sessions/[id] - Get session details with messages and attachments
- */
 export async function GET(
   req: NextRequest,
   { params }: { params: { id: string } }
@@ -44,6 +38,13 @@ export async function GET(
       return NextResponse.json({ error: 'Session not found' }, { status: 404 });
     }
 
+    // Decrypt session title and systemPrompt
+    const decryptedSession = {
+      ...sessionData,
+      title: decryptChatContent(sessionData.title),
+      systemPrompt: sessionData.systemPrompt ? decryptChatContent(sessionData.systemPrompt) : null,
+    };
+
     // Fetch messages
     const messages = await db
       .select()
@@ -51,7 +52,12 @@ export async function GET(
       .where(eq(chatMessage.sessionId, sessionId))
       .orderBy(chatMessage.createdAt);
 
-    // Fetch attachments with recording details
+    // Decrypt message content
+    const decryptedMessages = messages.map((msg) => ({
+      ...msg,
+      content: decryptChatContent(msg.content),
+    }));
+
     const attachments = await db
       .select({
         id: chatAttachment.id,
@@ -67,10 +73,22 @@ export async function GET(
       .leftJoin(summary, eq(recording.id, summary.recordingId))
       .where(eq(chatAttachment.sessionId, sessionId));
 
+    const decryptedAttachments = attachments.map((attachment) => ({
+      ...attachment,
+      transcript: attachment.transcript ? {
+        ...attachment.transcript,
+        content: decryptChatContent(attachment.transcript.content),
+      } : null,
+      summary: attachment.summary ? {
+        ...attachment.summary,
+        summary: decryptChatContent(attachment.summary.summary),
+      } : null,
+    }));
+
     return NextResponse.json({
-      session: sessionData,
-      messages,
-      attachments,
+      session: decryptedSession,
+      messages: decryptedMessages,
+      attachments: decryptedAttachments,
     });
   } catch (error) {
     console.error('Error fetching session:', error);
@@ -101,7 +119,7 @@ export async function PATCH(
     const userId = session.user.id;
     const sessionId = params.id;
     const body = await req.json();
-    const { title, model } = body;
+    const { title, model, systemPrompt } = body;
 
     // Verify ownership
     const [existingSession] = await db
@@ -118,10 +136,19 @@ export async function PATCH(
       return NextResponse.json({ error: 'Session not found' }, { status: 404 });
     }
 
-    // Update session
+    // Update session - encrypt title and systemPrompt if provided
     const updates: any = { updatedAt: new Date() };
-    if (title) updates.title = title;
+    if (title) {
+      const encryptedTitle = safeEncryptChatContent(title);
+      if (encryptedTitle) {
+        updates.title = encryptedTitle;
+      }
+    }
     if (model) updates.model = model;
+    if (systemPrompt !== undefined) {
+      const encryptedSystemPrompt = systemPrompt ? safeEncryptChatContent(systemPrompt) : null;
+      updates.systemPrompt = encryptedSystemPrompt;
+    }
 
     const [updatedSession] = await db
       .update(chatSession)
@@ -129,7 +156,14 @@ export async function PATCH(
       .where(eq(chatSession.id, sessionId))
       .returning();
 
-    return NextResponse.json({ session: updatedSession });
+    // Decrypt session data before returning
+    const decryptedUpdatedSession = {
+      ...updatedSession,
+      title: decryptChatContent(updatedSession.title),
+      systemPrompt: updatedSession.systemPrompt ? decryptChatContent(updatedSession.systemPrompt) : null,
+    };
+
+    return NextResponse.json({ session: decryptedUpdatedSession });
   } catch (error) {
     console.error('Error updating session:', error);
     return NextResponse.json(
