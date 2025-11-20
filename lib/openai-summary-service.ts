@@ -152,9 +152,9 @@ export class OpenAISummaryService {
       try {
         const { text } = await generateText({
           model: this.model,
-          system: 'You are an expert meeting analyst. Your task is to extract comprehensive information from meeting transcripts, with special focus on detailed key moments, decisions made, and action items (todos). Provide thorough and detailed responses. Be comprehensive and include as many relevant points as possible.',
+          system: 'You are an expert meeting analyst. Extract ONLY information that explicitly exists in the transcript. Do NOT invent, infer, or generate content that is not present. If the transcript is empty, corrupted, or contains no readable dialogue, return empty arrays. Only extract content from actual spoken words and dialogue.',
           prompt: prompt,
-          temperature: 0.3, // Lower temperature for more consistent structured output
+          temperature: 0.3,
         });
 
         if (!text) {
@@ -211,39 +211,37 @@ export class OpenAISummaryService {
   private buildSummaryPrompt(request: MeetingSummaryRequest): string {
     const { transcript, speakers, namedEntities, speakerMapping, meetingContext } = request;
 
-    let prompt = `You are an expert meeting-summarization assistant. Given any transcript, extract the content into three sections: Moments of Meeting, Action Points, and To-Dos.
+    let prompt = `You are an expert meeting-summarization assistant. Given a transcript, extract ONLY the content that actually exists into three sections: Moments of Meeting, Action Points, and To-Dos.
 
-Moments of Meeting: Provide detailed, comprehensive bullet points that capture ALL key discussion points from the transcript. Be thorough and include as many relevant moments as possible. Each moment should be detailed enough to understand the context and significance. Include discussions about topics, ideas shared, questions raised, concerns mentioned, and any notable exchanges. Aim for 15-30+ detailed moments depending on the transcript length.
+CRITICAL RULES:
+- ONLY extract information that is explicitly stated or clearly implied in the transcript
+- If the transcript is empty, corrupted, or contains only "undefined" or placeholder text, return EMPTY arrays for all sections
+- Do NOT invent, infer, or generate content that is not present in the transcript
+- Do NOT create action points, todos, or moments based solely on named entities or metadata without actual dialogue context
+- If speaker turns contain no readable dialogue (e.g., all "undefined"), do NOT create content from them
+- If timestamps are invalid (NaN, corrupted), do NOT create content
+- Only extract content from actual spoken words and dialogue that exists in the transcript
 
-Action Points: List all items that require attention, decisions, or follow-ups based on the transcript. These should highlight things the participants need to think about or resolve. Include all decision points, concerns raised, and items that need further consideration.
+Moments of Meeting: Extract ONLY key discussion points that are actually present in the transcript. Each moment must be directly supported by dialogue in the transcript. If there is no readable dialogue, return an empty array.
 
-To-Dos: Convert the transcript into a list of actionable, concrete tasks. Every task must start with a verb and be practical, specific, and easy to execute. Include all tasks mentioned or implied in the conversation.
+Action Points: Extract ONLY items that are explicitly mentioned as requiring action, decisions, or follow-ups in the transcript. If no such items are mentioned, return an empty array.
 
-Rules:
-- Do not copy exact sentences unless necessary.
-- Rewrite into clean, simple business English.
-- Maintain logical flow even if the transcript is messy.
-- Break big ideas into smaller, clear tasks.
-- Infer meaning where needed but do not invent new ideas.
-- Be comprehensive - extract as many relevant points as possible.
-- For Moments of Meeting, provide detailed descriptions that give context and meaning.
+To-Dos: Extract ONLY concrete tasks that are explicitly stated or clearly agreed upon in the transcript. Every task must be directly traceable to dialogue in the transcript. If no tasks are mentioned, return an empty array.
 
-Output structure example:
+Output format:
+- If transcript has readable content: Provide the three sections with extracted items
+- If transcript is empty/corrupted/no readable content: Return empty arrays for all sections
+
+Output structure:
 
 Moments of Meeting:
-• [Detailed description of first key moment with context]
-• [Detailed description of second key moment with context]
-• [Continue with all relevant moments...]
+• [Only if actual moments exist in transcript]
 
 Action Points:
-• [First action point]
-• [Second action point]
-• [Continue with all action points...]
+• [Only if action points exist in transcript]
 
 To-Dos:
-• [First actionable task]
-• [Second actionable task]
-• [Continue with all tasks...]
+• [Only if todos exist in transcript]
 
 **MEETING TRANSCRIPT:**
 ${transcript}
@@ -269,10 +267,11 @@ ${transcript}
     }
 
     if (namedEntities && namedEntities.length > 0) {
-      prompt += `\n**NAMED ENTITIES DETECTED:**\n`;
+      prompt += `\n**NAMED ENTITIES DETECTED (for reference only - do NOT create content from these alone):**\n`;
       namedEntities.forEach(entity => {
         prompt += `- ${entity.entity} (${entity.type}, confidence: ${entity.confidence})\n`;
       });
+      prompt += `\nIMPORTANT: Do NOT create Moments, Action Points, or To-Dos based solely on these named entities. Only use them if they appear in actual dialogue context.\n`;
     }
 
     if (meetingContext) {
